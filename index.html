@@ -1,554 +1,279 @@
 <!DOCTYPE html>
 <html lang="th">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>Tracking PO App</title>
-  <script src="https://cdn.tailwindcss.com"></script>
-  <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@300;400;500;600&display=swap" rel="stylesheet">
-  <style>
-    body { font-family: 'Prompt', sans-serif; background-color: #f3f4f6; }
-    .glass-card { background: rgba(255, 255, 255, 0.95); border-radius: 16px; box-shadow: 0 4px 30px rgba(0, 0, 0, 0.05); border: 1px solid rgba(255, 255, 255, 0.3); }
-    .input-field { width: 100%; padding: 12px 16px; border-radius: 12px; border: 1px solid #e5e7eb; background: #f9fafb; margin-top: 4px; outline: none; transition: all 0.2s; }
-    .input-field:focus { border-color: #3b82f6; box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.2); }
-    .btn { width: 100%; padding: 14px; border-radius: 12px; font-weight: 500; text-align: center; transition: all 0.2s; cursor: pointer; border: none; }
-    .btn-primary { background: #2563eb; color: white; }
-    .btn-primary:active { background: #1d4ed8; transform: scale(0.98); }
-    .btn-outline { background: white; color: #374151; border: 1px solid #d1d5db; }
-    .btn-outline:active { background: #f3f4f6; transform: scale(0.98); }
-    
-    /* Loader overlay */
-    #loader { position: fixed; inset: 0; background: rgba(255,255,255,0.8); z-index: 50; display: flex; flex-direction: column; justify-content: center; align-items: center; display: none; }
-    .spinner { border: 4px solid #f3f3f3; border-top: 4px solid #3b82f6; border-radius: 50%; width: 40px; height: 40px; animation: spin 1s linear infinite; }
-    @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
-  </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AKRA Portal | Main Dashboard</title>
+    <!-- ใช้ Tailwind CSS สำหรับความสวยงาม -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- ใช้ Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <!-- ฟอนต์ Noto Sans Thai -->
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Thai:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Noto Sans Thai', sans-serif;
+            background-color: #0f172a; /* Slate 900 */
+            background-image: radial-gradient(circle at 50% -20%, #1e293b, #0f172a);
+            color: #f8fafc;
+            min-height: 100vh;
+        }
+        .glass-card {
+            background: rgba(30, 41, 59, 0.7);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        /* แอนิเมชันตอนโหลดเข้าหน้า */
+        .fade-in { animation: fadeIn 0.5s ease-in-out; }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+    </style>
 </head>
-<body class="text-gray-800 antialiased h-screen flex flex-col">
+<body class="flex items-center justify-center p-4">
 
-  <!-- Header -->
-  <header class="bg-blue-600 text-white p-4 shadow-md sticky top-0 z-10">
-    <div class="max-w-md mx-auto flex justify-between items-center">
-      <h1 class="text-lg font-semibold tracking-wide" id="header-title">ระบบจัดการ PO</h1>
-      <button id="btn-home" class="hidden text-sm bg-blue-700 px-3 py-1 rounded-full hover:bg-blue-800 transition" onclick="showView('role-selection')">
-        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 inline-block mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" /></svg> หน้าแรก
-      </button>
-    </div>
-  </header>
+    <!-- 1. หน้า Login -->
+    <div id="loginSection" class="w-full max-w-md fade-in">
+        <div class="glass-card rounded-2xl p-8 shadow-2xl text-center">
+            <div class="bg-blue-600/20 p-4 rounded-full inline-block mb-4">
+                <i data-lucide="shield-check" class="w-12 h-12 text-blue-400"></i>
+            </div>
+            <h1 class="text-3xl font-bold mb-2">AKRA WEB</h1>
+            <p class="text-slate-400 mb-8">ลงชื่อเข้าใช้ระบบส่วนกลาง (SSO)</p>
 
-  <!-- Main Content Area -->
-  <main class="flex-1 overflow-y-auto p-4 max-w-md mx-auto w-full pb-10">
-    
-    <!-- 1. Role Selection View -->
-    <div id="role-selection" class="flex flex-col gap-4 mt-8">
-      <h2 class="text-center text-xl font-medium text-gray-700 mb-4">เลือกโหมดการทำงาน</h2>
-      
-      <button onclick="openPurchasing()" class="glass-card p-6 flex flex-col items-center justify-center gap-3 hover:bg-blue-50 transition active:scale-95">
-        <div class="bg-blue-100 p-4 rounded-full text-blue-600">
-          <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" /></svg>
-        </div>
-        <span class="text-lg font-medium text-blue-800">สำหรับฝ่ายจัดซื้อ</span>
-        <span class="text-sm text-gray-500 text-center">สร้างบิลและสั่งซื้อสินค้า</span>
-      </button>
-
-      <button onclick="openReceiving()" class="glass-card p-6 flex flex-col items-center justify-center gap-3 hover:bg-green-50 transition active:scale-95">
-        <div class="bg-green-100 p-4 rounded-full text-green-600">
-          <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" /></svg>
-        </div>
-        <span class="text-lg font-medium text-green-800">สำหรับพนักงานลงสินค้า</span>
-        <span class="text-sm text-gray-500 text-center">รับสินค้าเข้าคลังและระบุโลเคชั่น</span>
-      </button>
-    </div>
-
-    <!-- 2. Purchasing View -->
-    <div id="purchasing-view" class="hidden">
-      <div class="glass-card p-5">
-        <h2 class="text-lg font-semibold text-blue-800 mb-4 flex items-center border-b pb-2">
-          <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" /></svg> สร้างบิลใหม่ (PO)
-        </h2>
-        
-        <div class="space-y-4">
-          <div>
-            <label class="block text-sm font-medium text-gray-700">Vendor (ผู้จำหน่าย) <span class="text-red-500">*</span></label>
-            <select id="p-vendor" required class="input-field">
-              <option value="">-- เลือก Vendor --</option>
-            </select>
-          </div>
-          
-          <div class="bg-blue-50 p-4 rounded-xl border border-blue-100">
-            <h3 class="text-sm font-medium text-blue-800 mb-2">เพิ่มรายการสินค้า</h3>
-            <div class="space-y-3">
-              <div class="relative">
-                <label class="block text-xs font-medium text-gray-600">ชื่อสินค้า</label>
-                <input type="text" id="p-product" class="input-field text-sm" placeholder="พิมพ์ค้นหาชื่อสินค้า..." autocomplete="off">
-                <ul id="product-suggestions" class="absolute z-50 w-full bg-white border border-gray-300 rounded-lg shadow-2xl max-h-48 overflow-y-auto hidden mt-1 divide-y divide-gray-100"></ul>
-              </div>
-              <div class="flex gap-2 items-end">
-                <div class="flex-1">
-                  <label class="block text-xs font-medium text-gray-600">จำนวนที่สั่ง</label>
-                  <input type="number" id="p-quantity" class="input-field text-sm" placeholder="ระบุจำนวน...">
+            <form id="loginForm" class="space-y-4">
+                <div>
+                    <input type="password" id="passwordInput" placeholder="กรอกรหัสผ่านเพื่อเข้าใช้งาน" 
+                        class="w-full px-4 py-3 rounded-lg bg-slate-800 border border-slate-700 focus:outline-none focus:border-blue-500 text-center text-lg tracking-widest text-white transition-colors"
+                        required>
                 </div>
-                <button type="button" onclick="addItemToPO()" class="bg-blue-600 text-white px-4 py-3 rounded-xl text-sm font-medium hover:bg-blue-700 active:scale-95 transition flex-shrink-0 shadow-sm">
-                  + เพิ่มลงบิล
+                <button type="submit" id="loginBtn" 
+                    class="w-full bg-blue-600 hover:bg-blue-500 text-white font-semibold py-3 px-4 rounded-lg transition-all transform hover:scale-[1.02] active:scale-95 flex justify-center items-center">
+                    <span>เข้าสู่ระบบ</span>
                 </button>
-              </div>
-            </div>
-          </div>
-
-          <!-- List of added items -->
-          <div id="po-items-container" class="space-y-2 max-h-48 overflow-y-auto">
-            <p class="text-xs text-center text-gray-400 py-2">ยังไม่มีรายการสินค้า</p>
-          </div>
-
-          <div class="pt-4 border-t border-gray-100">
-            <button type="button" onclick="submitPurchasing()" class="btn btn-primary shadow-lg shadow-blue-200">บันทึกสร้างบิลทั้งหมด</button>
-          </div>
+                <p id="errorMsg" class="text-red-400 text-sm hidden mt-2">รหัสผ่านไม่ถูกต้อง กรุณาลองใหม่</p>
+            </form>
         </div>
-      </div>
     </div>
 
-    <!-- 3. Receiving List View -->
-    <div id="receiving-list-view" class="hidden">
-      <div class="flex justify-between items-end mb-4 px-1">
-        <h2 class="text-lg font-semibold text-green-800">รายการสินค้ารอรับ</h2>
-        <span class="text-xs bg-green-100 text-green-800 px-2 py-1 rounded-full" id="pending-count">0 รายการ</span>
-      </div>
-      
-      <div id="po-list-container" class="space-y-3">
-        <!-- PO items will be rendered here -->
-      </div>
-    </div>
+    <!-- 2. หน้า Dashboard (แสดงหลัง Login ผ่าน) -->
+    <div id="dashboardSection" class="w-full max-w-5xl hidden fade-in">
+        
+        <!-- Header -->
+        <header class="flex flex-col sm:flex-row justify-between items-center mb-10 bg-slate-800/50 p-6 rounded-2xl border border-slate-700 shadow-lg">
+            <div>
+                <h2 class="text-2xl font-bold flex items-center gap-2">
+                    <i data-lucide="layout-dashboard" class="text-blue-400"></i>
+                    ระบบปฏิบัติการ AKRA
+                </h2>
+                <p class="text-slate-400 text-sm mt-1">เลือกระบบที่คุณต้องการใช้งาน</p>
+            </div>
+            <div class="flex items-center gap-4 mt-4 sm:mt-0 bg-slate-900/50 py-2 px-4 rounded-xl border border-slate-700">
+                <div class="text-right">
+                    <p class="text-xs text-slate-400">ผู้ใช้งานระบบ</p>
+                    <p id="userNameDisplay" class="font-semibold text-blue-400 text-lg">User</p>
+                </div>
+                <div class="h-10 w-10 bg-slate-700 rounded-full flex items-center justify-center text-xl font-bold border-2 border-slate-600 text-white">
+                    <i data-lucide="user" class="w-5 h-5"></i>
+                </div>
+                <div class="w-px h-8 bg-slate-700 mx-2"></div>
+                <button onclick="logout()" class="p-2 text-slate-400 hover:text-red-400 hover:bg-red-400/10 rounded-lg transition-all" title="ออกจากระบบ">
+                    <i data-lucide="log-out" class="w-5 h-5"></i>
+                </button>
+            </div>
+        </header>
 
-    <!-- 4. Receiving Detail Form View -->
-    <div id="receiving-detail-view" class="hidden">
-      <div class="glass-card p-5">
-        <button type="button" onclick="showView('receiving-list-view')" class="text-sm text-gray-500 flex items-center mb-4 hover:text-gray-800">
-          <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" /></svg> กลับไปหน้ารายการ
-        </button>
+        <!-- App Grid -->
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+            
+            <!-- App 1: เบิกสินค้า W5 (AKRA) -->
+            <!-- ⚠️ สำคัญ: เปลี่ยน URL เป็นลิงก์เว็บจริงของคุณ (เช่น GitHub Pages) -->
+            <button onclick="openApp('เบิกสินค้า W5', 'https://akra-web.github.io/AKRA/')" 
+                class="glass-card p-6 rounded-xl hover:bg-slate-800 hover:border-indigo-500 transition-all transform hover:-translate-y-1 text-left group flex flex-col h-full cursor-pointer shadow-lg hover:shadow-indigo-500/20">
+                <div class="bg-indigo-500/20 w-12 h-12 rounded-lg flex items-center justify-center mb-4 group-hover:bg-indigo-500/40 transition-colors">
+                    <i data-lucide="package-minus" class="text-indigo-400 w-6 h-6"></i>
+                </div>
+                <h3 class="text-lg font-bold mb-2 group-hover:text-indigo-300 transition-colors">1. เบิกสินค้า W5</h3>
+                <p class="text-sm text-slate-400 flex-grow">ระบบจัดการเบิกจ่ายสินค้า W5</p>
+                <div class="mt-4 flex items-center text-xs text-indigo-400 opacity-0 group-hover:opacity-100 transition-opacity">
+                    <span>เปิดระบบ</span> <i data-lucide="external-link" class="w-3 h-3 ml-1"></i>
+                </div>
+            </button>
 
-        <div class="bg-gray-50 p-4 rounded-xl border border-gray-100 mb-5">
-          <p class="text-xs text-gray-500 mb-1">รายละเอียดบิล</p>
-          <p class="font-medium text-gray-800" id="r-display-vendor">-</p>
-          <p class="text-blue-700 font-semibold mt-1" id="r-display-product">-</p>
-          <p class="text-xs text-gray-500 mt-2">วันที่สั่ง: <span id="r-display-date"></span></p>
+            <!-- App 2: เบิกย้ายสินค้า AKRA > TRD -->
+            <button onclick="openApp('เบิกย้ายสินค้า AKRA > TRD', 'https://akra-web.github.io/TRDAKRA/')" 
+                class="glass-card p-6 rounded-xl hover:bg-slate-800 hover:border-emerald-500 transition-all transform hover:-translate-y-1 text-left group flex flex-col h-full cursor-pointer shadow-lg hover:shadow-emerald-500/20">
+                <div class="bg-emerald-500/20 w-12 h-12 rounded-lg flex items-center justify-center mb-4 group-hover:bg-emerald-500/40 transition-colors">
+                    <i data-lucide="arrow-right-left" class="text-emerald-400 w-6 h-6"></i>
+                </div>
+                <h3 class="text-lg font-bold mb-2 group-hover:text-emerald-300 transition-colors">2. เบิกย้ายสินค้า</h3>
+                <p class="text-sm text-slate-400 flex-grow">โอนย้ายสินค้าระหว่างคลัง AKRA ไปยัง TRD</p>
+                <div class="mt-4 flex items-center text-xs text-emerald-400 opacity-0 group-hover:opacity-100 transition-opacity">
+                    <span>เปิดระบบ</span> <i data-lucide="external-link" class="w-3 h-3 ml-1"></i>
+                </div>
+            </button>
+
+            <!-- App 3: KPITrackerAKRA -->
+            <button onclick="openApp('KPITrackerAKRA', 'https://akra-web.github.io/KPITRACKER/')" 
+                class="glass-card p-6 rounded-xl hover:bg-slate-800 hover:border-amber-500 transition-all transform hover:-translate-y-1 text-left group flex flex-col h-full cursor-pointer shadow-lg hover:shadow-amber-500/20">
+                <div class="bg-amber-500/20 w-12 h-12 rounded-lg flex items-center justify-center mb-4 group-hover:bg-amber-500/40 transition-colors">
+                    <i data-lucide="bar-chart-2" class="text-amber-400 w-6 h-6"></i>
+                </div>
+                <h3 class="text-lg font-bold mb-2 group-hover:text-amber-300 transition-colors">3. KPI Tracker</h3>
+                <p class="text-sm text-slate-400 flex-grow">ระบบติดตามและประเมินผลตัวชี้วัดการทำงาน</p>
+                <div class="mt-4 flex items-center text-xs text-amber-400 opacity-0 group-hover:opacity-100 transition-opacity">
+                    <span>เปิดระบบ</span> <i data-lucide="external-link" class="w-3 h-3 ml-1"></i>
+                </div>
+            </button>
+
+            <!-- App 4: รับลงสินค้า (PO) -->
+            <button onclick="openApp('รับลงสินค้า', 'https://akra-web.github.io/PO/')" 
+                class="glass-card p-6 rounded-xl hover:bg-slate-800 hover:border-rose-500 transition-all transform hover:-translate-y-1 text-left group flex flex-col h-full cursor-pointer shadow-lg hover:shadow-rose-500/20">
+                <div class="bg-rose-500/20 w-12 h-12 rounded-lg flex items-center justify-center mb-4 group-hover:bg-rose-500/40 transition-colors">
+                    <i data-lucide="clipboard-list" class="text-rose-400 w-6 h-6"></i>
+                </div>
+                <h3 class="text-lg font-bold mb-2 group-hover:text-rose-300 transition-colors">4. รับลงสินค้า</h3>
+                <p class="text-sm text-slate-400 flex-grow">ระบบจัดการใบสั่งซื้อ (PO) และการรับเข้าสินค้า</p>
+                <div class="mt-4 flex items-center text-xs text-rose-400 opacity-0 group-hover:opacity-100 transition-opacity">
+                    <span>เปิดระบบ</span> <i data-lucide="external-link" class="w-3 h-3 ml-1"></i>
+                </div>
+            </button>
+
         </div>
         
-        <form id="form-receiving" onsubmit="submitReceiving(event)" class="space-y-4">
-          <input type="hidden" id="r-row-number">
-
-          <div class="grid grid-cols-2 gap-3">
-            <div>
-              <label class="block text-sm font-medium text-gray-700">จำนวนที่มาลง</label>
-              <input type="number" id="r-quantity" class="input-field" placeholder="ไม่ต้องกรอกครบก็ได้">
-            </div>
-            <div>
-              <label class="block text-sm font-medium text-gray-700">หน่วย</label>
-              <select id="r-unit" class="input-field">
-                <option value="">-- เลือก --</option>
-                <option value="ลัง">ลัง</option>
-                <option value="กระสอบ">กระสอบ</option>
-              </select>
-            </div>
-          </div>
-
-          <div>
-            <label class="block text-sm font-medium text-gray-700">โลเคชั่นที่เข้า (LOC.IN) <span class="text-red-500">*</span></label>
-            <input type="text" id="r-locin" required class="input-field" placeholder="ระบุตำแหน่งจัดเก็บ...">
-          </div>
-
-          <div class="grid grid-cols-2 gap-3">
-            <div>
-              <label class="block text-sm font-medium text-gray-700">วันที่มาส่ง (ATA) <span class="text-red-500">*</span></label>
-              <input type="date" id="r-ata" required class="input-field">
-            </div>
-            <div>
-              <label class="block text-sm font-medium text-gray-700">วันหมดอายุ (EXP)</label>
-              <input type="date" id="r-exp" class="input-field">
-            </div>
-          </div>
-
-          <div class="pt-4">
-            <button type="submit" class="btn bg-green-600 hover:bg-green-700 text-white shadow-lg shadow-green-200">บันทึกรับสินค้าเข้าคลัง</button>
-          </div>
-        </form>
-      </div>
+        <div class="mt-12 text-center text-slate-500 text-sm">
+            &copy; 2026 AKRA WEB SYSTEM
+        </div>
     </div>
 
-  </main>
+    <!-- ส่วนของการทำงาน JavaScript -->
+    <script>
+        // เริ่มต้นการใช้งานไอคอน
+        lucide.createIcons();
 
-  <!-- Loader Overlay -->
-  <div id="loader">
-    <div class="spinner mb-4"></div>
-    <p class="text-gray-600 font-medium" id="loader-text">กำลังโหลดข้อมูล...</p>
-  </div>
+        // **ตั้งค่า URL ของเว็บแอป (Apps Script) ที่นี่**
+        const GOOGLE_APP_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbw5PCJ1OlxCQR6zaNubrmZTgaORB-rJK2Ow5_YC3i5kKv-BrrTgJkTJyNZKrzfodK1m/exec"; 
 
-  <script>
-    // --- API & Configuration สำหรับ GitHub ---
-    const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbw4uwZ33kYg9i9pSyQR-DQGvbw-CrbKLk_Oj96Rk4vH40j_mASUR0R8bB5eNf_xC0o/exec';
-
-    async function apiCall(action, payload = null) {
-      if (!SCRIPT_URL) {
-        console.warn("ยังไม่ได้ตั้งค่า SCRIPT_URL ระบบจะทำงานด้วยข้อมูลจำลอง (Mock Data)");
-        return mockApiCall(action, payload);
-      }
-
-      try {
-        const res = await fetch(SCRIPT_URL, {
-          method: 'POST',
-          headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-          body: JSON.stringify({ action: action, data: payload })
-        });
-        return await res.json();
-      } catch (error) {
-        // เปลี่ยนมาใช้ console.warn แทน console.error เพื่อไม่ให้ระบบพรีวิวมองว่าเป็น Error ร้ายแรง
-        console.warn('API Fetch Failed:', error.message);
-        console.warn('สลับมาใช้ข้อมูลจำลองเนื่องจากไม่สามารถเชื่อมต่อ Google Script ได้');
-        return mockApiCall(action, payload);
-      }
-    }
-
-    function mockApiCall(action, data) {
-      return new Promise((resolve) => {
-        setTimeout(() => {
-          if (action === 'getInitialData') {
-            resolve({
-              success: true,
-              vendors: ['บริษัท ABC จำกัด', 'ร้านค้า สมชาย', 'Supplier XYZ'],
-              products: ['กระดาษ A4', 'ปากกาน้ำเงิน', 'แฟ้มเอกสาร', 'หมึกพิมพ์'],
-              pendingPOs: [
-                { rowNumber: 2, poDate: '10/03/2026', vendor: 'บริษัท ABC จำกัด', product: 'กระดาษ A4', status: 'Pending' },
-                { rowNumber: 3, poDate: '11/03/2026', vendor: 'Supplier XYZ', product: 'หมึกพิมพ์', status: 'Pending' }
-              ]
-            });
-          } else if (action === 'createPO') {
-            resolve({ success: true, message: "ระบบจำลอง: สร้างบิล PO สำเร็จ!" });
-          } else if (action === 'receivePO') {
-            resolve({ success: true, message: "ระบบจำลอง: บันทึกรับสินค้าเข้าคลังสำเร็จ!" });
-          }
-        }, 600);
-      });
-    }
-
-    // --- State Variables ---
-    let appData = {
-      vendors: [],
-      products: [],
-      pendingPOs: []
-    };
-    let currentPOItems = [];
-
-    // --- View Navigation ---
-    function showView(viewId) {
-      document.getElementById('role-selection').classList.add('hidden');
-      document.getElementById('purchasing-view').classList.add('hidden');
-      document.getElementById('receiving-list-view').classList.add('hidden');
-      document.getElementById('receiving-detail-view').classList.add('hidden');
-      
-      document.getElementById(viewId).classList.remove('hidden');
-
-      // Update Header & Home Button
-      const homeBtn = document.getElementById('btn-home');
-      const title = document.getElementById('header-title');
-      
-      if (viewId === 'role-selection') {
-        homeBtn.classList.add('hidden');
-        title.innerText = "ระบบจัดการ PO";
-      } else {
-        homeBtn.classList.remove('hidden');
-        title.innerText = viewId.includes('purchasing') ? "โหมดจัดซื้อ" : "โหมดรับสินค้า";
-      }
-    }
-
-    // --- Loading & UI Helpers ---
-    function showLoading(text = 'กำลังโหลดข้อมูล...') {
-      document.getElementById('loader-text').innerText = text;
-      document.getElementById('loader').style.display = 'flex';
-    }
-
-    function hideLoading() {
-      document.getElementById('loader').style.display = 'none';
-    }
-
-    // --- Fetch Data ---
-    async function loadInitialData(callback) {
-      showLoading();
-      try {
-        const response = await apiCall('getInitialData');
-        hideLoading();
-        if (response.success) {
-          appData = response;
-          populateDropdowns();
-          renderPOList();
-          if (callback) callback();
-        } else {
-          alert('เกิดข้อผิดพลาดในการโหลดข้อมูล: ' + response.error);
-        }
-      } catch (error) {
-        hideLoading();
-        alert('ระบบมีปัญหาในการเชื่อมต่อ โปรดลองใหม่อีกครั้ง');
-      }
-    }
-
-    // --- Populate Dropdowns ---
-    function populateDropdowns() {
-      // Vendor Select
-      const vendorSelect = document.getElementById('p-vendor');
-      vendorSelect.innerHTML = '<option value="">-- เลือก Vendor --</option>';
-      appData.vendors.forEach(v => {
-        vendorSelect.innerHTML += `<option value="${v}">${v}</option>`;
-      });
-
-      // หมายเหตุ: นำการยัดข้อมูลลง Datalist ออกแล้วเพื่อความลื่นไหลของแอป
-      
-      // Set Default ATA Date to Today
-      document.getElementById('r-ata').valueAsDate = new Date();
-    }
-
-    // --- ระบบค้นหาสินค้า (Autocomplete แบบลื่นไหล) ---
-    const productInput = document.getElementById('p-product');
-    const suggestionBox = document.getElementById('product-suggestions');
-
-    productInput.addEventListener('input', function() {
-      const val = this.value.trim().toLowerCase();
-      suggestionBox.innerHTML = '';
-      
-      if (!val) {
-        suggestionBox.classList.add('hidden');
-        return;
-      }
-
-      // กรองสินค้าและแสดงผลสูงสุดแค่ 30 รายการ เพื่อป้องกันมือถือค้าง
-      const filtered = appData.products.filter(p => p.toLowerCase().includes(val)).slice(0, 30);
-      
-      if (filtered.length === 0) {
-        suggestionBox.classList.add('hidden');
-        return;
-      }
-
-      const frag = document.createDocumentFragment();
-      filtered.forEach(p => {
-        const li = document.createElement('li');
-        li.className = 'px-4 py-3 hover:bg-blue-50 active:bg-blue-100 cursor-pointer text-sm text-gray-700 transition';
-        li.textContent = p;
-        li.onclick = function() {
-          productInput.value = p;
-          suggestionBox.classList.add('hidden');
-          document.getElementById('p-quantity').focus(); // เลือกเสร็จให้โฟกัสช่องจำนวนทันที
+        // ฐานข้อมูลผู้ใช้ตามที่คุณระบุ
+        const users = {
+            "250013": "Chen",
+            "250005": "TOP",
+            "250028": "SAN",
+            "250007": "YONG",
+            "250021": "MAI",
+            "250022": "BUNLENG",
+            "250025": "PUSH",
+            "250027": "JAME",
+            "250010": "ENG"
         };
-        frag.appendChild(li);
-      });
-      
-      suggestionBox.appendChild(frag);
-      suggestionBox.classList.remove('hidden');
-    });
 
-    // ปิดกล่องค้นหาเมื่อแตะที่อื่นบนหน้าจอ
-    document.addEventListener('click', function(e) {
-      if (e.target !== productInput && e.target !== suggestionBox) {
-        suggestionBox.classList.add('hidden');
-      }
-    });
+        let currentUser = null;
 
-    // --- Workflows ---
-    function openPurchasing() {
-      currentPOItems = []; // เคลียร์รายการสินค้าเก่า
-      renderPOItems(); // อัปเดต UI
+        // เช็คว่าเคย Login ไว้หรือยัง (จำค่าไว้ใน Browser)
+        window.onload = () => {
+            const savedUser = localStorage.getItem('akra_sso_user');
+            if (savedUser) {
+                currentUser = savedUser;
+                showDashboard();
+            }
+        };
 
-      if(appData.vendors.length === 0) {
-        loadInitialData(() => showView('purchasing-view'));
-      } else {
-        showView('purchasing-view');
-      }
-    }
+        // จัดการฟอร์ม Login
+        document.getElementById('loginForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const pwd = document.getElementById('passwordInput').value;
+            const errorMsg = document.getElementById('errorMsg');
+            const loginBtn = document.getElementById('loginBtn');
 
-    function openReceiving() {
-      loadInitialData(() => showView('receiving-list-view'));
-    }
+            if (users[pwd]) {
+                currentUser = users[pwd];
+                errorMsg.classList.add('hidden');
+                
+                // เปลี่ยนสถานะปุ่มตอนโหลด
+                const originalBtnContent = loginBtn.innerHTML;
+                loginBtn.innerHTML = '<i data-lucide="loader-2" class="animate-spin mr-2"></i> กำลังเข้าสู่ระบบ...';
+                lucide.createIcons();
 
-    // --- Purchasing Logic ---
-    function addItemToPO() {
-      const productInput = document.getElementById('p-product');
-      const quantityInput = document.getElementById('p-quantity');
-      const product = productInput.value.trim();
-      const quantity = quantityInput.value.trim();
+                // บันทึกลง localStorage เพื่อทำ SSO (จำค่าไว้ไม่ต้องกรอกใหม่)
+                localStorage.setItem('akra_sso_user', currentUser);
 
-      if (!product || !quantity) {
-        alert("กรุณาระบุชื่อสินค้าและจำนวนให้ครบถ้วน");
-        return;
-      }
+                // ส่ง Log การเข้าสู่ระบบไปยัง Google Sheet (ไม่รอให้เสร็จก็ให้เข้าหน้าแดชบอร์ดเลยเพื่อความรวดเร็ว)
+                sendLog("Login", "Portal", "เข้าสู่ระบบหน้าหลัก");
 
-      currentPOItems.push({ product, quantity });
-      
-      productInput.value = '';
-      quantityInput.value = '';
-      productInput.focus();
+                showDashboard();
+            } else {
+                errorMsg.classList.remove('hidden');
+            }
+        });
 
-      renderPOItems();
-    }
-
-    function removePOItem(index) {
-      currentPOItems.splice(index, 1);
-      renderPOItems();
-    }
-
-    function renderPOItems() {
-      const container = document.getElementById('po-items-container');
-      container.innerHTML = '';
-      
-      if (currentPOItems.length === 0) {
-        container.innerHTML = '<p class="text-xs text-center text-gray-400 py-2">ยังไม่มีรายการสินค้า</p>';
-        return;
-      }
-
-      currentPOItems.forEach((item, index) => {
-        const div = document.createElement('div');
-        div.className = "flex justify-between items-center bg-white p-3 rounded-lg border border-gray-200 text-sm";
-        div.innerHTML = `
-          <div class="flex-1 truncate pr-2">
-            <p class="font-medium text-gray-800 truncate">${item.product}</p>
-            <p class="text-gray-500 text-xs">จำนวน: ${item.quantity}</p>
-          </div>
-          <button type="button" onclick="removePOItem(${index})" class="text-red-500 bg-red-50 p-2 rounded-lg hover:bg-red-100 transition">
-            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
-          </button>
-        `;
-        container.appendChild(div);
-      });
-    }
-
-    async function submitPurchasing() {
-      const vendor = document.getElementById('p-vendor').value;
-
-      if (!vendor) {
-        alert("กรุณาเลือก Vendor");
-        return;
-      }
-
-      if (currentPOItems.length === 0) {
-        alert("กรุณาเพิ่มสินค้าลงในบิลอย่างน้อย 1 รายการ");
-        return;
-      }
-      
-      const payload = {
-        vendor: vendor,
-        items: currentPOItems
-      };
-
-      showLoading('กำลังบันทึกบิล...');
-      
-      try {
-        const res = await apiCall('createPO', payload);
-        hideLoading();
-        if (res.success) {
-          alert(res.message);
-          document.getElementById('p-vendor').value = '';
-          currentPOItems = [];
-          renderPOItems();
-          showView('role-selection');
-        } else {
-          alert('เกิดข้อผิดพลาด: ' + res.error);
+        // ฟังก์ชันแสดงหน้า Dashboard
+        function showDashboard() {
+            document.getElementById('loginSection').classList.add('hidden');
+            document.getElementById('dashboardSection').classList.remove('hidden');
+            document.getElementById('userNameDisplay').textContent = currentUser;
+            document.getElementById('passwordInput').value = ''; // เคลียร์รหัส
+            document.getElementById('loginBtn').innerHTML = '<span>เข้าสู่ระบบ</span>'; // คืนค่าปุ่ม
         }
-      } catch (error) {
-        hideLoading();
-        alert('ระบบมีปัญหาในการเชื่อมต่อ โปรดลองใหม่อีกครั้ง');
-      }
-    }
 
-    // --- Receiving Logic ---
-    function renderPOList() {
-      const container = document.getElementById('po-list-container');
-      const countEl = document.getElementById('pending-count');
-      
-      container.innerHTML = '';
-      countEl.innerText = `${appData.pendingPOs.length} รายการ`;
-
-      if (appData.pendingPOs.length === 0) {
-        container.innerHTML = `
-          <div class="text-center py-10 text-gray-400 bg-white rounded-xl border border-dashed border-gray-300">
-            <svg xmlns="http://www.w3.org/2000/svg" class="h-12 w-12 mx-auto mb-2 text-gray-300" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" /></svg>
-            <p>ไม่มีรายการสินค้ารอรับ</p>
-          </div>
-        `;
-        return;
-      }
-
-      appData.pendingPOs.forEach((po, idx) => {
-        const card = document.createElement('div');
-        card.className = "glass-card p-4 active:scale-95 transition cursor-pointer hover:border-green-300 border-l-4 border-l-green-500";
-        card.onclick = () => openReceivingDetail(idx);
-        card.innerHTML = `
-          <div class="flex justify-between items-start">
-            <div>
-              <p class="text-sm font-medium text-gray-500">${po.vendor}</p>
-              <p class="font-semibold text-gray-800 text-base mt-1 line-clamp-2">${po.product}</p>
-            </div>
-            <span class="text-xs bg-gray-100 text-gray-600 px-2 py-1 rounded whitespace-nowrap">${po.poDate}</span>
-          </div>
-          <div class="mt-3 text-right">
-            <span class="text-sm text-green-600 font-medium flex items-center justify-end">
-              ลงสินค้า <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 ml-1" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" /></svg>
-            </span>
-          </div>
-        `;
-        container.appendChild(card);
-      });
-    }
-
-    function openReceivingDetail(index) {
-      const po = appData.pendingPOs[index];
-      
-      // Set display info
-      document.getElementById('r-display-vendor').innerText = po.vendor;
-      document.getElementById('r-display-product').innerText = po.product;
-      document.getElementById('r-display-date').innerText = po.poDate;
-      document.getElementById('r-row-number').value = po.rowNumber;
-      
-      // Clear previous inputs
-      document.getElementById('r-quantity').value = '';
-      document.getElementById('r-unit').value = '';
-      document.getElementById('r-locin').value = '';
-      document.getElementById('r-exp').value = '';
-      document.getElementById('r-ata').valueAsDate = new Date(); // Reset to today
-
-      showView('receiving-detail-view');
-    }
-
-    async function submitReceiving(e) {
-      e.preventDefault();
-      
-      const payload = {
-        rowNumber: document.getElementById('r-row-number').value,
-        quantity: document.getElementById('r-quantity').value,
-        unit: document.getElementById('r-unit').value,
-        locIn: document.getElementById('r-locin').value,
-        exp: document.getElementById('r-exp').value ? Utilities_formatDateFrontEnd(document.getElementById('r-exp').value) : "",
-        ata: document.getElementById('r-ata').value ? Utilities_formatDateFrontEnd(document.getElementById('r-ata').value) : ""
-      };
-
-      showLoading('กำลังบันทึกรับสินค้า...');
-      
-      try {
-        const res = await apiCall('receivePO', payload);
-        hideLoading();
-        if (res.success) {
-          alert(res.message);
-          openReceiving(); // Reload list
-        } else {
-          alert('เกิดข้อผิดพลาด: ' + res.error);
+        // ฟังก์ชันออกจากระบบ
+        function logout() {
+            sendLog("Logout", "Portal", "ออกจากระบบ");
+            localStorage.removeItem('akra_sso_user');
+            currentUser = null;
+            document.getElementById('dashboardSection').classList.add('hidden');
+            document.getElementById('loginSection').classList.remove('hidden');
         }
-      } catch (error) {
-        hideLoading();
-        alert('ระบบมีปัญหาในการเชื่อมต่อ โปรดลองใหม่อีกครั้ง');
-      }
-    }
 
-    // Helper to format date string slightly better if needed before sending to sheet
-    function Utilities_formatDateFrontEnd(dateString) {
-      if(!dateString) return "";
-      // The HTML date picker returns YYYY-MM-DD, Sheets handles this format nicely.
-      return dateString; 
-    }
+        // ฟังก์ชันเปิด App ในแท็บใหม่
+        function openApp(appName, targetUrl) {
+            // 1. ส่ง Log ไปบันทึก
+            sendLog("Open App", appName, `เข้าสู่แอปพลิเคชัน`);
 
-    // Init logic if needed on page load (currently waits for user to click)
-  </script>
+            // 2. สร้าง URL พร้อมแนบพารามิเตอร์ SSO ไปด้วย
+            try {
+                const urlWithSSO = new URL(targetUrl);
+                // แนบชื่อผู้ใช้ไปกับ URL เช่น ?user=Chen
+                urlWithSSO.searchParams.set('user', currentUser);
+                // แนบ Token หลอกๆ หรือ Timestamp เพื่อให้รู้ว่าเป็น Session ปัจจุบัน
+                urlWithSSO.searchParams.set('session', new Date().getTime()); 
+
+                // 3. เปิดแท็บใหม่
+                window.open(urlWithSSO.toString(), '_blank'); 
+            } catch (e) {
+                console.error("URL ไม่ถูกต้อง:", targetUrl);
+                alert("เกิดข้อผิดพลาด: ไม่สามารถเปิดลิงก์ได้ กรุณาตรวจสอบ URL ของแอป");
+            }
+        }
+
+        // ฟังก์ชันสำหรับส่งข้อมูลไปบันทึกลง Google Sheet แบบ Asynchronous (ไม่หน่วงหน้าเว็บ)
+        function sendLog(action, app, details) {
+            if (!GOOGLE_APP_SCRIPT_URL || GOOGLE_APP_SCRIPT_URL === "ใส่_URL_WEB_APP_ของคุณที่นี่") {
+                console.warn("ยังไม่ได้ตั้งค่า URL สำหรับส่ง Log");
+                return;
+            }
+
+            const payload = {
+                user: currentUser || "Unknown",
+                action: action,
+                app: app,
+                details: details
+            };
+
+            // ใช้ fetch ส่งข้อมูลแบบ 'no-cors' เพื่อไม่ให้ติดปัญหาข้ามโดเมน
+            fetch(GOOGLE_APP_SCRIPT_URL, {
+                method: 'POST',
+                mode: 'no-cors',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(payload)
+            }).then(() => {
+                console.log(`Log sent: ${action} - ${app}`);
+            }).catch(error => {
+                console.error('Log error:', error);
+            });
+        }
+    </script>
 </body>
 </html>
