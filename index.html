@@ -287,10 +287,15 @@
         // === ใหม่: ฟังก์ชันดึงข้อมูล User จาก Google Sheet ===
         async function fetchUsersFromGoogleSheet() {
             try {
+                // อัปเดตข้อความปุ่มเฉพาะตอนที่อยู่หน้า Login
                 const loginBtn = document.getElementById('loginBtn');
                 const btnText = loginBtn.querySelector('span');
-                if(btnText) btnText.innerText = 'กำลังซิงค์ข้อมูล...';
-                loginBtn.disabled = true;
+                const isLoginVisible = !document.getElementById('loginSection').classList.contains('hidden');
+                
+                if(isLoginVisible && btnText) {
+                    btnText.innerText = 'กำลังอัปเดตข้อมูล...';
+                    loginBtn.disabled = true;
+                }
 
                 // เรียกใช้งาน GET request เพื่อดึงข้อมูล
                 const response = await fetch(GOOGLE_APP_SCRIPT_URL + "?action=getUsers");
@@ -302,24 +307,24 @@
                     console.log("ซิงค์ข้อมูลผู้ใช้งานจาก Google Sheet สำเร็จ");
                 }
 
-                if(btnText) btnText.innerText = 'เข้าสู่ระบบ';
-                loginBtn.disabled = false;
+                if(isLoginVisible && btnText) {
+                    btnText.innerText = 'เข้าสู่ระบบ';
+                    loginBtn.disabled = false;
+                }
             } catch (error) {
                 console.warn("ไม่สามารถดึงข้อมูลจาก Google Sheet ได้ จะใช้ข้อมูลในเครื่องแทน", error);
                 const loginBtn = document.getElementById('loginBtn');
                 const btnText = loginBtn.querySelector('span');
-                if(btnText) btnText.innerText = 'เข้าสู่ระบบ';
-                loginBtn.disabled = false;
+                if(btnText) {
+                    btnText.innerText = 'เข้าสู่ระบบ';
+                    loginBtn.disabled = false;
+                }
             }
         }
 
         // เช็คว่าเคย Login ไว้หรือยัง (จำค่าไว้ใน Browser)
         window.onload = async () => {
-            // ดึงข้อมูล User จาก Google Sheet ก่อนตรวจสอบการ Login
-            if (GOOGLE_APP_SCRIPT_URL && GOOGLE_APP_SCRIPT_URL !== "ใส่_URL_WEB_APP_ของคุณที่นี่") {
-                await fetchUsersFromGoogleSheet();
-            }
-
+            // 1. ดึงข้อมูลจาก Local Storage มาแสดงผลทันที (ไม่รอเน็ต เพื่อความรวดเร็ว)
             const savedData = localStorage.getItem('akra_sso_user_data');
             if (savedData) {
                 try {
@@ -333,19 +338,36 @@
                     currentUser = userData.name;
                     currentRoles = userData.roles || [];
                     
-                    // เช็คว่า User ยังมีอยู่ในระบบหรือไม่ (กรณีโดน Admin ลบไปแล้ว)
+                    // แสดงหน้าแดชบอร์ดทันทีเลย
+                    showDashboard();
+                } catch(e) {
+                    localStorage.removeItem('akra_sso_user_data');
+                }
+            }
+
+            // 2. ปล่อยให้ระบบดึงข้อมูล User จาก Google Sheet ทำงานอยู่เบื้องหลัง
+            if (GOOGLE_APP_SCRIPT_URL && GOOGLE_APP_SCRIPT_URL !== "ใส่_URL_WEB_APP_ของคุณที่นี่") {
+                await fetchUsersFromGoogleSheet();
+                
+                // หลังจากดึงข้อมูลล่าสุดเสร็จแล้ว ค่อยมาเช็คเงียบๆ ว่า User คนนี้โดนลบสิทธิ์ไปหรือยัง
+                if (currentUser) {
                     let userExists = false;
                     for(let id in users) {
-                        if(users[id].name === currentUser) userExists = true;
+                        if(users[id].name === currentUser) {
+                            userExists = true;
+                            // อัปเดต Role ล่าสุด เผื่อแอดมินเพิ่งแก้สิทธิ์
+                            currentRoles = users[id].roles || [];
+                            localStorage.setItem('akra_sso_user_data', JSON.stringify({ name: currentUser, roles: currentRoles }));
+                            break;
+                        }
                     }
 
                     if(userExists) {
-                        showDashboard();
+                        showDashboard(); // รีเฟรชหน้าต่างแอปเผื่อสิทธิ์เปลี่ยน
                     } else {
+                        alert("เซสชันถูกยกเลิก หรือสิทธิ์การใช้งานของคุณถูกเพิกถอนโดยผู้ดูแลระบบ");
                         logout(); // โดนลบสิทธิ์ ให้บังคับออก
                     }
-                } catch(e) {
-                    localStorage.removeItem('akra_sso_user_data');
                 }
             }
         };
