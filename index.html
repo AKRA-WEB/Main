@@ -196,6 +196,19 @@
                 </div>
             </button>
 
+            <!-- App 6: คู่มือการใช้งานแอพ -->
+            <button id="app-manual" onclick="openApp('คู่มือการใช้งานแอพ', 'https://akra-web.github.io/SOP/')" 
+                class="bg-white p-6 rounded-xl border-2 border-transparent hover:border-brand-orange transition-all transform hover:-translate-y-1 text-left group flex flex-col h-full cursor-pointer shadow-lg hover:shadow-brand-orange/20">
+                <div class="bg-slate-100 w-12 h-12 rounded-xl flex items-center justify-center mb-4 group-hover:bg-brand-blue transition-colors">
+                    <i data-lucide="book-open" class="text-brand-blue group-hover:text-white w-6 h-6 transition-colors"></i>
+                </div>
+                <h3 class="text-lg font-bold mb-2 text-brand-blue group-hover:text-brand-orange transition-colors">คู่มือการใช้งานแอพ</h3>
+                <p class="text-sm text-slate-500 flex-grow">เอกสารแนะนำและขั้นตอนการใช้งานระบบต่างๆ</p>
+                <div class="mt-4 flex items-center justify-between text-xs text-brand-orange opacity-0 group-hover:opacity-100 transition-opacity">
+                    <span class="font-semibold">เปิดระบบ</span> <i data-lucide="arrow-right" class="w-4 h-4"></i>
+                </div>
+            </button>
+
         </div>
         
         <div class="mt-12 text-center text-white/70 text-sm">
@@ -298,11 +311,11 @@
         const GOOGLE_APP_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxSomEq-O49vgID_6P-3XfoGuM86rM0dWPQS-ZMsFDvF-_N-O3EkaOS1Cdgg8nkxNfe/exec"; 
 
         const rolesConfig = {
-            "ADMIN": ["app-w5", "app-trd", "app-kpi", "app-po", "app-damage"],
-            "AKRA": ["app-w5", "app-trd", "app-kpi", "app-po", "app-damage"],
-            "TRD": ["app-kpi"],
-            "WAREHOUSE": ["app-po", "app-trd", "app-damage"],
-            "Cashier": ["app-kpi", "app-damage"]
+            "ADMIN": ["app-w5", "app-trd", "app-kpi", "app-po", "app-damage", "app-manual"],
+            "AKRA": ["app-w5", "app-trd", "app-kpi", "app-po", "app-damage", "app-manual"],
+            "TRD": ["app-kpi", "app-manual"],
+            "WAREHOUSE": ["app-po", "app-trd", "app-damage", "app-manual"],
+            "Cashier": ["app-kpi", "app-damage", "app-manual"]
         };
 
         const defaultUsers = {
@@ -504,7 +517,7 @@
                 adminBtn.classList.add('hidden');
             }
 
-            const allApps = ["app-w5", "app-trd", "app-kpi", "app-po", "app-damage"];
+            const allApps = ["app-w5", "app-trd", "app-kpi", "app-po", "app-damage", "app-manual"];
             let allowedApps = new Set(); 
 
             currentRoles.forEach(role => {
