@@ -177,7 +177,7 @@
                     <i data-lucide="clipboard-list" class="text-brand-blue group-hover:text-white w-6 h-6 transition-colors"></i>
                 </div>
                 <h3 class="text-lg font-bold mb-2 text-brand-blue group-hover:text-brand-orange transition-colors">รับลงสินค้า</h3>
-                <p class="text-sm text-slate-500 flex-grow">ระบบจัดการใบสั่งซื้อ (PO) และการรับเข้าสินค้า</p>
+                <p class="text-sm text-slate-500 flex-grow">ระบบจัดการรับเข้าสินค้า GR (Goods Receive)</p>
                 <div class="mt-4 flex items-center justify-between text-xs text-brand-orange opacity-0 group-hover:opacity-100 transition-opacity">
                     <span class="font-semibold">เปิดระบบ</span> <i data-lucide="arrow-right" class="w-4 h-4"></i>
                 </div>
@@ -313,8 +313,8 @@
         const rolesConfig = {
             "ADMIN": ["app-w5", "app-trd", "app-kpi", "app-po", "app-damage", "app-manual"],
             "AKRA": ["app-w5", "app-trd", "app-kpi", "app-po", "app-damage", "app-manual"],
-            "TRD": ["app-kpi", "app-manual"],
-            "WAREHOUSE": ["app-po", "app-trd", "app-damage", "app-manual"],
+            "TRD": ["app-kpi", "app-manual", "app-trd", "app-damage"],
+            "WAREHOUSE": ["app-po", "app-trd", "app-damage", "app-manual", "app-w5", "app-kpi"],
             "Cashier": ["app-kpi", "app-damage", "app-manual"]
         };
 
