@@ -3,784 +3,823 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AKRA Portal | Main Dashboard</title>
-    <!-- ใช้ Tailwind CSS -->
+    <title>AKRA Portal | Centralized System</title>
+    
+    <!-- ฟอนต์ Noto Sans Thai -->
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Thai:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    
+    <!-- Tailwind CSS CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
-
-    <!-- ตั้งค่า CI Colors (50% Blue, 30% White, 20% Orange) -->
     <script>
         tailwind.config = {
             theme: {
                 extend: {
                     colors: {
                         brand: {
-                            blue: '#171C8F',   /* Imperial Blue */
-                            orange: '#E35205', /* Burnt Orange */
-                            white: '#FFFFFF'   /* White */
+                            blue: '#171C8F',
+                            orange: '#E35205',
+                            white: '#FFFFFF',
+                            gray: '#f8fafc'
                         }
+                    },
+                    fontFamily: {
+                        sans: ['"Noto Sans Thai"', 'sans-serif'],
                     }
                 }
             }
         }
     </script>
 
-    <!-- ใช้ Lucide Icons -->
+    <!-- Lucide Icons -->
     <script src="https://unpkg.com/lucide@latest"></script>
-    <!-- ฟอนต์ Noto Sans Thai -->
-    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Thai:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    
     <style>
-        body {
-            font-family: 'Noto Sans Thai', sans-serif;
-            background-color: #171C8F; /* CI: Imperial Blue */
-            background-image: radial-gradient(circle at 50% 0%, #232abc, #171C8F 70%);
-            color: #1e293b;
-            min-height: 100vh;
-        }
-        .fade-in { animation: fadeIn 0.4s ease-out forwards; }
+        .fade-in { animation: fadeIn 0.3s ease-out forwards; }
         @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(15px); }
+            from { opacity: 0; transform: translateY(10px); }
             to { opacity: 1; transform: translateY(0); }
         }
         
-        /* สไตล์สำหรับ Toast Notification */
-        #toast-container {
-            position: fixed;
-            top: 20px;
-            right: 20px;
-            z-index: 9999;
-            display: flex;
-            flex-direction: column;
-            gap: 10px;
-        }
-        .toast-slide-in {
-            animation: slideInRight 0.3s cubic-bezier(0.68, -0.55, 0.265, 1.55) forwards;
-        }
-        .toast-fade-out {
-            animation: fadeOut 0.3s ease-out forwards;
-        }
+        .toast-slide-in { animation: slideInRight 0.4s cubic-bezier(0.68, -0.55, 0.265, 1.55) forwards; }
+        .toast-fade-out { animation: fadeOutRight 0.3s ease-in forwards; }
         @keyframes slideInRight {
             from { transform: translateX(120%); opacity: 0; }
             to { transform: translateX(0); opacity: 1; }
         }
-        @keyframes fadeOut {
+        @keyframes fadeOutRight {
             from { transform: translateX(0); opacity: 1; }
             to { transform: translateX(120%); opacity: 0; }
         }
+
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar { width: 5px; height: 5px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
+        ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+        
+        /* Interactive Card Hover Effects */
+        .role-card.active {
+            border-color: #E35205;
+            background-color: #fffaf5;
+            box-shadow: 0 4px 15px -3px rgba(227, 82, 5, 0.15);
+        }
+        .role-card.active .icon-bg { background-color: #E35205; color: white; }
+        
+        .app-preview-card { transition: all 0.3s ease; filter: grayscale(100%) opacity(40%); }
+        .app-preview-card.unlocked { filter: grayscale(0%) opacity(100%); transform: translateY(-2px); border-color: #171C8F; }
     </style>
 </head>
-<body class="flex items-center justify-center p-4">
+<body class="bg-gradient-to-b from-[#232abc] to-brand-blue min-h-screen text-slate-800 flex items-center justify-center p-4">
 
     <!-- Toast Container -->
-    <div id="toast-container"></div>
+    <div id="toast-container" class="fixed top-5 right-5 z-50 flex flex-col gap-3"></div>
 
-    <!-- 1. หน้า Login -->
-    <div id="loginSection" class="w-full max-w-md fade-in">
-        <div class="bg-white rounded-2xl p-8 shadow-2xl text-center border-t-8 border-t-brand-orange">
+    <!-- 1. ส่วนลงชื่อเข้าใช้ (Login Section) -->
+    <main id="login-section" class="w-full max-w-md fade-in">
+        <section class="bg-white rounded-3xl p-8 shadow-2xl text-center border-t-8 border-t-brand-orange relative overflow-hidden">
             <div class="bg-brand-blue/10 p-4 rounded-full inline-block mb-4 shadow-sm">
                 <i data-lucide="shield-check" class="w-12 h-12 text-brand-blue"></i>
             </div>
-            <h1 class="text-3xl font-bold mb-2 text-brand-blue">AKRA-TRD WEB</h1>
+            <h1 class="text-3xl font-bold mb-2 text-brand-blue tracking-tight">AKRA-TRD WEB</h1>
             <p class="text-slate-500 mb-8">ลงชื่อเข้าใช้ระบบส่วนกลาง (SSO)</p>
 
-            <form id="loginForm" class="space-y-5">
+            <form id="login-form" class="space-y-5" novalidate>
                 <div>
-                    <input type="password" id="passwordInput" placeholder="รหัสพนักงาน / รหัสผ่าน" 
-                        class="w-full px-4 py-3 rounded-lg bg-slate-50 border border-slate-200 focus:outline-none focus:border-brand-blue focus:ring-2 focus:ring-brand-blue/20 text-center text-lg tracking-widest text-brand-blue transition-all shadow-inner"
-                        required>
+                    <input type="password" id="password-input" placeholder="รหัสพนักงาน / รหัสผ่าน" 
+                        class="w-full px-4 py-3 rounded-xl bg-slate-50 border border-slate-200 focus:outline-none focus:border-brand-blue focus:ring-2 focus:ring-brand-blue/20 text-center text-lg tracking-widest text-brand-blue transition-all shadow-inner"
+                        required autocomplete="current-password">
                 </div>
-                <button type="submit" id="loginBtn" 
-                    class="w-full bg-brand-orange hover:bg-[#c94804] text-white font-semibold py-3 px-4 rounded-lg transition-all transform hover:scale-[1.02] active:scale-95 flex justify-center items-center shadow-lg shadow-brand-orange/30 disabled:opacity-70 disabled:cursor-not-allowed disabled:transform-none">
-                    <span>เข้าสู่ระบบ</span>
+                <button type="submit" id="login-btn" 
+                    class="w-full bg-brand-orange hover:bg-[#c94804] text-white font-semibold py-3.5 px-4 rounded-xl transition-all transform hover:scale-[1.02] active:scale-95 flex justify-center items-center shadow-lg shadow-brand-orange/30 disabled:opacity-70 disabled:transform-none">
+                    <span id="login-btn-text">เข้าสู่ระบบ</span>
                 </button>
-                <p id="errorMsg" class="text-brand-orange text-sm hidden mt-2 bg-brand-orange/10 py-2 rounded-lg"><i data-lucide="alert-circle" class="inline w-4 h-4 mb-0.5"></i> รหัสไม่ถูกต้อง กรุณาลองใหม่</p>
             </form>
-        </div>
-    </div>
+        </section>
+    </main>
 
-    <!-- 2. หน้า Dashboard (แสดงหลัง Login ผ่าน) -->
-    <div id="dashboardSection" class="w-full max-w-5xl hidden fade-in">
-        
-        <!-- Header -->
-        <header class="flex flex-col sm:flex-row justify-between items-center mb-8 bg-white p-6 rounded-2xl shadow-xl">
+    <!-- 2. ส่วนหน้าหลัก (Dashboard Section) -->
+    <main id="dashboard-section" class="w-full max-w-6xl hidden fade-in py-8">
+        <header class="flex flex-col sm:flex-row justify-between items-center mb-8 bg-white p-6 rounded-2xl shadow-xl border border-white/50">
             <div class="text-center sm:text-left mb-4 sm:mb-0">
                 <h2 class="text-2xl font-bold flex items-center justify-center sm:justify-start gap-2 text-brand-blue">
-                    <i data-lucide="layout-dashboard" class="text-brand-orange"></i>
+                    <div class="bg-brand-orange p-1.5 rounded-lg"><i data-lucide="layout-dashboard" class="text-white w-5 h-5"></i></div>
                     ระบบปฏิบัติการ AKRA-TRD
                 </h2>
-                <p class="text-slate-500 text-sm mt-1">เลือกระบบที่คุณต้องการใช้งาน</p>
+                <p class="text-slate-500 text-sm mt-1 ml-10">เลือกระบบที่คุณต้องการใช้งานจากสิทธิ์ที่ได้รับ</p>
             </div>
-            <div class="flex items-center gap-4 bg-slate-50 py-2 px-4 rounded-xl border border-slate-200 shadow-sm">
-                <div class="text-right">
+            <nav class="flex items-center gap-4 bg-slate-50 py-2 px-4 rounded-xl border border-slate-200 shadow-inner">
+                <div class="text-right hidden sm:block">
                     <p class="text-xs text-slate-500">ผู้ใช้งานระบบ</p>
-                    <p id="userNameDisplay" class="font-bold text-brand-blue text-lg tracking-wide">User</p>
+                    <p id="user-name-display" class="font-bold text-brand-blue text-lg tracking-wide">User</p>
                 </div>
                 <div class="h-10 w-10 bg-brand-orange rounded-full flex items-center justify-center text-xl font-bold text-white shadow-md">
                     <i data-lucide="user" class="w-5 h-5"></i>
                 </div>
-                <div class="w-px h-8 bg-slate-300 mx-1"></div>
-                <!-- ปุ่ม Admin จะแสดงเฉพาะแอดมิน -->
-                <button id="adminBtn" onclick="openAdminPanel()" class="hidden p-2 text-slate-400 hover:text-brand-blue hover:bg-brand-blue/10 rounded-lg transition-all" title="จัดการผู้ใช้งาน">
+                <div class="w-px h-8 bg-slate-300 mx-1 hidden sm:block"></div>
+                <button id="admin-btn" class="hidden p-2 text-slate-400 hover:text-brand-blue hover:bg-brand-blue/10 rounded-lg transition-all" title="จัดการผู้ใช้งาน">
                     <i data-lucide="settings" class="w-5 h-5"></i>
                 </button>
-                <button onclick="logout()" class="p-2 text-slate-400 hover:text-brand-orange hover:bg-brand-orange/10 rounded-lg transition-all" title="ออกจากระบบ">
+                <button id="logout-btn" class="p-2 text-slate-400 hover:text-brand-orange hover:bg-brand-orange/10 rounded-lg transition-all" title="ออกจากระบบ">
                     <i data-lucide="log-out" class="w-5 h-5"></i>
                 </button>
-            </div>
+            </nav>
         </header>
 
-        <!-- App Grid -->
-        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-            
-            <!-- App 1: เบิกสินค้า W5 (AKRA) -->
-            <button id="app-w5" onclick="openApp('เบิกสินค้า W5', 'https://akra-web.github.io/AKRA/')" 
-                class="bg-white p-6 rounded-xl border-2 border-transparent hover:border-brand-orange transition-all transform hover:-translate-y-1 text-left group flex flex-col h-full cursor-pointer shadow-lg hover:shadow-brand-orange/20">
-                <div class="bg-slate-100 w-12 h-12 rounded-xl flex items-center justify-center mb-4 group-hover:bg-brand-blue transition-colors">
-                    <i data-lucide="package-minus" class="text-brand-blue group-hover:text-white w-6 h-6 transition-colors"></i>
-                </div>
-                <h3 class="text-lg font-bold mb-2 text-brand-blue group-hover:text-brand-orange transition-colors">เบิกสินค้า W5</h3>
-                <p class="text-sm text-slate-500 flex-grow">ระบบจัดการเบิกจ่ายสินค้า W5</p>
-                <div class="mt-4 flex items-center justify-between text-xs text-brand-orange opacity-0 group-hover:opacity-100 transition-opacity">
-                    <span class="font-semibold">เปิดระบบ</span> <i data-lucide="arrow-right" class="w-4 h-4"></i>
-                </div>
-            </button>
-
-            <!-- App 2: เบิกย้ายสินค้า AKRA > TRD -->
-            <button id="app-trd" onclick="openApp('เบิกย้ายสินค้า AKRA > TRD', 'https://akra-web.github.io/TRDAKRA/')" 
-                class="bg-white p-6 rounded-xl border-2 border-transparent hover:border-brand-orange transition-all transform hover:-translate-y-1 text-left group flex flex-col h-full cursor-pointer shadow-lg hover:shadow-brand-orange/20">
-                <div class="bg-slate-100 w-12 h-12 rounded-xl flex items-center justify-center mb-4 group-hover:bg-brand-blue transition-colors">
-                    <i data-lucide="arrow-right-left" class="text-brand-blue group-hover:text-white w-6 h-6 transition-colors"></i>
-                </div>
-                <h3 class="text-lg font-bold mb-2 text-brand-blue group-hover:text-brand-orange transition-colors">เบิกย้ายสินค้า</h3>
-                <p class="text-sm text-slate-500 flex-grow">โอนย้ายสินค้าระหว่างคลัง AKRA ไปยัง TRD</p>
-                <div class="mt-4 flex items-center justify-between text-xs text-brand-orange opacity-0 group-hover:opacity-100 transition-opacity">
-                    <span class="font-semibold">เปิดระบบ</span> <i data-lucide="arrow-right" class="w-4 h-4"></i>
-                </div>
-            </button>
-
-            <!-- App 3: KPITrackerAKRA -->
-            <button id="app-kpi" onclick="openApp('KPITrackerAKRA', 'https://akra-web.github.io/KPITRACKER/')" 
-                class="bg-white p-6 rounded-xl border-2 border-transparent hover:border-brand-orange transition-all transform hover:-translate-y-1 text-left group flex flex-col h-full cursor-pointer shadow-lg hover:shadow-brand-orange/20">
-                <div class="bg-slate-100 w-12 h-12 rounded-xl flex items-center justify-center mb-4 group-hover:bg-brand-blue transition-colors">
-                    <i data-lucide="bar-chart-2" class="text-brand-blue group-hover:text-white w-6 h-6 transition-colors"></i>
-                </div>
-                <h3 class="text-lg font-bold mb-2 text-brand-blue group-hover:text-brand-orange transition-colors">KPI Tracker</h3>
-                <p class="text-sm text-slate-500 flex-grow">ระบบติดตามและประเมินผลตัวชี้วัดการทำงาน</p>
-                <div class="mt-4 flex items-center justify-between text-xs text-brand-orange opacity-0 group-hover:opacity-100 transition-opacity">
-                    <span class="font-semibold">เปิดระบบ</span> <i data-lucide="arrow-right" class="w-4 h-4"></i>
-                </div>
-            </button>
-
-            <!-- App 4: รับลงสินค้า (PO) -->
-            <button id="app-po" onclick="openApp('รับลงสินค้า', 'https://akra-web.github.io/PO/')" 
-                class="bg-white p-6 rounded-xl border-2 border-transparent hover:border-brand-orange transition-all transform hover:-translate-y-1 text-left group flex flex-col h-full cursor-pointer shadow-lg hover:shadow-brand-orange/20">
-                <div class="bg-slate-100 w-12 h-12 rounded-xl flex items-center justify-center mb-4 group-hover:bg-brand-blue transition-colors">
-                    <i data-lucide="clipboard-list" class="text-brand-blue group-hover:text-white w-6 h-6 transition-colors"></i>
-                </div>
-                <h3 class="text-lg font-bold mb-2 text-brand-blue group-hover:text-brand-orange transition-colors">รับลงสินค้า</h3>
-                <p class="text-sm text-slate-500 flex-grow">ระบบจัดการรับเข้าสินค้า GR (Goods Receive)</p>
-                <div class="mt-4 flex items-center justify-between text-xs text-brand-orange opacity-0 group-hover:opacity-100 transition-opacity">
-                    <span class="font-semibold">เปิดระบบ</span> <i data-lucide="arrow-right" class="w-4 h-4"></i>
-                </div>
-            </button>
-
-            <!-- App 5: แจ้งของคืน / ของเคลม / นับสต๊อค -->
-            <button id="app-damage" onclick="openApp('แจ้งของคืน / ของเคลม / นับสต๊อค', 'https://akra-web.github.io/Returnitem/')" 
-                class="bg-white p-6 rounded-xl border-2 border-transparent hover:border-brand-orange transition-all transform hover:-translate-y-1 text-left group flex flex-col h-full cursor-pointer shadow-lg hover:shadow-brand-orange/20">
-                <div class="bg-slate-100 w-12 h-12 rounded-xl flex items-center justify-center mb-4 group-hover:bg-brand-blue transition-colors">
-                    <i data-lucide="package-x" class="text-brand-blue group-hover:text-white w-6 h-6 transition-colors"></i>
-                </div>
-                <h3 class="text-lg font-bold mb-2 text-brand-blue group-hover:text-brand-orange transition-colors">แจ้งของคืน / ของเคลม / นับสต๊อค</h3>
-                <p class="text-sm text-slate-500 flex-grow">ระบบจัดการของคืน เคลมสินค้า และนับสต๊อค</p>
-                <div class="mt-4 flex items-center justify-between text-xs text-brand-orange opacity-0 group-hover:opacity-100 transition-opacity">
-                    <span class="font-semibold">เปิดระบบ</span> <i data-lucide="arrow-right" class="w-4 h-4"></i>
-                </div>
-            </button>
-
-            <!-- App 6: คู่มือการใช้งานแอพ -->
-            <button id="app-manual" onclick="openApp('คู่มือการใช้งานแอพ', 'https://akra-web.github.io/SOP/')" 
-                class="bg-white p-6 rounded-xl border-2 border-transparent hover:border-brand-orange transition-all transform hover:-translate-y-1 text-left group flex flex-col h-full cursor-pointer shadow-lg hover:shadow-brand-orange/20">
-                <div class="bg-slate-100 w-12 h-12 rounded-xl flex items-center justify-center mb-4 group-hover:bg-brand-blue transition-colors">
-                    <i data-lucide="book-open" class="text-brand-blue group-hover:text-white w-6 h-6 transition-colors"></i>
-                </div>
-                <h3 class="text-lg font-bold mb-2 text-brand-blue group-hover:text-brand-orange transition-colors">คู่มือการใช้งานแอพ</h3>
-                <p class="text-sm text-slate-500 flex-grow">เอกสารแนะนำและขั้นตอนการใช้งานระบบต่างๆ</p>
-                <div class="mt-4 flex items-center justify-between text-xs text-brand-orange opacity-0 group-hover:opacity-100 transition-opacity">
-                    <span class="font-semibold">เปิดระบบ</span> <i data-lucide="arrow-right" class="w-4 h-4"></i>
-                </div>
-            </button>
-
-        </div>
+        <section id="app-grid" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6 relative min-h-[200px]"></section>
         
-        <div class="mt-12 text-center text-white/70 text-sm">
+        <footer class="mt-12 text-center text-white/70 text-sm font-medium">
             &copy; 2026 AKRA WEB SYSTEM
-        </div>
-    </div>
+        </footer>
+    </main>
 
-    <!-- 3. หน้า Admin Panel (แสดงเฉพาะ Admin) -->
-    <div id="adminSection" class="w-full max-w-6xl hidden fade-in">
-        <header class="flex flex-col sm:flex-row justify-between items-center mb-6 bg-white p-6 rounded-2xl shadow-lg">
-            <div class="mb-4 sm:mb-0">
-                <h2 class="text-2xl font-bold flex items-center gap-2 text-brand-blue">
-                    <i data-lucide="shield" class="text-brand-orange"></i>
-                    จัดการสิทธิ์ผู้ใช้งาน (Admin Panel)
-                </h2>
-                <p class="text-slate-500 text-sm mt-1">เพิ่มรหัสผ่าน หรือกำหนดสิทธิ์การใช้งานแอปพลิเคชัน</p>
-            </div>
-            <button onclick="closeAdminPanel()" class="bg-brand-blue hover:bg-[#121670] text-white px-5 py-2 rounded-lg transition-colors flex items-center gap-2 shadow-md">
-                <i data-lucide="arrow-left" class="w-4 h-4"></i> กลับหน้าหลัก
-            </button>
-        </header>
-
-        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            <!-- ฟอร์มเพิ่ม/แก้ไข -->
-            <div class="bg-white p-6 rounded-xl lg:col-span-1 h-fit border-t-4 border-t-brand-orange shadow-xl">
-                <h3 class="text-lg font-bold mb-4 flex items-center gap-2 text-brand-blue" id="formTitle">
-                    <i data-lucide="user-plus" class="w-5 h-5 text-brand-orange"></i> เพิ่มผู้ใช้งานใหม่
-                </h3>
-                <form id="userManageForm" class="space-y-4">
-                    <div>
-                        <label class="block text-sm font-medium text-slate-600 mb-1">รหัสพนักงาน (ID / Username)</label>
-                        <input type="text" id="editUserId" class="w-full px-4 py-2 rounded-lg bg-slate-50 border border-slate-300 focus:outline-none focus:border-brand-orange focus:ring-1 focus:ring-brand-orange text-slate-800 transition-colors" required>
-                    </div>
-                    <div>
-                        <label class="block text-sm font-medium text-slate-600 mb-1">ชื่อพนักงาน</label>
-                        <input type="text" id="editUserName" class="w-full px-4 py-2 rounded-lg bg-slate-50 border border-slate-300 focus:outline-none focus:border-brand-orange focus:ring-1 focus:ring-brand-orange text-slate-800 transition-colors uppercase" required>
-                    </div>
-                    <div>
-                        <label class="block text-sm font-medium text-slate-600 mb-2">สิทธิ์การใช้งาน (เลือกได้หลายข้อ)</label>
-                        <div class="space-y-2 bg-slate-50 p-4 rounded-lg border border-slate-200" id="roleCheckboxes">
-                            <label class="flex items-center gap-3 cursor-pointer hover:bg-slate-100 p-2 rounded-md transition-colors group"><input type="checkbox" value="ADMIN" class="role-cb rounded text-brand-orange bg-white border-slate-300 w-4 h-4 focus:ring-brand-orange"> <span class="text-sm font-medium text-slate-700 group-hover:text-brand-blue">ADMIN (ผู้ดูแลระบบ)</span></label>
-                            <label class="flex items-center gap-3 cursor-pointer hover:bg-slate-100 p-2 rounded-md transition-colors group"><input type="checkbox" value="AKRA" class="role-cb rounded text-brand-orange bg-white border-slate-300 w-4 h-4 focus:ring-brand-orange"> <span class="text-sm font-medium text-slate-700 group-hover:text-brand-blue">AKRA</span></label>
-                            <label class="flex items-center gap-3 cursor-pointer hover:bg-slate-100 p-2 rounded-md transition-colors group"><input type="checkbox" value="TRD" class="role-cb rounded text-brand-orange bg-white border-slate-300 w-4 h-4 focus:ring-brand-orange"> <span class="text-sm font-medium text-slate-700 group-hover:text-brand-blue">TRD</span></label>
-                            <label class="flex items-center gap-3 cursor-pointer hover:bg-slate-100 p-2 rounded-md transition-colors group"><input type="checkbox" value="WAREHOUSE" class="role-cb rounded text-brand-orange bg-white border-slate-300 w-4 h-4 focus:ring-brand-orange"> <span class="text-sm font-medium text-slate-700 group-hover:text-brand-blue">WAREHOUSE (คลังสินค้า)</span></label>
-                            <label class="flex items-center gap-3 cursor-pointer hover:bg-slate-100 p-2 rounded-md transition-colors group"><input type="checkbox" value="Cashier" class="role-cb rounded text-brand-orange bg-white border-slate-300 w-4 h-4 focus:ring-brand-orange"> <span class="text-sm font-medium text-slate-700 group-hover:text-brand-blue">Cashier (แคชเชียร์)</span></label>
-                        </div>
-                    </div>
-                    <div class="flex gap-3 pt-4">
-                        <button type="submit" id="saveUserBtn" class="flex-1 bg-brand-orange hover:bg-[#c94804] text-white font-semibold py-2.5 px-4 rounded-lg transition-colors shadow-lg shadow-brand-orange/30 flex justify-center items-center">
-                            <span>บันทึกข้อมูล</span>
-                        </button>
-                        <button type="button" onclick="resetUserForm()" class="px-5 py-2.5 bg-slate-200 hover:bg-slate-300 rounded-lg transition-colors text-slate-700 font-medium">เคลียร์</button>
-                    </div>
-                </form>
-            </div>
-
-            <!-- ตารางรายชื่อ -->
-            <div class="bg-white p-0 rounded-xl lg:col-span-2 overflow-hidden flex flex-col shadow-xl border border-slate-200">
-                <div class="p-6 pb-4 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-                    <h3 class="text-lg font-bold text-brand-blue">รายชื่อผู้ใช้งานทั้งหมด (<span id="userCount">0</span>)</h3>
-                    
-                    <!-- Search Box -->
-                    <div class="relative w-full sm:w-64">
-                        <input type="text" id="searchInput" onkeyup="renderUserTable()" placeholder="ค้นหา ID หรือ ชื่อ..." 
-                            class="w-full pl-9 pr-4 py-2 rounded-lg bg-slate-50 border border-slate-300 focus:outline-none focus:border-brand-blue text-sm text-slate-800 transition-colors">
-                        <i data-lucide="search" class="w-4 h-4 text-slate-400 absolute left-3 top-2.5"></i>
-                    </div>
-                </div>
-
-                <div class="overflow-x-auto flex-grow">
-                    <table class="w-full text-left border-collapse min-w-[550px]">
-                        <thead>
-                            <tr class="bg-brand-blue text-white text-sm">
-                                <th class="p-4 font-medium w-24">รหัส (ID)</th>
-                                <th class="p-4 font-medium">ชื่อพนักงาน</th>
-                                <th class="p-4 font-medium">สิทธิ์ (Roles)</th>
-                                <th class="p-4 font-medium text-right w-24">จัดการ</th>
-                            </tr>
-                        </thead>
-                        <tbody id="userTableBody" class="text-sm divide-y divide-slate-100 bg-white">
-                            <!-- แถวข้อมูลจะถูกสร้างด้วย JS -->
-                        </tbody>
-                    </table>
-                </div>
-                <div class="p-4 bg-slate-50 border-t border-slate-200 flex items-center justify-between text-xs text-slate-500">
-                    <p><i data-lucide="info" class="inline w-3 h-3 mr-1"></i> ข้อมูลเชื่อมต่อกับ Google Sheets อัตโนมัติ</p>
-                    <button onclick="fetchUsersFromGoogleSheet(true)" class="flex items-center hover:text-brand-blue font-medium transition-colors" title="ดึงข้อมูลล่าสุดจากระบบ">
-                        <i data-lucide="refresh-cw" class="w-3 h-3 mr-1"></i> รีเฟรชข้อมูล
+    <!-- 3. ส่วนจัดการผู้ใช้งานแบบ Interactive (Admin Section) -->
+    <main id="admin-section" class="w-full max-w-7xl hidden fade-in py-6 h-screen max-h-[900px] flex flex-col">
+        
+        <!-- Admin Header พร้อมสลับหน้าจอ (User/App) -->
+        <header class="flex flex-col sm:flex-row justify-between items-center mb-6 bg-white p-5 rounded-2xl shadow-lg shrink-0 gap-4">
+            <div class="flex items-center gap-4 w-full sm:w-auto">
+                <div class="bg-slate-100 p-1.5 rounded-xl flex gap-1 shadow-inner shrink-0">
+                    <button id="tab-btn-users" onclick="AdminInteractive.switchTab('users')" class="px-5 py-2 rounded-lg font-bold bg-white text-brand-blue shadow-sm transition-all flex items-center gap-2">
+                        <i data-lucide="users" class="w-4 h-4"></i> จัดการพนักงาน
+                    </button>
+                    <button id="tab-btn-apps" onclick="AdminInteractive.switchTab('apps')" class="px-5 py-2 rounded-lg font-medium text-slate-500 hover:text-brand-blue transition-all flex items-center gap-2">
+                        <i data-lucide="layout-grid" class="w-4 h-4"></i> ตั้งค่าการเห็นแอป
                     </button>
                 </div>
             </div>
-        </div>
-    </div>
+            
+            <div class="flex gap-3">
+                <button id="refresh-data-btn" class="bg-slate-100 hover:bg-slate-200 text-slate-700 px-4 py-2 rounded-xl transition-colors flex items-center gap-2 font-medium">
+                    <i data-lucide="refresh-cw" class="w-4 h-4" id="refresh-icon"></i> รีเฟรช
+                </button>
+                <button id="back-to-dash-btn" class="bg-brand-blue hover:bg-[#121670] text-white px-5 py-2 rounded-xl transition-colors flex items-center gap-2 shadow-md shadow-brand-blue/30 font-medium">
+                    <i data-lucide="arrow-left" class="w-4 h-4"></i> กลับหน้าหลัก
+                </button>
+            </div>
+        </header>
 
-    <!-- ส่วนของการทำงาน JavaScript -->
+        <!-- ==============================================
+             [TAB 1] Interactive Layout: จัดการสิทธิ์พนักงาน 
+             ============================================== -->
+        <section id="tab-content-users" class="flex flex-col lg:flex-row gap-6 flex-grow min-h-0">
+            <!-- Panel ซ้าย: รายชื่อผู้ใช้ -->
+            <article class="bg-white rounded-2xl shadow-xl border border-slate-200 flex flex-col w-full lg:w-1/3 shrink-0 overflow-hidden relative">
+                <div class="p-5 border-b border-slate-100 bg-slate-50 flex flex-col gap-3">
+                    <button onclick="AdminInteractive.setupNewUser()" class="w-full bg-brand-blue/10 hover:bg-brand-blue hover:text-white text-brand-blue border border-brand-blue/20 font-semibold py-3 px-4 rounded-xl transition-all flex justify-center items-center gap-2 group">
+                        <i data-lucide="user-plus" class="w-5 h-5 group-hover:scale-110 transition-transform"></i> เพิ่มผู้ใช้งานใหม่
+                    </button>
+                    <div class="relative">
+                        <input type="text" id="search-input" placeholder="ค้นหา ID หรือ ชื่อ..." 
+                            class="w-full pl-10 pr-4 py-2.5 rounded-xl bg-white border border-slate-200 focus:outline-none focus:border-brand-orange focus:ring-1 focus:ring-brand-orange text-sm transition-colors shadow-sm">
+                        <i data-lucide="search" class="w-4 h-4 text-slate-400 absolute left-3.5 top-3"></i>
+                    </div>
+                    <div class="text-xs text-slate-500 font-medium flex justify-between">
+                        <span>รายชื่อทั้งหมด</span>
+                        <span id="user-count" class="bg-brand-orange text-white px-2 py-0.5 rounded-full">0</span>
+                    </div>
+                </div>
+                
+                <div id="interactive-user-list" class="flex-grow overflow-y-auto p-2 space-y-1 bg-slate-50/50">
+                    <!-- รายชื่อจะถูก Render ตรงนี้ -->
+                </div>
+
+                <div id="list-loading-state" class="hidden absolute inset-0 bg-white/80 backdrop-blur-sm flex flex-col items-center justify-center z-10 text-brand-blue">
+                    <i data-lucide="loader-2" class="w-8 h-8 animate-spin mb-2"></i>
+                </div>
+            </article>
+
+            <!-- Panel ขวา: พื้นที่จัดการสิทธิ์ (Interactive Canvas) -->
+            <article class="bg-white rounded-2xl shadow-xl border-t-8 border-t-brand-orange flex flex-col w-full lg:w-2/3 shrink-0 overflow-hidden">
+                <!-- State: ยังไม่ได้เลือกใคร -->
+                <div id="empty-selection-state" class="flex flex-col items-center justify-center h-full text-slate-400 p-10">
+                    <div class="w-24 h-24 bg-slate-50 rounded-full flex items-center justify-center mb-6 shadow-inner">
+                        <i data-lucide="mouse-pointer-click" class="w-10 h-10 text-slate-300"></i>
+                    </div>
+                    <h3 class="text-xl font-bold text-slate-500 mb-2">เลือกผู้ใช้งานจากเมนูด้านซ้าย</h3>
+                    <p class="text-sm">เพื่อดูและจัดการสิทธิ์กลุ่มที่ผู้ใช้นี้อยู่</p>
+                </div>
+
+                <!-- State: กำลังจัดการผู้ใช้ -->
+                <form id="interactive-form" class="hidden flex flex-col h-full" novalidate>
+                    <div class="p-6 border-b border-slate-100 bg-slate-50/80 flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between shrink-0">
+                        <div class="flex items-center gap-4 w-full sm:w-auto">
+                            <div class="w-14 h-14 bg-brand-blue text-white rounded-2xl flex items-center justify-center text-xl font-bold shadow-md" id="editor-avatar">?</div>
+                            <div class="flex-grow flex flex-col gap-2">
+                                <input type="text" id="editor-name" placeholder="ชื่อพนักงาน" required
+                                    class="text-xl font-bold bg-transparent border-b-2 border-slate-200 focus:border-brand-orange focus:outline-none uppercase w-full max-w-[200px] pb-1 transition-colors text-brand-blue placeholder:text-slate-300">
+                                <input type="text" id="editor-id" placeholder="รหัสพนักงาน (ID)" required
+                                    class="text-sm text-slate-500 bg-transparent border-none focus:outline-none focus:ring-0 p-0 w-full font-mono placeholder:text-slate-300">
+                            </div>
+                        </div>
+                        <div class="flex gap-2">
+                            <button type="button" id="btn-delete-user" class="hidden p-2.5 text-red-500 hover:bg-red-50 rounded-xl transition-colors border border-red-100" title="ลบผู้ใช้นี้">
+                                <i data-lucide="trash-2" class="w-5 h-5"></i>
+                            </button>
+                            <button type="submit" id="btn-save-user" class="bg-brand-orange hover:bg-[#c94804] text-white px-6 py-2.5 rounded-xl font-semibold shadow-md shadow-brand-orange/20 transition-all flex items-center gap-2">
+                                <i data-lucide="save" class="w-4 h-4"></i> <span id="save-btn-text">บันทึกข้อมูล</span>
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="flex-grow overflow-y-auto p-6 flex flex-col gap-8 bg-white">
+                        <!-- จิ้มสิทธิ์ (Roles) -->
+                        <div>
+                            <div class="flex justify-between items-end mb-4">
+                                <div>
+                                    <h3 class="text-lg font-bold text-slate-800 flex items-center gap-2"><i data-lucide="check-square" class="w-5 h-5 text-brand-orange"></i> 1. นำผู้ใช้เข้ากลุ่ม (Roles)</h3>
+                                    <p class="text-sm text-slate-500 mt-1">คลิกเพื่อเพิ่ม/ลดผู้ใช้นี้ออกจากกลุ่มต่างๆ</p>
+                                </div>
+                                <p id="role-error-msg" class="text-red-500 text-sm font-medium hidden animate-pulse">กรุณาเลือกอย่างน้อย 1 กลุ่ม!</p>
+                            </div>
+                            <div id="interactive-role-grid" class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3"></div>
+                        </div>
+
+                        <!-- App Preview -->
+                        <div class="bg-slate-50 rounded-2xl p-5 border border-slate-100 shadow-inner mt-auto">
+                            <h3 class="text-sm font-bold text-slate-600 mb-4 flex items-center gap-2">
+                                <i data-lucide="eye" class="w-4 h-4"></i> 2. ผลลัพธ์: แอปพลิเคชันที่ใช้งานได้
+                            </h3>
+                            <div id="interactive-app-preview" class="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-8 gap-3"></div>
+                        </div>
+                    </div>
+                </form>
+            </article>
+        </section>
+
+        <!-- ==============================================
+             [TAB 2] App Role Matrix: จัดการแอป 
+             ============================================== -->
+        <section id="tab-content-apps" class="hidden flex-col flex-grow bg-white rounded-2xl shadow-xl border-t-8 border-t-brand-blue overflow-hidden p-6">
+            <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-4">
+                <div>
+                    <h3 class="text-xl font-bold text-brand-blue flex items-center gap-2">
+                        <i data-lucide="sliders" class="w-6 h-6 text-brand-orange"></i> ตารางสิทธิ์การมองเห็นแอป (App-Role Matrix)
+                    </h3>
+                    <p class="text-slate-500 text-sm mt-1">กำหนดว่าแอปพลิเคชันไหน อนุญาตให้กลุ่มใด (Role) ใช้งานได้บ้าง</p>
+                </div>
+                <button onclick="AdminInteractive.saveAppConfig()" class="bg-brand-blue hover:bg-[#121670] text-white px-6 py-2.5 rounded-xl font-semibold shadow-md transition-all flex items-center gap-2 shrink-0">
+                    <i data-lucide="save" class="w-4 h-4"></i> บันทึกการตั้งค่าแอป
+                </button>
+            </div>
+
+            <div class="overflow-x-auto border border-slate-200 rounded-xl">
+                <table class="w-full text-left border-collapse min-w-[700px]">
+                    <thead class="bg-slate-50">
+                        <tr id="app-matrix-header-row" class="border-b border-slate-200">
+                            <th class="p-4 font-bold text-slate-700 bg-slate-100 border-r border-slate-200">แอปพลิเคชัน / ระบบ</th>
+                            <!-- Role headers will be rendered here -->
+                        </tr>
+                    </thead>
+                    <tbody id="app-permission-matrix" class="divide-y divide-slate-100">
+                        <!-- Matrix rows will be rendered here -->
+                    </tbody>
+                </table>
+            </div>
+            <div class="mt-4 p-4 bg-orange-50 text-brand-orange rounded-xl text-sm flex items-start gap-3">
+                <i data-lucide="info" class="w-5 h-5 shrink-0 mt-0.5"></i>
+                <p><b>หมายเหตุ:</b> การตั้งค่าส่วนนี้จะบันทึกอยู่ในบราวเซอร์เครื่องนี้ (Local Config) เพื่อใช้ในการพรีวิว หากต้องการให้บันทึกถาวรระดับเซิร์ฟเวอร์ จะต้องส่งข้อมูลชุดนี้ไปเก็บที่ Google Sheets ด้วย</p>
+            </div>
+        </section>
+
+    </main>
+
     <script>
-        lucide.createIcons();
-
-        // **ตั้งค่า URL ของเว็บแอป (Apps Script) ที่นี่**
-        const GOOGLE_APP_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxSomEq-O49vgID_6P-3XfoGuM86rM0dWPQS-ZMsFDvF-_N-O3EkaOS1Cdgg8nkxNfe/exec"; 
-
-        const rolesConfig = {
-            "ADMIN": ["app-w5", "app-trd", "app-kpi", "app-po", "app-damage", "app-manual"],
-            "AKRA": ["app-w5", "app-trd", "app-kpi", "app-po", "app-damage", "app-manual"],
-            "TRD": ["app-kpi", "app-manual", "app-trd", "app-damage"],
-            "WAREHOUSE": ["app-po", "app-trd", "app-damage", "app-manual", "app-w5", "app-kpi"],
-            "Cashier": ["app-kpi", "app-damage", "app-manual"]
+        /** =========================================================
+         * 1. CONFIGURATION & DATA
+         * ========================================================== */
+        const CONFIG = {
+            API_URL: "https://script.google.com/macros/s/AKfycbxSomEq-O49vgID_6P-3XfoGuM86rM0dWPQS-ZMsFDvF-_N-O3EkaOS1Cdgg8nkxNfe/exec",
+            STORAGE_USER_DB: "akra_users_db",
+            STORAGE_SESSION: "akra_session",
+            STORAGE_APP_CONFIG: "akra_app_config"
         };
 
-        const defaultUsers = {
-            "250002": { name: "TOP", roles: ["WAREHOUSE"] },
-            "250007": { name: "YONG", roles: ["WAREHOUSE"] },
-            "250008": { name: "NONGMAI", roles: ["WAREHOUSE"] },
-            "250010": { name: "ENG", roles: ["WAREHOUSE"] },
-            "250013": { name: "CHEN", roles: ["ADMIN"] },
-            "250019": { name: "PAO", roles: ["WAREHOUSE"] },
-            "250020": { name: "MHEE", roles: ["WAREHOUSE"] },
-            "250021": { name: "MAI", roles: ["WAREHOUSE"] },
-            "250022": { name: "BUNLENG", roles: ["WAREHOUSE"] },
-            "250023": { name: "MAPRANG", roles: ["Cashier"] }, 
-            "250024": { name: "BOY", roles: ["WAREHOUSE"] },
-            "250025": { name: "PUSH", roles: ["WAREHOUSE"] },
-            "250027": { name: "JAME", roles: ["WAREHOUSE"] },
-            "250028": { name: "SAN", roles: ["AKRA"] }, 
-            "hhsawyer": { name: "Herehorr", roles: ["ADMIN"] },
-            "Stamp111": { name: "STAMP", roles: ["ADMIN"] }
+        // ข้อมูลตั้งต้น (Default App Configuration)
+        const DEFAULT_APP_CONFIG = [
+            { id: "app-w5", name: "เบิก W5", icon: "package-minus", url: "https://akra-web.github.io/AKRA/", roles: ["ADMIN", "AKRA", "WAREHOUSE"] },
+            { id: "app-trd", name: "ย้ายสินค้า", icon: "arrow-right-left", url: "https://akra-web.github.io/TRDAKRA/", roles: ["ADMIN", "AKRA", "TRD", "WAREHOUSE"] },
+            { id: "app-po", name: "รับสินค้า", icon: "clipboard-list", url: "https://akra-web.github.io/PO/", roles: ["ADMIN", "AKRA", "WAREHOUSE"] },
+            { id: "app-pr", name: "PR ขอซื้อ", icon: "file-plus-2", url: "https://akra-web.github.io/PR/", roles: ["ADMIN", "AKRA", "WAREHOUSE"] },
+            { id: "app-tracking", name: "Track PO", icon: "truck", url: "https://akra-web.github.io/TrackingPO/", roles: ["ADMIN", "AKRA", "TRD", "WAREHOUSE"] },
+            { id: "app-damage", name: "ของคืน/เคลม", icon: "package-x", url: "https://akra-web.github.io/Returnitem/", roles: ["ADMIN", "AKRA", "TRD", "WAREHOUSE", "Cashier"] },
+            { id: "app-kpi", name: "KPI Tracker", icon: "bar-chart-2", url: "https://akra-web.github.io/KPITRACKER/", roles: ["ADMIN", "AKRA", "TRD", "WAREHOUSE", "Cashier"] },
+            { id: "app-manual", name: "คู่มือ", icon: "book-open", url: "https://akra-web.github.io/SOP/", roles: ["ADMIN", "AKRA", "TRD", "WAREHOUSE", "Cashier"] }
+        ];
+
+        const AVAILABLE_ROLES = [
+            { val: "ADMIN", label: "ADMIN", desc: "ผู้ดูแลระบบ", icon: "shield-alert" },
+            { val: "AKRA", label: "AKRA", desc: "พนักงาน AKRA", icon: "building-2" },
+            { val: "TRD", label: "TRD", desc: "พนักงาน TRD", icon: "store" },
+            { val: "WAREHOUSE", label: "WAREHOUSE", desc: "คลังสินค้า", icon: "warehouse" },
+            { val: "Cashier", label: "Cashier", desc: "แคชเชียร์/การเงิน", icon: "calculator" }
+        ];
+
+        let state = {
+            users: {},
+            currentUser: null,
+            currentRoles: [],
+            appConfig: [] // ตัวเก็บค่าแอปที่ดึงมาใช้งาน
         };
 
-        let users = {};
-        const savedUsersDB = localStorage.getItem('akra_users_db');
-        if (savedUsersDB) {
-            users = JSON.parse(savedUsersDB);
-        } else {
-            users = JSON.parse(JSON.stringify(defaultUsers));
-            localStorage.setItem('akra_users_db', JSON.stringify(users));
-        }
+        /** =========================================================
+         * 2. UI SERVICES
+         * ========================================================== */
+        const UI = {
+            showToast: (message, type = 'success') => {
+                const container = document.getElementById('toast-container');
+                const toast = document.createElement('div');
+                let config = { bg: 'bg-[#171C8F]', icon: 'check-circle' };
+                if (type === 'error') config = { bg: 'bg-red-500', icon: 'x-circle' };
+                if (type === 'warning') config = { bg: 'bg-[#E35205]', icon: 'alert-triangle' };
 
-        let currentUser = null;
-        let currentRoles = []; 
-
-        // ==========================================
-        // UI Helpers (Toast System แทน Alert)
-        // ==========================================
-        function showToast(message, type = 'success') {
-            const container = document.getElementById('toast-container');
-            const toast = document.createElement('div');
-            
-            let bgColor = 'bg-brand-blue';
-            let icon = 'check-circle';
-            if (type === 'error') { bgColor = 'bg-red-500'; icon = 'x-circle'; }
-            if (type === 'info') { bgColor = 'bg-[#232abc]'; icon = 'info'; }
-            if (type === 'warning') { bgColor = 'bg-brand-orange'; icon = 'alert-triangle'; }
-
-            toast.className = `flex items-center gap-3 ${bgColor} text-white px-5 py-3 rounded-lg shadow-lg toast-slide-in min-w-[250px] z-50`;
-            toast.innerHTML = `
-                <i data-lucide="${icon}" class="w-5 h-5"></i>
-                <span class="font-medium text-sm">${message}</span>
-            `;
-            
-            container.appendChild(toast);
-            lucide.createIcons();
-
-            setTimeout(() => {
-                toast.classList.replace('toast-slide-in', 'toast-fade-out');
-                setTimeout(() => toast.remove(), 300);
-            }, 3000);
-        }
-
-        // ==========================================
-        // ดึงข้อมูล User จาก Google Sheet
-        // ==========================================
-        async function fetchUsersFromGoogleSheet(isManualRefresh = false) {
-            try {
-                const loginBtn = document.getElementById('loginBtn');
-                const btnText = loginBtn?.querySelector('span');
-                const isLoginVisible = !document.getElementById('loginSection').classList.contains('hidden');
-                
-                if(isLoginVisible && btnText && !isManualRefresh) {
-                    btnText.innerText = 'กำลังอัปเดตข้อมูล...';
-                    loginBtn.disabled = true;
-                }
-
-                if(isManualRefresh) showToast("กำลังอัปเดตข้อมูล...", "info");
-
-                const response = await fetch(GOOGLE_APP_SCRIPT_URL + "?action=getUsers");
-                const data = await response.json();
-
-                if (data && Object.keys(data).length > 0) {
-                    users = data; 
-                    localStorage.setItem('akra_users_db', JSON.stringify(users));
-                    if(isManualRefresh) {
-                        showToast("อัปเดตข้อมูลสำเร็จ", "success");
-                        renderUserTable();
-                    }
-                }
-
-                if(isLoginVisible && btnText) {
-                    btnText.innerText = 'เข้าสู่ระบบ';
-                    loginBtn.disabled = false;
-                }
-            } catch (error) {
-                console.warn("Fetch Error:", error);
-                if(isManualRefresh) showToast("อัปเดตล้มเหลว ใช้ข้อมูลในเครื่องแทน", "error");
-                
-                const loginBtn = document.getElementById('loginBtn');
-                const btnText = loginBtn?.querySelector('span');
-                if(btnText) {
-                    btnText.innerText = 'เข้าสู่ระบบ';
-                    loginBtn.disabled = false;
-                }
-            }
-        }
-
-        window.onload = async () => {
-            const savedData = localStorage.getItem('akra_sso_user_data');
-            if (savedData) {
-                try {
-                    const userData = JSON.parse(savedData);
-                    if (typeof userData.role === 'string') userData.roles = [userData.role];
-                    
-                    currentUser = userData.name;
-                    currentRoles = userData.roles || [];
-                    showDashboard();
-                } catch(e) {
-                    localStorage.removeItem('akra_sso_user_data');
-                }
-            }
-
-            if (GOOGLE_APP_SCRIPT_URL) {
-                await fetchUsersFromGoogleSheet();
-                
-                if (currentUser) {
-                    let userExists = false;
-                    for(let id in users) {
-                        if(users[id].name === currentUser) {
-                            userExists = true;
-                            currentRoles = users[id].roles || [];
-                            localStorage.setItem('akra_sso_user_data', JSON.stringify({ name: currentUser, roles: currentRoles }));
-                            break;
-                        }
-                    }
-
-                    if(userExists) {
-                        showDashboard(); 
-                    } else {
-                        showToast("เซสชันถูกยกเลิก หรือสิทธิ์ถูกลบ", "warning");
-                        setTimeout(() => logout(), 1500);
-                    }
-                }
-            }
-        };
-
-        // ==========================================
-        // จัดการ Login
-        // ==========================================
-        document.getElementById('loginForm').addEventListener('submit', async (e) => {
-            e.preventDefault();
-            const pwd = document.getElementById('passwordInput').value.trim();
-            const errorMsg = document.getElementById('errorMsg');
-            const loginBtn = document.getElementById('loginBtn');
-
-            if (users[pwd]) {
-                const userData = users[pwd];
-                currentUser = userData.name;
-                currentRoles = Array.isArray(userData.roles) ? userData.roles : (userData.role ? [userData.role] : []);
-                
-                errorMsg.classList.add('hidden');
-                
-                const originalBtnContent = loginBtn.innerHTML;
-                loginBtn.innerHTML = '<i data-lucide="loader-2" class="animate-spin mr-2"></i> กำลังเข้าสู่ระบบ...';
-                loginBtn.disabled = true;
+                toast.className = `flex items-center gap-3 ${config.bg} text-white px-5 py-3 rounded-xl shadow-xl toast-slide-in min-w-[250px] font-medium text-sm`;
+                toast.innerHTML = `<i data-lucide="${config.icon}" class="w-5 h-5"></i> <span>${message}</span>`;
+                container.appendChild(toast);
                 lucide.createIcons();
-
-                localStorage.setItem('akra_sso_user_data', JSON.stringify({ name: currentUser, roles: currentRoles }));
-                sendLog("Login", "Portal", `เข้าสู่ระบบหน้าหลัก (Roles: ${currentRoles.join(', ')})`);
-
                 setTimeout(() => {
-                    showDashboard();
-                    loginBtn.innerHTML = originalBtnContent;
-                    loginBtn.disabled = false;
-                    showToast(`ยินดีต้อนรับคุณ ${currentUser}`, "success");
-                }, 600);
-
-            } else {
-                errorMsg.classList.remove('hidden');
-                document.getElementById('passwordInput').focus();
+                    toast.classList.replace('toast-slide-in', 'toast-fade-out');
+                    setTimeout(() => toast.remove(), 300);
+                }, 3000);
+            },
+            switchSection: (sectionId) => {
+                ['login-section', 'dashboard-section', 'admin-section'].forEach(sec => {
+                    document.getElementById(sec).classList.toggle('hidden', sec !== sectionId);
+                });
+                if(sectionId === 'admin-section') AdminInteractive.init();
             }
-        });
+        };
 
-        function showDashboard() {
-            document.getElementById('loginSection').classList.add('hidden');
-            const dash = document.getElementById('dashboardSection');
-            dash.classList.remove('hidden');
-            dash.classList.add('fade-in');
-            document.getElementById('adminSection').classList.add('hidden');
-            
-            const badges = currentRoles.map(r => `<span class="inline-block bg-brand-blue/10 text-brand-blue text-xs font-semibold px-2 py-0.5 rounded ml-1 border border-brand-blue/20">${r}</span>`).join('');
-            document.getElementById('userNameDisplay').innerHTML = `${currentUser} ${badges}`;
-            
-            document.getElementById('passwordInput').value = ''; 
-
-            const adminBtn = document.getElementById('adminBtn');
-            if (currentRoles.includes("ADMIN")) {
-                adminBtn.classList.remove('hidden');
-            } else {
-                adminBtn.classList.add('hidden');
-            }
-
-            const allApps = ["app-w5", "app-trd", "app-kpi", "app-po", "app-damage", "app-manual"];
-            let allowedApps = new Set(); 
-
-            currentRoles.forEach(role => {
-                if (rolesConfig[role]) {
-                    rolesConfig[role].forEach(app => allowedApps.add(app));
+        const API = {
+            fetchUsers: async () => {
+                try {
+                    const response = await fetch(`${CONFIG.API_URL}?action=getUsers`);
+                    if (!response.ok) throw new Error("HTTP Error");
+                    const data = await response.json();
+                    if (Object.keys(data).length > 0) {
+                        state.users = data;
+                        localStorage.setItem(CONFIG.STORAGE_USER_DB, JSON.stringify(data));
+                        return true;
+                    }
+                } catch (error) {
+                    const cached = localStorage.getItem(CONFIG.STORAGE_USER_DB);
+                    if (cached) { state.users = JSON.parse(cached); return true; }
+                    throw error;
                 }
-            });
+            },
+            saveUserAction: async (payload) => {
+                await fetch(CONFIG.API_URL, { method: 'POST', mode: 'no-cors', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
+            },
+            sendLog: (action, appName, details) => {
+                if(!state.currentUser) return;
+                fetch(CONFIG.API_URL, { method: 'POST', mode: 'no-cors', headers: { 'Content-Type': 'application/json' }, 
+                body: JSON.stringify({ action, app: appName, details, user: state.currentUser }) }).catch(()=>{});
+            }
+        };
 
-            const allowedAppsArray = Array.from(allowedApps);
+        /** =========================================================
+         * 3. ADMIN INTERACTIVE MANAGER
+         * ========================================================== */
+        const AdminInteractive = {
+            editingUserId: null,
+            editingRoles: [],
 
-            allApps.forEach(appId => {
-                const appElement = document.getElementById(appId);
-                if (appElement) {
-                    if (allowedAppsArray.includes(appId)) {
-                        appElement.classList.remove('hidden');
-                        appElement.classList.add('flex');
+            init: () => {
+                // Initialize App Config State
+                const savedAppConfig = localStorage.getItem(CONFIG.STORAGE_APP_CONFIG);
+                state.appConfig = savedAppConfig ? JSON.parse(savedAppConfig) : JSON.parse(JSON.stringify(DEFAULT_APP_CONFIG));
+
+                AdminInteractive.renderUserList();
+                AdminInteractive.setupAppPreviewGrid();
+                AdminInteractive.renderAppMatrix();
+                
+                document.getElementById('search-input').addEventListener('input', AdminInteractive.renderUserList);
+                document.getElementById('interactive-form').addEventListener('submit', AdminInteractive.handleSave);
+                document.getElementById('btn-delete-user').addEventListener('click', AdminInteractive.handleDelete);
+                
+                document.getElementById('interactive-form').classList.add('hidden');
+                document.getElementById('empty-selection-state').classList.remove('hidden');
+            },
+
+            switchTab: (tabName) => {
+                const isUsers = tabName === 'users';
+                
+                // Toggle Content
+                document.getElementById('tab-content-users').classList.toggle('hidden', !isUsers);
+                document.getElementById('tab-content-apps').classList.toggle('hidden', isUsers);
+                
+                // Toggle Tab Buttons UI
+                const btnUsers = document.getElementById('tab-btn-users');
+                const btnApps = document.getElementById('tab-btn-apps');
+
+                if (isUsers) {
+                    btnUsers.className = "px-5 py-2 rounded-lg font-bold bg-white text-brand-blue shadow-sm transition-all flex items-center gap-2";
+                    btnApps.className = "px-5 py-2 rounded-lg font-medium text-slate-500 hover:text-brand-blue transition-all flex items-center gap-2";
+                } else {
+                    btnApps.className = "px-5 py-2 rounded-lg font-bold bg-white text-brand-blue shadow-sm transition-all flex items-center gap-2";
+                    btnUsers.className = "px-5 py-2 rounded-lg font-medium text-slate-500 hover:text-brand-blue transition-all flex items-center gap-2";
+                }
+            },
+
+            // --- TAB 1: User Logic ---
+            renderUserList: () => {
+                const listEl = document.getElementById('interactive-user-list');
+                const search = document.getElementById('search-input').value.toLowerCase().trim();
+                listEl.innerHTML = '';
+                let count = 0;
+
+                for (const [id, data] of Object.entries(state.users)) {
+                    if (search && !id.toLowerCase().includes(search) && !data.name.toLowerCase().includes(search)) continue;
+                    count++;
+                    
+                    const roles = Array.isArray(data.roles) ? data.roles : [];
+                    const shortRoles = roles.slice(0, 2).join(', ') + (roles.length > 2 ? '...' : '');
+                    
+                    const div = document.createElement('div');
+                    div.className = `p-3 rounded-xl cursor-pointer transition-all border border-transparent hover:bg-white hover:border-slate-200 hover:shadow-sm flex items-center gap-3 ${AdminInteractive.editingUserId === id ? 'bg-white border-brand-orange/50 shadow-md ring-1 ring-brand-orange/20' : ''}`;
+                    div.onclick = () => AdminInteractive.selectUser(id);
+                    
+                    div.innerHTML = `
+                        <div class="w-10 h-10 rounded-full bg-brand-blue/10 text-brand-blue flex items-center justify-center font-bold text-sm shrink-0 border border-brand-blue/20">
+                            ${data.name.substring(0, 1).toUpperCase()}
+                        </div>
+                        <div class="flex-grow min-w-0">
+                            <p class="font-bold text-slate-800 truncate leading-tight">${data.name}</p>
+                            <p class="text-xs font-mono text-slate-500">${id}</p>
+                        </div>
+                        <div class="shrink-0 text-right">
+                            <span class="text-[10px] bg-slate-100 text-slate-600 px-2 py-1 rounded-md font-medium">${shortRoles || 'No Role'}</span>
+                        </div>
+                    `;
+                    listEl.appendChild(div);
+                }
+
+                if(count === 0) listEl.innerHTML = `<div class="p-6 text-center text-slate-400 text-sm"><i data-lucide="user-x" class="w-8 h-8 mx-auto mb-2 opacity-50"></i>ไม่พบชื่อนี้</div>`;
+                document.getElementById('user-count').innerText = count;
+                lucide.createIcons();
+            },
+
+            selectUser: (id) => {
+                const data = state.users[id];
+                if(!data) return;
+
+                document.getElementById('empty-selection-state').classList.add('hidden');
+                document.getElementById('interactive-form').classList.remove('hidden');
+                document.getElementById('btn-delete-user').classList.remove('hidden');
+                document.getElementById('role-error-msg').classList.add('hidden');
+
+                AdminInteractive.editingUserId = id;
+                AdminInteractive.editingRoles = Array.isArray(data.roles) ? [...data.roles] : [];
+
+                const idInput = document.getElementById('editor-id');
+                idInput.value = id; idInput.readOnly = true;
+                
+                document.getElementById('editor-name').value = data.name;
+                document.getElementById('editor-avatar').innerText = data.name.substring(0,1).toUpperCase();
+
+                AdminInteractive.renderUserList();
+                AdminInteractive.renderRoleGrid();
+                AdminInteractive.updateAppPreview();
+            },
+
+            setupNewUser: () => {
+                document.getElementById('empty-selection-state').classList.add('hidden');
+                document.getElementById('interactive-form').classList.remove('hidden');
+                document.getElementById('btn-delete-user').classList.add('hidden'); 
+                document.getElementById('role-error-msg').classList.add('hidden');
+
+                AdminInteractive.editingUserId = null; 
+                AdminInteractive.editingRoles = []; 
+
+                const idInput = document.getElementById('editor-id');
+                idInput.value = ''; idInput.readOnly = false; idInput.focus();
+
+                document.getElementById('editor-name').value = '';
+                document.getElementById('editor-avatar').innerHTML = '<i data-lucide="user-plus" class="w-6 h-6"></i>';
+
+                AdminInteractive.renderUserList(); 
+                AdminInteractive.renderRoleGrid();
+                AdminInteractive.updateAppPreview();
+                lucide.createIcons();
+            },
+
+            renderRoleGrid: () => {
+                const grid = document.getElementById('interactive-role-grid');
+                grid.innerHTML = '';
+
+                AVAILABLE_ROLES.forEach(r => {
+                    const isActive = AdminInteractive.editingRoles.includes(r.val);
+                    const div = document.createElement('div');
+                    
+                    div.className = `role-card cursor-pointer border-2 rounded-2xl p-4 flex flex-col items-center justify-center text-center transition-all duration-200 group relative overflow-hidden h-32 ${isActive ? 'active border-brand-orange bg-[#fffaf5]' : 'border-slate-200 hover:border-slate-300 bg-white'}`;
+                    div.onclick = () => AdminInteractive.toggleRole(r.val);
+                    
+                    const iconBg = isActive ? 'bg-brand-orange text-white' : 'bg-slate-100 text-slate-400 group-hover:bg-slate-200';
+                    const checkMark = isActive ? `<div class="absolute top-2 right-2 text-brand-orange bg-white rounded-full p-0.5 shadow-sm"><i data-lucide="check-circle-2" class="w-4 h-4"></i></div>` : '';
+
+                    div.innerHTML = `
+                        ${checkMark}
+                        <div class="icon-bg w-10 h-10 rounded-full flex items-center justify-center mb-2 transition-colors ${iconBg}">
+                            <i data-lucide="${r.icon}" class="w-5 h-5"></i>
+                        </div>
+                        <h4 class="font-bold text-sm text-slate-800">${r.label}</h4>
+                        <p class="text-[10px] text-slate-500 leading-tight mt-1 px-1">${r.desc}</p>
+                    `;
+                    grid.appendChild(div);
+                });
+                lucide.createIcons();
+            },
+
+            toggleRole: (roleVal) => {
+                const idx = AdminInteractive.editingRoles.indexOf(roleVal);
+                if (idx === -1) AdminInteractive.editingRoles.push(roleVal);
+                else AdminInteractive.editingRoles.splice(idx, 1);
+                
+                document.getElementById('role-error-msg').classList.add('hidden');
+                AdminInteractive.renderRoleGrid();
+                AdminInteractive.updateAppPreview(); 
+            },
+
+            setupAppPreviewGrid: () => {
+                const grid = document.getElementById('interactive-app-preview');
+                grid.innerHTML = '';
+                state.appConfig.forEach(app => {
+                    grid.innerHTML += `
+                        <div id="preview-app-${app.id}" class="app-preview-card border-2 border-slate-200 bg-white rounded-xl p-2 flex flex-col items-center justify-center text-center">
+                            <div class="w-8 h-8 rounded-lg bg-slate-100 text-slate-500 flex items-center justify-center mb-1 transition-colors">
+                                <i data-lucide="${app.icon}" class="w-4 h-4"></i>
+                            </div>
+                            <span class="text-[9px] font-bold leading-tight line-clamp-2">${app.name}</span>
+                        </div>
+                    `;
+                });
+            },
+
+            updateAppPreview: () => {
+                state.appConfig.forEach(app => {
+                    const el = document.getElementById(`preview-app-${app.id}`);
+                    if (!el) return;
+                    
+                    const isUnlocked = app.roles.some(role => AdminInteractive.editingRoles.includes(role));
+                    const iconDiv = el.querySelector('div'); 
+                    
+                    if (isUnlocked) {
+                        el.classList.add('unlocked');
+                        iconDiv.className = "w-8 h-8 rounded-lg bg-brand-blue/10 text-brand-blue flex items-center justify-center mb-1 transition-colors";
                     } else {
-                        appElement.classList.add('hidden');
-                        appElement.classList.remove('flex');
+                        el.classList.remove('unlocked');
+                        iconDiv.className = "w-8 h-8 rounded-lg bg-slate-100 text-slate-500 flex items-center justify-center mb-1 transition-colors";
                     }
-                }
-            });
-        }
+                });
+            },
 
-        function logout() {
-            sendLog("Logout", "Portal", "ออกจากระบบ");
-            localStorage.removeItem('akra_sso_user_data');
-            currentUser = null;
-            currentRoles = [];
-            document.getElementById('dashboardSection').classList.add('hidden');
-            document.getElementById('adminSection').classList.add('hidden');
-            
-            const login = document.getElementById('loginSection');
-            login.classList.remove('hidden');
-            login.classList.add('fade-in');
-        }
+            handleSave: async (e) => {
+                e.preventDefault();
+                const idInput = document.getElementById('editor-id').value.trim();
+                const nameInput = document.getElementById('editor-name').value.trim().toUpperCase();
+                
+                if (!idInput || !nameInput) { UI.showToast("กรุณากรอกรหัสและชื่อพนักงาน", "warning"); return; }
+                if (AdminInteractive.editingRoles.length === 0) { document.getElementById('role-error-msg').classList.remove('hidden'); return; }
 
-        // ==========================================
-        // จัดการ Admin Panel (CRUD Users)
-        // ==========================================
-        function openAdminPanel() {
-            document.getElementById('dashboardSection').classList.add('hidden');
-            const admin = document.getElementById('adminSection');
-            admin.classList.remove('hidden');
-            admin.classList.add('fade-in');
-            renderUserTable();
-        }
+                const btn = document.getElementById('btn-save-user');
+                const btnText = document.getElementById('save-btn-text');
+                btn.disabled = true; btnText.innerHTML = '<i data-lucide="loader-2" class="w-4 h-4 animate-spin inline"></i> กำลังบันทึก...';
 
-        function closeAdminPanel() {
-            document.getElementById('adminSection').classList.add('hidden');
-            const dash = document.getElementById('dashboardSection');
-            dash.classList.remove('hidden');
-            dash.classList.add('fade-in');
-            document.getElementById('searchInput').value = ''; // เคลียร์ค้นหา
-        }
-
-        function renderUserTable() {
-            const tbody = document.getElementById('userTableBody');
-            const searchText = document.getElementById('searchInput').value.toLowerCase().trim();
-            tbody.innerHTML = '';
-            
-            let count = 0;
-
-            for (const [id, data] of Object.entries(users)) {
-                // ค้นหา
-                if (searchText !== '') {
-                    if (!id.toLowerCase().includes(searchText) && !data.name.toLowerCase().includes(searchText)) {
-                        continue;
+                try {
+                    const payload = { action: "saveUser", id: idInput, name: nameInput, roles: AdminInteractive.editingRoles };
+                    state.users[idInput] = { name: nameInput, roles: [...AdminInteractive.editingRoles] };
+                    localStorage.setItem(CONFIG.STORAGE_USER_DB, JSON.stringify(state.users));
+                    
+                    await API.saveUserAction(payload);
+                    API.sendLog("Admin Action", "Portal", `จัดการสิทธิ์: ${idInput} (${nameInput})`);
+                    UI.showToast("อัปเดตสิทธิ์สำเร็จ", "success");
+                    
+                    if(nameInput === state.currentUser) {
+                        state.currentRoles = [...AdminInteractive.editingRoles];
+                        localStorage.setItem(CONFIG.STORAGE_SESSION, JSON.stringify({ name: nameInput, roles: state.currentRoles }));
                     }
+
+                    AdminInteractive.editingUserId = idInput; 
+                    document.getElementById('editor-id').readOnly = true;
+                    document.getElementById('btn-delete-user').classList.remove('hidden');
+                    AdminInteractive.renderUserList();
+
+                } catch (err) { UI.showToast("บันทึกไม่สำเร็จ ลองใหม่อีกครั้ง", "error"); } 
+                finally { btn.disabled = false; btnText.innerText = 'บันทึกข้อมูล'; }
+            },
+
+            handleDelete: async () => {
+                const id = AdminInteractive.editingUserId;
+                if(!id) return;
+                const name = state.users[id].name;
+
+                if (name === state.currentUser) { UI.showToast("ไม่อนุญาตให้ลบบัญชีที่กำลังใช้งานอยู่", "warning"); return; }
+
+                if(confirm(`ยืนยันการลบ ${name} (${id}) ถาวรหรือไม่?`)) {
+                    try {
+                        delete state.users[id];
+                        localStorage.setItem(CONFIG.STORAGE_USER_DB, JSON.stringify(state.users));
+                        await API.saveUserAction({ action: "deleteUser", id });
+                        
+                        UI.showToast("ลบผู้ใช้สำเร็จ", "success");
+                        AdminInteractive.setupNewUser();
+                        document.getElementById('empty-selection-state').classList.remove('hidden');
+                        document.getElementById('interactive-form').classList.add('hidden');
+                    } catch(e) { UI.showToast("ลบไม่สำเร็จ", "error"); }
+                }
+            },
+
+            // --- TAB 2: App Role Matrix Logic ---
+            renderAppMatrix: () => {
+                const tbody = document.getElementById('app-permission-matrix');
+                const headerRow = document.getElementById('app-matrix-header-row');
+
+                // สร้างหัวตาราง (Roles) แค่ครั้งเดียว
+                if (headerRow.children.length === 1) {
+                    AVAILABLE_ROLES.forEach(r => {
+                        const th = document.createElement('th');
+                        th.className = "p-4 font-bold text-slate-700 bg-slate-100 text-center border-l border-slate-200 min-w-[100px]";
+                        th.innerHTML = `<i data-lucide="${r.icon}" class="w-4 h-4 mx-auto mb-1 text-brand-orange"></i>${r.label}`;
+                        headerRow.appendChild(th);
+                    });
+                }
+
+                tbody.innerHTML = '';
+                state.appConfig.forEach(app => {
+                    const tr = document.createElement('tr');
+                    tr.className = "hover:bg-brand-blue/5 transition-colors";
+
+                    let roleCells = '';
+                    AVAILABLE_ROLES.forEach(r => {
+                        const hasRole = app.roles.includes(r.val);
+                        // Disable ADMIN role toggle (Admin should always see everything)
+                        const isAdminCol = r.val === 'ADMIN';
+                        const checkedAttr = hasRole ? 'checked' : '';
+                        const disabledAttr = isAdminCol ? 'disabled' : '';
+                        const cursorClass = isAdminCol ? 'cursor-not-allowed opacity-50' : 'cursor-pointer';
+
+                        roleCells += `
+                            <td class="p-4 text-center border-l border-slate-100 align-middle">
+                                <label class="inline-flex items-center ${cursorClass}">
+                                    <input type="checkbox" class="sr-only peer" ${checkedAttr} ${disabledAttr} 
+                                           onchange="AdminInteractive.toggleMatrixRole('${app.id}', '${r.val}')">
+                                    <div class="w-11 h-6 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-brand-blue relative"></div>
+                                </label>
+                            </td>
+                        `;
+                    });
+
+                    tr.innerHTML = `
+                        <td class="p-4 font-medium text-slate-800 border-r border-slate-200 bg-white">
+                            <div class="flex items-center gap-3">
+                                <div class="w-8 h-8 rounded-lg bg-slate-100 text-slate-500 flex items-center justify-center shrink-0">
+                                    <i data-lucide="${app.icon}" class="w-4 h-4"></i>
+                                </div>
+                                <span>${app.name}</span>
+                            </div>
+                        </td>
+                        ${roleCells}
+                    `;
+                    tbody.appendChild(tr);
+                });
+                lucide.createIcons();
+            },
+
+            toggleMatrixRole: (appId, roleVal) => {
+                const app = state.appConfig.find(a => a.id === appId);
+                if(!app) return;
+
+                const roleIdx = app.roles.indexOf(roleVal);
+                if (roleIdx > -1) {
+                    app.roles.splice(roleIdx, 1);
+                } else {
+                    app.roles.push(roleVal);
+                }
+            },
+
+            saveAppConfig: () => {
+                // เซฟลง LocalStorage เพื่อให้สะท้อนกับ Client ทันที
+                localStorage.setItem(CONFIG.STORAGE_APP_CONFIG, JSON.stringify(state.appConfig));
+                UI.showToast("บันทึกการตั้งค่าการเข้าถึงแอปเรียบร้อย", "success");
+                
+                // รีเฟรช UI ที่เกี่ยวข้อง
+                AdminInteractive.setupAppPreviewGrid();
+                if(AdminInteractive.editingUserId) {
+                    AdminInteractive.updateAppPreview();
                 }
                 
-                count++;
-                let rolesDisplay = Array.isArray(data.roles) ? data.roles : (data.role ? [data.role] : []);
-                
-                const tr = document.createElement('tr');
-                tr.className = 'hover:bg-slate-50 transition-colors group';
-                
-                const roleBadges = rolesDisplay.map(r => {
-                    let colorClass = 'bg-slate-100 text-slate-600 border-slate-200';
-                    if(r === 'ADMIN') colorClass = 'bg-brand-orange text-white border-brand-orange';
-                    if(r === 'AKRA') colorClass = 'bg-brand-blue/10 text-brand-blue border-brand-blue/30';
-                    if(r === 'TRD') colorClass = 'bg-blue-50 text-blue-600 border-blue-200';
-                    if(r === 'WAREHOUSE') colorClass = 'bg-slate-800 text-white border-slate-800';
-                    if(r === 'Cashier') colorClass = 'bg-orange-50 text-brand-orange border-orange-200';
-                    return `<span class="px-2 py-0.5 text-[11px] font-bold tracking-wide rounded border ${colorClass}">${r}</span>`;
-                }).join(' ');
-
-                tr.innerHTML = `
-                    <td class="p-4 align-middle font-mono text-slate-500 text-xs">${id}</td>
-                    <td class="p-4 align-middle font-bold text-slate-800 tracking-wide">${data.name}</td>
-                    <td class="p-4 align-middle">
-                        <div class="flex flex-wrap gap-1.5">${roleBadges}</div>
-                    </td>
-                    <td class="p-4 align-middle text-right flex justify-end gap-2 opacity-100 sm:opacity-50 sm:group-hover:opacity-100 transition-opacity">
-                        <button onclick="editUser('${id}')" class="p-2 bg-slate-100 text-slate-500 hover:bg-brand-blue hover:text-white rounded-lg transition-colors" title="แก้ไข">
-                            <i data-lucide="edit-2" class="w-4 h-4"></i>
-                        </button>
-                        <button onclick="deleteUser('${id}')" class="p-2 bg-slate-100 text-slate-500 hover:bg-red-500 hover:text-white rounded-lg transition-colors" title="ลบ">
-                            <i data-lucide="trash-2" class="w-4 h-4"></i>
-                        </button>
-                    </td>
-                `;
-                tbody.appendChild(tr);
+                // ถือโอกาสเซฟ log ส่งไปหลังบ้านด้วย
+                API.sendLog("Admin Action", "Portal", "ปรับปรุงตารางสิทธิ์การเข้าแอป");
             }
+        };
 
-            if (count === 0) {
-                tbody.innerHTML = `<tr><td colspan="4" class="p-8 text-center text-slate-500">ไม่พบข้อมูลผู้ใช้งาน</td></tr>`;
-            }
-
-            document.getElementById('userCount').innerText = count;
-            lucide.createIcons();
-        }
-
-        document.getElementById('userManageForm').addEventListener('submit', (e) => {
-            e.preventDefault();
-            const id = document.getElementById('editUserId').value.trim();
-            const name = document.getElementById('editUserName').value.trim().toUpperCase();
-            
-            const checkboxes = document.querySelectorAll('.role-cb');
-            let selectedRoles = [];
-            checkboxes.forEach(cb => {
-                if(cb.checked) selectedRoles.push(cb.value);
-            });
-
-            if(selectedRoles.length === 0) {
-                showToast("กรุณาเลือกสิทธิ์อย่างน้อย 1 รายการ", "warning");
-                return;
-            }
-
-            const saveBtn = document.getElementById('saveUserBtn');
-            const originalBtnHtml = saveBtn.innerHTML;
-            saveBtn.innerHTML = '<i data-lucide="loader-2" class="animate-spin mr-2"></i> กำลังบันทึก...';
-            saveBtn.disabled = true;
-            lucide.createIcons();
-
-            users[id] = { name: name, roles: selectedRoles };
-            localStorage.setItem('akra_users_db', JSON.stringify(users));
-            
-            const payload = {
-                action: "saveUser",
-                id: id,
-                name: name,
-                roles: selectedRoles
-            };
-            fetch(GOOGLE_APP_SCRIPT_URL, {
-                method: 'POST',
-                mode: 'no-cors',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(payload)
-            }).finally(() => {
-                saveBtn.innerHTML = originalBtnHtml;
-                saveBtn.disabled = false;
+        /** =========================================================
+         * 4. MAIN APP INITIALIZATION
+         * ========================================================== */
+        const App = {
+            init: async () => {
+                lucide.createIcons();
                 
-                showToast("บันทึกข้อมูลเรียบร้อยแล้ว", "success");
-                sendLog("Admin Action", "Portal", `เพิ่ม/แก้ไข ผู้ใช้: ${id} (${name})`);
-                
-                resetUserForm();
-                renderUserTable();
-                
-                if(name === currentUser) {
-                    currentRoles = selectedRoles;
-                    localStorage.setItem('akra_sso_user_data', JSON.stringify({ name: currentUser, roles: currentRoles }));
-                    const badges = currentRoles.map(r => `<span class="inline-block bg-brand-blue/10 text-brand-blue text-xs font-semibold px-2 py-0.5 rounded ml-1 border border-brand-blue/20">${r}</span>`).join('');
-                    document.getElementById('userNameDisplay').innerHTML = `${currentUser} ${badges}`;
-                }
-            });
-        });
+                // Setup State App Config
+                const savedAppConfig = localStorage.getItem(CONFIG.STORAGE_APP_CONFIG);
+                state.appConfig = savedAppConfig ? JSON.parse(savedAppConfig) : JSON.parse(JSON.stringify(DEFAULT_APP_CONFIG));
 
-        function editUser(id) {
-            const data = users[id];
-            if(!data) return;
-
-            document.getElementById('formTitle').innerHTML = '<i data-lucide="user-cog" class="w-5 h-5 text-brand-orange"></i> แก้ไขข้อมูลพนักงาน';
-            const idInput = document.getElementById('editUserId');
-            idInput.value = id;
-            idInput.readOnly = true; 
-            idInput.classList.add('opacity-60', 'cursor-not-allowed');
-
-            document.getElementById('editUserName').value = data.name;
-
-            let rolesToSet = Array.isArray(data.roles) ? data.roles : (data.role ? [data.role] : []);
-            document.querySelectorAll('.role-cb').forEach(cb => {
-                cb.checked = rolesToSet.includes(cb.value);
-            });
-            
-            lucide.createIcons();
-            document.getElementById('adminSection').scrollIntoView({ behavior: 'smooth' });
-        }
-
-        function deleteUser(id) {
-            if(users[id].name === currentUser) {
-                showToast("ระบบไม่อนุญาตให้ลบตัวเอง", "error");
-                return;
-            }
-            
-            if(confirm(`ยืนยันการลบรหัสพนักงาน: ${id} (${users[id].name}) ?\nข้อมูลนี้จะถูกลบออกจากระบบทันที`)) {
-                const name = users[id].name;
-                delete users[id];
-                localStorage.setItem('akra_users_db', JSON.stringify(users));
-                
-                const payload = {
-                    action: "deleteUser",
-                    id: id
-                };
-                fetch(GOOGLE_APP_SCRIPT_URL, {
-                    method: 'POST',
-                    mode: 'no-cors',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(payload)
+                document.getElementById('login-form').addEventListener('submit', App.handleLogin);
+                document.getElementById('logout-btn').addEventListener('click', App.handleLogout);
+                document.getElementById('admin-btn').addEventListener('click', () => UI.switchSection('admin-section'));
+                document.getElementById('back-to-dash-btn').addEventListener('click', () => UI.switchSection('dashboard-section'));
+                document.getElementById('refresh-data-btn').addEventListener('click', async () => {
+                    document.getElementById('refresh-icon').classList.add('animate-spin');
+                    await API.fetchUsers();
+                    AdminInteractive.renderUserList();
+                    setTimeout(()=>document.getElementById('refresh-icon').classList.remove('animate-spin'), 500);
                 });
 
-                sendLog("Admin Action", "Portal", `ลบผู้ใช้: ${id} (${name})`);
-                renderUserTable();
-                showToast("ลบผู้ใช้งานสำเร็จ", "success");
+                const session = localStorage.getItem(CONFIG.STORAGE_SESSION);
+                if (session) {
+                    try {
+                        const parsed = JSON.parse(session);
+                        state.currentUser = parsed.name;
+                        state.currentRoles = parsed.roles || [];
+                        UI.switchSection('dashboard-section');
+                        App.renderDashboard();
+                    } catch (e) { localStorage.removeItem(CONFIG.STORAGE_SESSION); }
+                }
+
+                try { await API.fetchUsers(); } 
+                catch (error) { 
+                    if(Object.keys(state.users).length === 0) {
+                         state.users = {"250013": { name: "CHEN", roles: ["ADMIN"] }, "Stamp111": { name: "STAMP", roles: ["WAREHOUSE", "Cashier"] }};
+                    }
+                }
+            },
+
+            handleLogin: async (e) => {
+                e.preventDefault();
+                const pwdInput = document.getElementById('password-input');
+                const pwd = pwdInput.value.trim();
+
+                if (!pwd) return;
+
+                const btn = document.getElementById('login-btn');
+                const btnText = document.getElementById('login-btn-text');
+                btn.disabled = true; btnText.innerHTML = '<i data-lucide="loader-2" class="w-5 h-5 animate-spin mr-2 inline"></i> ตรวจสอบ...'; lucide.createIcons();
+                
+                setTimeout(() => {
+                    const user = state.users[pwd];
+                    if (user) {
+                        state.currentUser = user.name;
+                        state.currentRoles = Array.isArray(user.roles) ? user.roles : [user.roles];
+                        localStorage.setItem(CONFIG.STORAGE_SESSION, JSON.stringify({ name: state.currentUser, roles: state.currentRoles }));
+                        pwdInput.value = '';
+                        UI.showToast(`ยินดีต้อนรับ ${state.currentUser}`);
+                        UI.switchSection('dashboard-section');
+                        App.renderDashboard();
+                    } else {
+                        UI.showToast("รหัสไม่ถูกต้อง", 'error');
+                        pwdInput.focus();
+                    }
+                    btn.disabled = false; btnText.innerText = 'เข้าสู่ระบบ';
+                }, 500);
+            },
+
+            handleLogout: () => {
+                localStorage.removeItem(CONFIG.STORAGE_SESSION);
+                state.currentUser = null; state.currentRoles = [];
+                UI.switchSection('login-section');
+            },
+
+            renderDashboard: () => {
+                const badges = state.currentRoles.map(r => `<span class="inline-block bg-brand-blue/10 text-brand-blue text-[10px] font-bold px-2 py-0.5 rounded ml-1 border border-brand-blue/20">${r}</span>`).join('');
+                document.getElementById('user-name-display').innerHTML = `${state.currentUser} ${badges}`;
+
+                const adminBtn = document.getElementById('admin-btn');
+                state.currentRoles.includes("ADMIN") ? adminBtn.classList.remove('hidden') : adminBtn.classList.add('hidden');
+
+                const grid = document.getElementById('app-grid');
+                grid.innerHTML = ''; 
+                // Using Dynamic Config
+                const allowedApps = state.appConfig.filter(app => app.roles.some(role => state.currentRoles.includes(role)));
+
+                if (allowedApps.length === 0) {
+                    grid.innerHTML = `<div class="col-span-full bg-white border border-slate-200 rounded-3xl p-12 text-center shadow-lg"><i data-lucide="lock" class="w-16 h-16 text-slate-200 mx-auto mb-4"></i><h3 class="text-xl font-bold text-slate-400">ไม่มีสิทธิ์ใช้งาน</h3></div>`;
+                } else {
+                    allowedApps.forEach(app => {
+                        grid.innerHTML += `
+                            <button onclick="window.open('${app.url}?user=${state.currentUser}&ts=${Date.now()}', '_blank')" 
+                                class="bg-white p-6 rounded-2xl border-2 border-transparent hover:border-brand-orange transition-all transform hover:-translate-y-1 text-left group flex flex-col h-full shadow-lg hover:shadow-brand-orange/20">
+                                <div class="bg-slate-50 w-12 h-12 rounded-xl flex items-center justify-center mb-4 group-hover:bg-brand-orange transition-colors border border-slate-100">
+                                    <i data-lucide="${app.icon}" class="text-brand-blue group-hover:text-white w-6 h-6 transition-colors"></i>
+                                </div>
+                                <h3 class="text-lg font-bold mb-1 text-brand-blue group-hover:text-brand-orange transition-colors">${app.name}</h3>
+                            </button>
+                        `;
+                    });
+                }
+                lucide.createIcons();
             }
-        }
+        };
 
-        function resetUserForm() {
-            document.getElementById('formTitle').innerHTML = '<i data-lucide="user-plus" class="w-5 h-5 text-brand-orange"></i> เพิ่มผู้ใช้งานใหม่';
-            const idInput = document.getElementById('editUserId');
-            idInput.value = '';
-            idInput.readOnly = false;
-            idInput.classList.remove('opacity-60', 'cursor-not-allowed');
-            document.getElementById('editUserName').value = '';
-            document.querySelectorAll('.role-cb').forEach(cb => cb.checked = false);
-            lucide.createIcons();
-        }
-
-        // ==========================================
-
-        function openApp(appName, targetUrl) {
-            sendLog("Open App", appName, `เข้าสู่แอปพลิเคชัน`);
-
-            try {
-                const urlWithSSO = new URL(targetUrl);
-                urlWithSSO.searchParams.set('user', currentUser);
-                urlWithSSO.searchParams.set('session', new Date().getTime()); 
-                window.open(urlWithSSO.toString(), '_blank'); 
-            } catch (e) {
-                console.error("URL ไม่ถูกต้อง:", targetUrl);
-                showToast("เกิดข้อผิดพลาดในการเปิดลิงก์", "error");
-            }
-        }
-
-        function sendLog(action, app, details) {
-            if (!GOOGLE_APP_SCRIPT_URL) return;
-
-            const payload = {
-                user: currentUser || "Unknown",
-                action: action,
-                app: app,
-                details: details
-            };
-
-            fetch(GOOGLE_APP_SCRIPT_URL, {
-                method: 'POST',
-                mode: 'no-cors',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(payload)
-            }).catch(error => {
-                console.error('Log error:', error);
-            });
-        }
+        document.addEventListener('DOMContentLoaded', App.init);
     </script>
 </body>
 </html>
