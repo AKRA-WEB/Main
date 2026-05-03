@@ -51,13 +51,11 @@
             to { transform: translateX(120%); opacity: 0; }
         }
 
-        /* Custom Scrollbar */
         ::-webkit-scrollbar { width: 5px; height: 5px; }
         ::-webkit-scrollbar-track { background: transparent; }
         ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
         ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
         
-        /* Interactive Card Hover Effects */
         .role-card.active {
             border-color: #E35205;
             background-color: #fffaf5;
@@ -71,7 +69,6 @@
 </head>
 <body class="bg-gradient-to-b from-[#232abc] to-brand-blue min-h-screen text-slate-800 flex items-center justify-center p-4">
 
-    <!-- Toast Container -->
     <div id="toast-container" class="fixed top-5 right-5 z-50 flex flex-col gap-3"></div>
 
     <!-- 1. ส่วนลงชื่อเข้าใช้ (Login Section) -->
@@ -132,10 +129,8 @@
         </footer>
     </main>
 
-    <!-- 3. ส่วนจัดการผู้ใช้งานแบบ Interactive (Admin Section) -->
+    <!-- 3. ส่วนจัดการผู้ใช้งาน (Admin Section) -->
     <main id="admin-section" class="w-full max-w-7xl hidden fade-in py-6 h-screen max-h-[900px] flex flex-col">
-        
-        <!-- Admin Header พร้อมสลับหน้าจอ (User/App) -->
         <header class="flex flex-col sm:flex-row justify-between items-center mb-6 bg-white p-5 rounded-2xl shadow-lg shrink-0 gap-4">
             <div class="flex items-center gap-4 w-full sm:w-auto">
                 <div class="bg-slate-100 p-1.5 rounded-xl flex gap-1 shadow-inner shrink-0 overflow-x-auto w-full sm:w-auto">
@@ -147,7 +142,6 @@
                     </button>
                 </div>
             </div>
-            
             <div class="flex gap-3">
                 <button id="refresh-data-btn" class="bg-slate-100 hover:bg-slate-200 text-slate-700 px-4 py-2 rounded-xl transition-colors flex items-center gap-2 font-medium">
                     <i data-lucide="refresh-cw" class="w-4 h-4" id="refresh-icon"></i> รีเฟรช
@@ -158,11 +152,8 @@
             </div>
         </header>
 
-        <!-- ==============================================
-             [TAB 1] Interactive Layout: จัดการสิทธิ์พนักงาน 
-             ============================================== -->
+        <!-- [TAB 1] จัดการสิทธิ์พนักงาน -->
         <section id="tab-content-users" class="flex flex-col lg:flex-row gap-6 flex-grow min-h-0">
-            <!-- Panel ซ้าย: รายชื่อผู้ใช้ -->
             <article class="bg-white rounded-2xl shadow-xl border border-slate-200 flex flex-col w-full lg:w-1/3 shrink-0 overflow-hidden relative">
                 <div class="p-5 border-b border-slate-100 bg-slate-50 flex flex-col gap-3">
                     <button onclick="AdminInteractive.setupNewUser()" class="w-full bg-brand-blue/10 hover:bg-brand-blue hover:text-white text-brand-blue border border-brand-blue/20 font-semibold py-3 px-4 rounded-xl transition-all flex justify-center items-center gap-2 group">
@@ -179,18 +170,14 @@
                     </div>
                 </div>
                 
-                <div id="interactive-user-list" class="flex-grow overflow-y-auto p-2 space-y-1 bg-slate-50/50">
-                    <!-- รายชื่อจะถูก Render ตรงนี้ -->
-                </div>
+                <div id="interactive-user-list" class="flex-grow overflow-y-auto p-2 space-y-1 bg-slate-50/50"></div>
 
                 <div id="list-loading-state" class="hidden absolute inset-0 bg-white/80 backdrop-blur-sm flex flex-col items-center justify-center z-10 text-brand-blue">
                     <i data-lucide="loader-2" class="w-8 h-8 animate-spin mb-2"></i>
                 </div>
             </article>
 
-            <!-- Panel ขวา: พื้นที่จัดการสิทธิ์ (Interactive Canvas) -->
             <article class="bg-white rounded-2xl shadow-xl border-t-8 border-t-brand-orange flex flex-col w-full lg:w-2/3 shrink-0 overflow-hidden">
-                <!-- State: ยังไม่ได้เลือกใคร -->
                 <div id="empty-selection-state" class="flex flex-col items-center justify-center h-full text-slate-400 p-10">
                     <div class="w-24 h-24 bg-slate-50 rounded-full flex items-center justify-center mb-6 shadow-inner">
                         <i data-lucide="mouse-pointer-click" class="w-10 h-10 text-slate-300"></i>
@@ -199,7 +186,6 @@
                     <p class="text-sm">เพื่อดูและจัดการสิทธิ์กลุ่มที่ผู้ใช้นี้อยู่</p>
                 </div>
 
-                <!-- State: กำลังจัดการผู้ใช้ -->
                 <form id="interactive-form" class="hidden flex flex-col h-full" novalidate>
                     <div class="p-6 border-b border-slate-100 bg-slate-50/80 flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between shrink-0">
                         <div class="flex items-center gap-4 w-full sm:w-auto">
@@ -222,7 +208,6 @@
                     </div>
 
                     <div class="flex-grow overflow-y-auto p-6 flex flex-col gap-8 bg-white">
-                        <!-- จิ้มสิทธิ์ (Roles) -->
                         <div>
                             <div class="flex justify-between items-end mb-4">
                                 <div>
@@ -234,7 +219,6 @@
                             <div id="interactive-role-grid" class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3"></div>
                         </div>
 
-                        <!-- App Preview -->
                         <div class="bg-slate-50 rounded-2xl p-5 border border-slate-100 shadow-inner mt-auto">
                             <h3 class="text-sm font-bold text-slate-600 mb-4 flex items-center gap-2">
                                 <i data-lucide="eye" class="w-4 h-4"></i> 2. ผลลัพธ์: แอปพลิเคชันที่ใช้งานได้
@@ -246,9 +230,7 @@
             </article>
         </section>
 
-        <!-- ==============================================
-             [TAB 2] App Role Matrix: จัดการแอป 
-             ============================================== -->
+        <!-- [TAB 2] จัดการแอป -->
         <section id="tab-content-apps" class="hidden flex-col flex-grow bg-white rounded-2xl shadow-xl border-t-8 border-t-brand-blue overflow-hidden p-6">
             <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-4">
                 <div>
@@ -267,12 +249,9 @@
                     <thead class="bg-slate-50">
                         <tr id="app-matrix-header-row" class="border-b border-slate-200">
                             <th class="p-4 font-bold text-slate-700 bg-slate-100 border-r border-slate-200">แอปพลิเคชัน / ระบบ</th>
-                            <!-- Role headers will be rendered here -->
                         </tr>
                     </thead>
-                    <tbody id="app-permission-matrix" class="divide-y divide-slate-100">
-                        <!-- Matrix rows will be rendered here -->
-                    </tbody>
+                    <tbody id="app-permission-matrix" class="divide-y divide-slate-100"></tbody>
                 </table>
             </div>
             <div class="mt-4 p-4 bg-orange-50 text-brand-orange rounded-xl text-sm flex items-start gap-3">
@@ -280,7 +259,6 @@
                 <p><b>หมายเหตุ:</b> การตั้งค่าส่วนนี้จะถูกซิงค์ไปยัง Google Sheets อัตโนมัติ (แผ่นงานชื่อ AppConfig) เพื่อให้การตั้งค่าสะท้อนไปยังพนักงานทุกคนทันทีที่เข้าสู่ระบบครั้งถัดไป</p>
             </div>
         </section>
-
     </main>
 
     <script>
@@ -288,8 +266,8 @@
          * 1. CONFIGURATION & DATA
          * ========================================================== */
         const CONFIG = {
-            API_URL: "https://script.google.com/macros/s/AKfycbwaecb-r_nSEO08iU__2bwSMHnB37NmWof0nDMtjWaFOlhaUhTHCp4BXjQmoGo_jbk/exec", // วาง URL ของคุณตรงนี้
-            STORAGE_USER_DB: "akra_users_db", // (Admin Only)
+            API_URL: "https://script.google.com/macros/s/AKfycbwv2oGqYocA-k-EN2qjs_rf64gc9kDCG2o2nIKlAW0BDCT0rXLvcgLurCRaQXjuC-OG/exec", 
+            STORAGE_USER_DB: "akra_users_db",
             STORAGE_SESSION: "akra_session_token",
             STORAGE_USER_DATA: "akra_user_data",
             STORAGE_APP_CONFIG: "akra_app_config"
@@ -315,16 +293,13 @@
         ];
 
         let state = {
-            users: {}, // โหลดเฉพาะเมื่อเป็น Admin
+            users: {},
             currentUser: null,
             currentRoles: [],
             sessionToken: null,
             appConfig: [] 
         };
 
-        /** =========================================================
-         * 2. UI SERVICES & API
-         * ========================================================== */
         const UI = {
             showToast: (message, type = 'success') => {
                 const container = document.getElementById('toast-container');
@@ -347,21 +322,16 @@
                     document.getElementById(sec).classList.toggle('hidden', sec !== sectionId);
                 });
                 if(sectionId === 'admin-section') {
-                    // หากเปิดหน้า Admin ให้ดึงข้อมูล Users ทั้งหมด
                     AdminInteractive.fetchAdminData();
                 }
             }
         };
 
         const API = {
-            // ส่งข้อมูลแบบธรรมดาข้ามโดเมน เพื่อหลีกเลี่ยง CORS Preflight ของ GAS
             postAction: async (payload) => {
-                // แนบ Token ไปกับทุกคำสั่ง POST เพื่อให้ Server รู้ว่าเป็นใคร
                 if(state.sessionToken) payload.token = state.sessionToken; 
-                
                 await fetch(CONFIG.API_URL, { 
                     method: 'POST', 
-                    // ใช้ text/plain เลี่ยง OPTIONS Preflight
                     headers: { 'Content-Type': 'text/plain;charset=utf-8' }, 
                     body: JSON.stringify(payload) 
                 });
@@ -372,9 +342,6 @@
             }
         };
 
-        /** =========================================================
-         * 3. ADMIN INTERACTIVE MANAGER
-         * ========================================================== */
         const AdminInteractive = {
             editingUserId: null,
             editingRoles: [],
@@ -382,8 +349,7 @@
             fetchAdminData: async () => {
                 document.getElementById('list-loading-state').classList.remove('hidden');
                 try {
-                    // ดึงข้อมูลรายชื่อพนักงาน (ต้องใช้ Admin Token)
-                    const res = await fetch(`${CONFIG.API_URL}?action=getAdminData&token=${state.sessionToken}`);
+                    const res = await fetch(`${CONFIG.API_URL}?action=getAdminData&token=${encodeURIComponent(state.sessionToken)}`);
                     const data = await res.json();
                     
                     if (data.status === 'success' && data.users) {
@@ -604,7 +570,6 @@
                     
                     await API.postAction(payload);
                     
-                    // Update Local State After Success
                     state.users[idInput] = { name: nameInput, roles: [...AdminInteractive.editingRoles] };
                     localStorage.setItem(CONFIG.STORAGE_USER_DB, JSON.stringify(state.users));
                     
@@ -647,7 +612,6 @@
                 }
             },
 
-            // --- TAB 2: App Role Matrix Logic ---
             renderAppMatrix: () => {
                 const tbody = document.getElementById('app-permission-matrix');
                 const headerRow = document.getElementById('app-matrix-header-row');
@@ -745,9 +709,6 @@
             }
         };
 
-        /** =========================================================
-         * 4. MAIN APP INITIALIZATION
-         * ========================================================== */
         const App = {
             init: async () => {
                 lucide.createIcons();
@@ -767,7 +728,6 @@
                     setTimeout(()=>document.getElementById('refresh-icon').classList.remove('animate-spin'), 500);
                 });
 
-                // --- ตรวจสอบ Session ที่เซฟไว้ ---
                 const savedToken = localStorage.getItem(CONFIG.STORAGE_SESSION);
                 const savedUserData = localStorage.getItem(CONFIG.STORAGE_USER_DATA);
                 
@@ -778,7 +738,6 @@
                         state.currentUser = parsedUser.name;
                         state.currentRoles = parsedUser.roles || [];
                         
-                        // โหลด AppConfig จาก Cache
                         const cachedApps = localStorage.getItem(CONFIG.STORAGE_APP_CONFIG);
                         state.appConfig = cachedApps ? JSON.parse(cachedApps) : JSON.parse(JSON.stringify(DEFAULT_APP_CONFIG));
                         
@@ -788,7 +747,6 @@
                 }
             },
 
-            // แจ้ง Server ให้ตรวจสอบการเข้าสู่ระบบ
             handleLogin: async (e) => {
                 e.preventDefault();
                 const pwdInput = document.getElementById('password-input');
@@ -800,7 +758,6 @@
                 btn.disabled = true; btnText.innerHTML = '<i data-lucide="loader-2" class="w-5 h-5 animate-spin mr-2 inline"></i> ตรวจสอบ...'; lucide.createIcons();
                 
                 try {
-                    // ส่งแบบ GET เพื่อเลี่ยงปัญหา CORS Preflight ใน Google Apps Script
                     const response = await fetch(`${CONFIG.API_URL}?action=login&id=${encodeURIComponent(pwd)}`);
                     const data = await response.json();
 
@@ -815,12 +772,9 @@
                             state.appConfig = JSON.parse(JSON.stringify(DEFAULT_APP_CONFIG));
                         }
 
-                        // บันทึก Session Token และข้อมูลพนักงานลง Local Storage
                         localStorage.setItem(CONFIG.STORAGE_SESSION, state.sessionToken);
                         localStorage.setItem(CONFIG.STORAGE_USER_DATA, JSON.stringify({ name: state.currentUser, roles: state.currentRoles }));
                         localStorage.setItem(CONFIG.STORAGE_APP_CONFIG, JSON.stringify(state.appConfig));
-                        
-                        // เคลียร์รายชื่อเก่าที่เคยเก็บไว้เพื่อความปลอดภัย
                         localStorage.removeItem(CONFIG.STORAGE_USER_DB);
 
                         pwdInput.value = '';
@@ -832,7 +786,7 @@
                         pwdInput.focus();
                     }
                 } catch (error) {
-                    UI.showToast("เกิดข้อผิดพลาดในการเชื่อมต่อ", 'error');
+                    UI.showToast("เกิดข้อผิดพลาดในการเชื่อมต่อ กรุณาลองใหม่", 'error');
                 } finally {
                     btn.disabled = false; btnText.innerText = 'เข้าสู่ระบบ';
                 }
@@ -878,13 +832,8 @@
             }
         };
 
-        /** =========================================================
-         * 5. AKRA SSO — Secure Token Sender
-         * ========================================================== */
         const AKRA_SSO = {
             openApp: function(url, appId) {
-                // แนบ JWT (Session Token) ที่ได้จาก Server ไปใน URL 
-                // ฝั่งปลายทางจะเอา Token นี้ไป Verify กับ Server อีกที
                 if(!state.sessionToken) return App.handleLogout();
                 
                 window.open(`${url}?sso=${encodeURIComponent(state.sessionToken)}`, '_blank');
