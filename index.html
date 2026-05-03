@@ -85,7 +85,7 @@
 
             <form id="login-form" class="space-y-5" novalidate>
                 <div>
-                    <input type="password" id="password-input" placeholder="รหัสพนักงาน / รหัสผ่าน" 
+                    <input type="password" id="password-input" placeholder="รหัสพนักงาน" 
                         class="w-full px-4 py-3 rounded-xl bg-slate-50 border border-slate-200 focus:outline-none focus:border-brand-blue focus:ring-2 focus:ring-brand-blue/20 text-center text-lg tracking-widest text-brand-blue transition-all shadow-inner"
                         required autocomplete="current-password">
                 </div>
@@ -288,16 +288,17 @@
          * 1. CONFIGURATION & DATA
          * ========================================================== */
         const CONFIG = {
-            API_URL: "https://script.google.com/macros/s/AKfycbxGddluKdxhpthZZvpJmY3dOWlNMJaqNt14RWMbEdi-GsROQsmhvWRHUEvGIm0QwE1-/exec",
-            STORAGE_USER_DB: "akra_users_db",
-            STORAGE_SESSION: "akra_session",
+            API_URL: "https://script.google.com/macros/s/AKfycbxMdnPcafzGl-ekKcttDGWwAfQE1AfQ3L8zssLIF8jvP513ajVvAnAaAtocjboiwqvD/exec", // วาง URL ของคุณตรงนี้
+            STORAGE_USER_DB: "akra_users_db", // (Admin Only)
+            STORAGE_SESSION: "akra_session_token",
+            STORAGE_USER_DATA: "akra_user_data",
             STORAGE_APP_CONFIG: "akra_app_config"
         };
 
         const DEFAULT_APP_CONFIG = [
             { id: "app-w5", name: "เบิก W5", icon: "package-minus", url: "https://akra-web.github.io/AKRA/", roles: ["ADMIN", "AKRA", "WAREHOUSE", "Cashier"] },
             { id: "app-trd", name: "ย้ายสินค้า", icon: "arrow-right-left", url: "https://akra-web.github.io/TRDAKRA/", roles: ["ADMIN", "AKRA", "TRD", "WAREHOUSE", "Cashier"] },
-            { id: "app-gr", name: "รับเข้าสินค้า", icon: "clipboard-list", url: "https://akra-web.github.io/GR/", roles: ["ADMIN", "AKRA", "WAREHOUSE", "Cashier"] },
+            { id: "app-gr", name: "รับสินค้า", icon: "clipboard-list", url: "https://akra-web.github.io/GR/", roles: ["ADMIN", "AKRA", "WAREHOUSE", "Cashier"] },
             { id: "app-pr", name: "PR ขอซื้อ", icon: "file-plus-2", url: "https://akra-web.github.io/PR/", roles: ["ADMIN", "AKRA", "WAREHOUSE", "Cashier"] },
             { id: "app-tracking", name: "Track PO", icon: "truck", url: "https://akra-web.github.io/TrackingPO/", roles: ["ADMIN", "AKRA", "TRD", "WAREHOUSE", "Cashier"] },
             { id: "app-damage", name: "ของคืน/เคลม", icon: "package-x", url: "https://akra-web.github.io/Returnitem/", roles: ["ADMIN", "AKRA", "TRD", "WAREHOUSE", "Cashier"] },
@@ -314,9 +315,10 @@
         ];
 
         let state = {
-            users: {},
+            users: {}, // โหลดเฉพาะเมื่อเป็น Admin
             currentUser: null,
             currentRoles: [],
+            sessionToken: null,
             appConfig: [] 
         };
 
@@ -344,47 +346,29 @@
                 ['login-section', 'dashboard-section', 'admin-section'].forEach(sec => {
                     document.getElementById(sec).classList.toggle('hidden', sec !== sectionId);
                 });
-                if(sectionId === 'admin-section') AdminInteractive.init();
+                if(sectionId === 'admin-section') {
+                    // หากเปิดหน้า Admin ให้ดึงข้อมูล Users ทั้งหมด
+                    AdminInteractive.fetchAdminData();
+                }
             }
         };
 
         const API = {
-            fetchData: async () => {
-                try {
-                    const response = await fetch(`${CONFIG.API_URL}?action=getUsers`);
-                    if (!response.ok) throw new Error("HTTP Error");
-                    const data = await response.json();
-                    
-                    if (data.users && Object.keys(data.users).length > 0) {
-                        state.users = data.users;
-                        localStorage.setItem(CONFIG.STORAGE_USER_DB, JSON.stringify(data.users));
-                        
-                        // ดึง AppConfig จาก Sheet ถ้ามี ถ้าไม่มีใช้ Default
-                        if (data.appConfig && data.appConfig.length > 0) {
-                            state.appConfig = data.appConfig;
-                        } else {
-                            state.appConfig = JSON.parse(JSON.stringify(DEFAULT_APP_CONFIG));
-                        }
-                        localStorage.setItem(CONFIG.STORAGE_APP_CONFIG, JSON.stringify(state.appConfig));
-                        return true;
-                    }
-                } catch (error) {
-                    console.warn("ดึงข้อมูลจาก Server ไม่สำเร็จ ใช้ Cache แทน");
-                    const cachedUsers = localStorage.getItem(CONFIG.STORAGE_USER_DB);
-                    if (cachedUsers) state.users = JSON.parse(cachedUsers);
-                    
-                    const cachedApps = localStorage.getItem(CONFIG.STORAGE_APP_CONFIG);
-                    state.appConfig = cachedApps ? JSON.parse(cachedApps) : JSON.parse(JSON.stringify(DEFAULT_APP_CONFIG));
-                    throw error;
-                }
-            },
+            // ส่งข้อมูลแบบธรรมดาข้ามโดเมน เพื่อหลีกเลี่ยง CORS Preflight ของ GAS
             postAction: async (payload) => {
-                await fetch(CONFIG.API_URL, { method: 'POST', mode: 'no-cors', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
+                // แนบ Token ไปกับทุกคำสั่ง POST เพื่อให้ Server รู้ว่าเป็นใคร
+                if(state.sessionToken) payload.token = state.sessionToken; 
+                
+                await fetch(CONFIG.API_URL, { 
+                    method: 'POST', 
+                    // ใช้ text/plain เลี่ยง OPTIONS Preflight
+                    headers: { 'Content-Type': 'text/plain;charset=utf-8' }, 
+                    body: JSON.stringify(payload) 
+                });
             },
             sendLog: (action, appName, details) => {
                 if(!state.currentUser) return;
-                fetch(CONFIG.API_URL, { method: 'POST', mode: 'no-cors', headers: { 'Content-Type': 'application/json' }, 
-                body: JSON.stringify({ action, app: appName, details, user: state.currentUser }) }).catch(()=>{});
+                API.postAction({ action: "log", app: appName, details, user: state.currentUser }).catch(()=>{});
             }
         };
 
@@ -395,11 +379,38 @@
             editingUserId: null,
             editingRoles: [],
 
+            fetchAdminData: async () => {
+                document.getElementById('list-loading-state').classList.remove('hidden');
+                try {
+                    // ดึงข้อมูลรายชื่อพนักงาน (ต้องใช้ Admin Token)
+                    const res = await fetch(`${CONFIG.API_URL}?action=getAdminData&token=${state.sessionToken}`);
+                    const data = await res.json();
+                    
+                    if (data.status === 'success' && data.users) {
+                        state.users = data.users;
+                        localStorage.setItem(CONFIG.STORAGE_USER_DB, JSON.stringify(state.users));
+                        AdminInteractive.renderUserList();
+                        AdminInteractive.setupAppPreviewGrid();
+                        AdminInteractive.renderAppMatrix();
+                    } else {
+                        UI.showToast("คุณไม่มีสิทธิ์ดึงข้อมูลพนักงาน", "error");
+                        UI.switchSection('dashboard-section');
+                    }
+                } catch (error) {
+                    console.warn("ดึงข้อมูลไม่สำเร็จ ใช้ Cache แທน");
+                    const cachedUsers = localStorage.getItem(CONFIG.STORAGE_USER_DB);
+                    if (cachedUsers) {
+                        state.users = JSON.parse(cachedUsers);
+                        AdminInteractive.renderUserList();
+                        AdminInteractive.renderAppMatrix();
+                    } else {
+                        UI.showToast("ไม่สามารถโหลดรายชื่อพนักงานได้", "error");
+                    }
+                }
+                document.getElementById('list-loading-state').classList.add('hidden');
+            },
+
             init: () => {
-                AdminInteractive.renderUserList();
-                AdminInteractive.setupAppPreviewGrid();
-                AdminInteractive.renderAppMatrix();
-                
                 document.getElementById('search-input').addEventListener('input', AdminInteractive.renderUserList);
                 document.getElementById('interactive-form').addEventListener('submit', AdminInteractive.handleSave);
                 document.getElementById('btn-delete-user').addEventListener('click', AdminInteractive.handleDelete);
@@ -590,16 +601,19 @@
 
                 try {
                     const payload = { action: "saveUser", id: idInput, name: nameInput, roles: AdminInteractive.editingRoles };
+                    
+                    await API.postAction(payload);
+                    
+                    // Update Local State After Success
                     state.users[idInput] = { name: nameInput, roles: [...AdminInteractive.editingRoles] };
                     localStorage.setItem(CONFIG.STORAGE_USER_DB, JSON.stringify(state.users));
                     
-                    await API.postAction(payload);
                     API.sendLog("Admin Action", "Portal", `จัดการสิทธิ์: ${idInput} (${nameInput})`);
                     UI.showToast("อัปเดตสิทธิ์สำเร็จ", "success");
                     
                     if(nameInput === state.currentUser) {
                         state.currentRoles = [...AdminInteractive.editingRoles];
-                        localStorage.setItem(CONFIG.STORAGE_SESSION, JSON.stringify({ name: nameInput, roles: state.currentRoles }));
+                        localStorage.setItem(CONFIG.STORAGE_USER_DATA, JSON.stringify({ name: nameInput, roles: state.currentRoles }));
                     }
 
                     AdminInteractive.editingUserId = idInput; 
@@ -620,9 +634,10 @@
 
                 if(confirm(`ยืนยันการลบ ${name} (${id}) ถาวรหรือไม่?`)) {
                     try {
+                        await API.postAction({ action: "deleteUser", id });
+                        
                         delete state.users[id];
                         localStorage.setItem(CONFIG.STORAGE_USER_DB, JSON.stringify(state.users));
-                        await API.postAction({ action: "deleteUser", id });
                         
                         UI.showToast("ลบผู้ใช้สำเร็จ", "success");
                         AdminInteractive.setupNewUser();
@@ -706,13 +721,12 @@
                 lucide.createIcons();
 
                 try {
-                    localStorage.setItem(CONFIG.STORAGE_APP_CONFIG, JSON.stringify(state.appConfig));
-                    
                     await API.postAction({
                         action: "saveAppConfig",
                         appConfig: state.appConfig
                     });
-
+                    
+                    localStorage.setItem(CONFIG.STORAGE_APP_CONFIG, JSON.stringify(state.appConfig));
                     UI.showToast("บันทึกตารางสิทธิ์ลงฐานข้อมูลสำเร็จ", "success");
                     
                     AdminInteractive.setupAppPreviewGrid();
@@ -722,7 +736,7 @@
                     API.sendLog("Admin Action", "Portal", "ปรับปรุงตารางสิทธิ์การเข้าแอปบน Database");
                     
                 } catch (error) {
-                    UI.showToast("การจำลองบันทึกสำเร็จ (พบ API error แต่ข้อมูลถูกบันทึกใน Local Storage เพื่อใช้พรีวิวแล้ว)", "info");
+                    UI.showToast("บันทึกไม่สำเร็จ ลองใหม่อีกครั้ง", "error");
                 } finally {
                     btn.innerHTML = originalHtml;
                     btn.disabled = false;
@@ -737,6 +751,7 @@
         const App = {
             init: async () => {
                 lucide.createIcons();
+                AdminInteractive.init();
                 
                 document.getElementById('login-form').addEventListener('submit', App.handleLogin);
                 document.getElementById('logout-btn').addEventListener('click', App.handleLogout);
@@ -747,68 +762,89 @@
                 });
                 document.getElementById('refresh-data-btn').addEventListener('click', async () => {
                     document.getElementById('refresh-icon').classList.add('animate-spin');
-                    try {
-                        await API.fetchData();
-                        AdminInteractive.renderUserList();
-                        AdminInteractive.renderAppMatrix(); 
-                        UI.showToast("ดึงข้อมูลล่าสุดจากเซิร์ฟเวอร์แล้ว");
-                    } catch(e) {}
+                    await AdminInteractive.fetchAdminData();
+                    UI.showToast("อัปเดตข้อมูลล่าสุดจากเซิร์ฟเวอร์แล้ว");
                     setTimeout(()=>document.getElementById('refresh-icon').classList.remove('animate-spin'), 500);
                 });
 
-                const session = localStorage.getItem(CONFIG.STORAGE_SESSION);
-                if (session) {
+                // --- ตรวจสอบ Session ที่เซฟไว้ ---
+                const savedToken = localStorage.getItem(CONFIG.STORAGE_SESSION);
+                const savedUserData = localStorage.getItem(CONFIG.STORAGE_USER_DATA);
+                
+                if (savedToken && savedUserData) {
                     try {
-                        const parsed = JSON.parse(session);
-                        state.currentUser = parsed.name;
-                        state.currentRoles = parsed.roles || [];
+                        const parsedUser = JSON.parse(savedUserData);
+                        state.sessionToken = savedToken;
+                        state.currentUser = parsedUser.name;
+                        state.currentRoles = parsedUser.roles || [];
+                        
+                        // โหลด AppConfig จาก Cache
+                        const cachedApps = localStorage.getItem(CONFIG.STORAGE_APP_CONFIG);
+                        state.appConfig = cachedApps ? JSON.parse(cachedApps) : JSON.parse(JSON.stringify(DEFAULT_APP_CONFIG));
+                        
                         UI.switchSection('dashboard-section');
-                    } catch (e) { localStorage.removeItem(CONFIG.STORAGE_SESSION); }
-                }
-
-                try { 
-                    await API.fetchData(); 
-                    if(state.currentUser) App.renderDashboard();
-                } 
-                catch (error) { 
-                    if(Object.keys(state.users).length === 0) {
-                         state.users = {"250013": { name: "CHEN", roles: ["ADMIN"] }, "Stamp111": { name: "STAMP", roles: ["WAREHOUSE", "Cashier"] }};
-                    }
+                        App.renderDashboard();
+                    } catch (e) { App.handleLogout(); }
                 }
             },
 
+            // แจ้ง Server ให้ตรวจสอบการเข้าสู่ระบบ
             handleLogin: async (e) => {
                 e.preventDefault();
                 const pwdInput = document.getElementById('password-input');
                 const pwd = pwdInput.value.trim();
-
                 if (!pwd) return;
 
                 const btn = document.getElementById('login-btn');
                 const btnText = document.getElementById('login-btn-text');
                 btn.disabled = true; btnText.innerHTML = '<i data-lucide="loader-2" class="w-5 h-5 animate-spin mr-2 inline"></i> ตรวจสอบ...'; lucide.createIcons();
                 
-                setTimeout(() => {
-                    const user = state.users[pwd];
-                    if (user) {
-                        state.currentUser = user.name;
-                        state.currentRoles = Array.isArray(user.roles) ? user.roles : [user.roles];
-                        localStorage.setItem(CONFIG.STORAGE_SESSION, JSON.stringify({ name: state.currentUser, roles: state.currentRoles }));
+                try {
+                    // ส่งแบบ GET เพื่อเลี่ยงปัญหา CORS Preflight ใน Google Apps Script
+                    const response = await fetch(`${CONFIG.API_URL}?action=login&id=${encodeURIComponent(pwd)}`);
+                    const data = await response.json();
+
+                    if (data.status === 'success') {
+                        state.sessionToken = data.token;
+                        state.currentUser = data.user.name;
+                        state.currentRoles = data.user.roles || [];
+                        
+                        if (data.appConfig && data.appConfig.length > 0) {
+                            state.appConfig = data.appConfig;
+                        } else {
+                            state.appConfig = JSON.parse(JSON.stringify(DEFAULT_APP_CONFIG));
+                        }
+
+                        // บันทึก Session Token และข้อมูลพนักงานลง Local Storage
+                        localStorage.setItem(CONFIG.STORAGE_SESSION, state.sessionToken);
+                        localStorage.setItem(CONFIG.STORAGE_USER_DATA, JSON.stringify({ name: state.currentUser, roles: state.currentRoles }));
+                        localStorage.setItem(CONFIG.STORAGE_APP_CONFIG, JSON.stringify(state.appConfig));
+                        
+                        // เคลียร์รายชื่อเก่าที่เคยเก็บไว้เพื่อความปลอดภัย
+                        localStorage.removeItem(CONFIG.STORAGE_USER_DB);
+
                         pwdInput.value = '';
                         UI.showToast(`ยินดีต้อนรับ ${state.currentUser}`);
                         UI.switchSection('dashboard-section');
                         App.renderDashboard();
                     } else {
-                        UI.showToast("รหัสไม่ถูกต้อง", 'error');
+                        UI.showToast("รหัสไม่ถูกต้อง หรือไม่มีในระบบ", 'error');
                         pwdInput.focus();
                     }
+                } catch (error) {
+                    UI.showToast("เกิดข้อผิดพลาดในการเชื่อมต่อ", 'error');
+                } finally {
                     btn.disabled = false; btnText.innerText = 'เข้าสู่ระบบ';
-                }, 500);
+                }
             },
 
             handleLogout: () => {
                 localStorage.removeItem(CONFIG.STORAGE_SESSION);
-                state.currentUser = null; state.currentRoles = [];
+                localStorage.removeItem(CONFIG.STORAGE_USER_DATA);
+                localStorage.removeItem(CONFIG.STORAGE_USER_DB);
+                state.currentUser = null; 
+                state.currentRoles = [];
+                state.sessionToken = null;
                 UI.switchSection('login-section');
             },
 
@@ -843,22 +879,16 @@
         };
 
         /** =========================================================
-         * 5. AKRA SSO — Token Generator
-         *    สร้าง Token เมื่อเปิดแอพ เพื่อให้แอพปลายทาง verify ได้
+         * 5. AKRA SSO — Secure Token Sender
          * ========================================================== */
         const AKRA_SSO = {
-            // Token = "userName|timestamp|appId" เข้ารหัสด้วย btoa
-            createToken: function(appId) {
-                const ts  = Date.now();
-                const raw = `${state.currentUser}|${ts}|${appId}`;
-                return btoa(encodeURIComponent(raw));
-            },
-
-            // เปิดแอพพร้อมแนบ Token ใน URL (?sso=xxx)
             openApp: function(url, appId) {
-                const token = AKRA_SSO.createToken(appId);
-                window.open(`${url}?sso=${token}`, '_blank');
-                API.sendLog("Open App", appId, `${state.currentUser} เปิดแอพ`);
+                // แนบ JWT (Session Token) ที่ได้จาก Server ไปใน URL 
+                // ฝั่งปลายทางจะเอา Token นี้ไป Verify กับ Server อีกที
+                if(!state.sessionToken) return App.handleLogout();
+                
+                window.open(`${url}?sso=${encodeURIComponent(state.sessionToken)}`, '_blank');
+                API.sendLog("Open App", appId, `${state.currentUser} เปิดแอป`);
             }
         };
 
