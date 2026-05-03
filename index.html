@@ -828,7 +828,7 @@
                 } else {
                     allowedApps.forEach(app => {
                         grid.innerHTML += `
-                            <button onclick="window.open('${app.url}?user=${state.currentUser}&ts=${Date.now()}', '_blank')" 
+                            <button onclick="AKRA_SSO.openApp('${app.url}', '${app.id}')" 
                                 class="bg-white p-6 rounded-2xl border-2 border-transparent hover:border-brand-orange transition-all transform hover:-translate-y-1 text-left group flex flex-col h-full shadow-lg hover:shadow-brand-orange/20">
                                 <div class="bg-slate-50 w-12 h-12 rounded-xl flex items-center justify-center mb-4 group-hover:bg-brand-orange transition-colors border border-slate-100">
                                     <i data-lucide="${app.icon}" class="text-brand-blue group-hover:text-white w-6 h-6 transition-colors"></i>
@@ -839,6 +839,26 @@
                     });
                 }
                 lucide.createIcons();
+            }
+        };
+
+        /** =========================================================
+         * 5. AKRA SSO — Token Generator
+         *    สร้าง Token เมื่อเปิดแอพ เพื่อให้แอพปลายทาง verify ได้
+         * ========================================================== */
+        const AKRA_SSO = {
+            // Token = "userName|timestamp|appId" เข้ารหัสด้วย btoa
+            createToken: function(appId) {
+                const ts  = Date.now();
+                const raw = `${state.currentUser}|${ts}|${appId}`;
+                return btoa(encodeURIComponent(raw));
+            },
+
+            // เปิดแอพพร้อมแนบ Token ใน URL (?sso=xxx)
+            openApp: function(url, appId) {
+                const token = AKRA_SSO.createToken(appId);
+                window.open(`${url}?sso=${token}`, '_blank');
+                API.sendLog("Open App", appId, `${state.currentUser} เปิดแอพ`);
             }
         };
 
