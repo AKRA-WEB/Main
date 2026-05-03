@@ -887,7 +887,7 @@
                 // ฝั่งปลายทางจะเอา Token นี้ไป Verify กับ Server อีกที
                 if(!state.sessionToken) return App.handleLogout();
                 
-                window.open(${url}?sso=${encodeURIComponent(token)}, '_blank');
+                window.open(`${url}?sso=${encodeURIComponent(state.sessionToken)}`, '_blank');
                 API.sendLog("Open App", appId, `${state.currentUser} เปิดแอป`);
             }
         };
