@@ -273,13 +273,55 @@
             STORAGE_APP_CONFIG: "akra_app_config"
         };
 
+        // ระบบจัดการข้อมูลสำรองเมื่อเบราว์เซอร์บล็อก localStorage (เช่น โหมดส่วนตัว / iframe)
+        const safeStorage = (function() {
+            let inMemoryDb = {};
+            const isSupported = (function() {
+                try {
+                    const testKey = "__storage_test__";
+                    localStorage.setItem(testKey, testKey);
+                    localStorage.removeItem(testKey);
+                    return true;
+                } catch (e) {
+                    return false;
+                }
+            })();
+
+            return {
+                getItem: function(key) {
+                    if (isSupported) {
+                        try { return localStorage.getItem(key); } catch (e) {}
+                    }
+                    return inMemoryDb[key] || null;
+                },
+                setItem: function(key, value) {
+                    if (isSupported) {
+                        try { localStorage.setItem(key, value); return; } catch (e) {}
+                    }
+                    inMemoryDb[key] = String(value);
+                },
+                removeItem: function(key) {
+                    if (isSupported) {
+                        try { localStorage.removeItem(key); return; } catch (e) {}
+                    }
+                    delete inMemoryDb[key];
+                },
+                clear: function() {
+                    if (isSupported) {
+                        try { localStorage.clear(); return; } catch (e) {}
+                    }
+                    inMemoryDb = {};
+                }
+            };
+        })();
+
         const DEFAULT_APP_CONFIG = [
-            { id: "app-w5", name: "เบิกย้ายสินค้า W5", icon: "package-minus", url: "https://akra-web.github.io/AKRA/", roles: ["ADMIN", "AKRA", "WAREHOUSE", "Cashier"] },
-            { id: "app-trd", name: "เบิกย้ายสินค้า", icon: "arrow-right-left", url: "https://akra-web.github.io/TRDAKRA/", roles: ["ADMIN", "AKRA", "TRD", "WAREHOUSE", "Cashier"] },
-            { id: "app-gr", name: "ตรวจรับเข้าสินค้า", icon: "clipboard-list", url: "https://akra-web.github.io/GR/", roles: ["ADMIN", "AKRA", "WAREHOUSE", "Cashier"] },
-            { id: "app-pr", name: "ขอสั่งซื้อสินค้า", icon: "file-plus-2", url: "https://akra-web.github.io/PR/", roles: ["ADMIN", "AKRA", "WAREHOUSE", "Cashier"] },
-            { id: "app-tracking", name: "ติดตามสถานะจัดส่ง", icon: "truck", url: "https://akra-web.github.io/TrackingPO/", roles: ["ADMIN", "AKRA", "TRD", "WAREHOUSE", "Cashier"] },
-            { id: "app-damage", name: "ส่งคืนและเคลมสินค้า", icon: "package-x", url: "https://akra-web.github.io/Returnitem/", roles: ["ADMIN", "AKRA", "TRD", "WAREHOUSE", "Cashier"] },
+            { id: "app-w5", name: "เบิก W5", icon: "package-minus", url: "https://akra-web.github.io/AKRA/", roles: ["ADMIN", "AKRA", "WAREHOUSE", "Cashier"] },
+            { id: "app-trd", name: "ย้ายสินค้า", icon: "arrow-right-left", url: "https://akra-web.github.io/TRDAKRA/", roles: ["ADMIN", "AKRA", "TRD", "WAREHOUSE", "Cashier"] },
+            { id: "app-gr", name: "รับสินค้า", icon: "clipboard-list", url: "https://akra-web.github.io/GR/", roles: ["ADMIN", "AKRA", "WAREHOUSE", "Cashier"] },
+            { id: "app-pr", name: "PR ขอซื้อ", icon: "file-plus-2", url: "https://akra-web.github.io/PR/", roles: ["ADMIN", "AKRA", "WAREHOUSE", "Cashier"] },
+            { id: "app-tracking", name: "Track PO", icon: "truck", url: "https://akra-web.github.io/TrackingPO/", roles: ["ADMIN", "AKRA", "TRD", "WAREHOUSE", "Cashier"] },
+            { id: "app-damage", name: "ของคืน/เคลม", icon: "package-x", url: "https://akra-web.github.io/Returnitem/", roles: ["ADMIN", "AKRA", "TRD", "WAREHOUSE", "Cashier"] },
             { id: "app-kpi", name: "KPI Tracker", icon: "bar-chart-2", url: "https://akra-web.github.io/KPITRACKER/", roles: ["ADMIN", "AKRA", "TRD", "WAREHOUSE", "Cashier"] },
             { id: "app-manual", name: "คู่มือ", icon: "book-open", url: "https://akra-web.github.io/SOP/", roles: ["ADMIN", "AKRA", "TRD", "WAREHOUSE", "Cashier"] }
         ];
@@ -354,7 +396,7 @@
                     
                     if (data.status === 'success' && data.users) {
                         state.users = data.users;
-                        localStorage.setItem(CONFIG.STORAGE_USER_DB, JSON.stringify(state.users));
+                        safeStorage.setItem(CONFIG.STORAGE_USER_DB, JSON.stringify(state.users));
                         AdminInteractive.renderUserList();
                         AdminInteractive.setupAppPreviewGrid();
                         AdminInteractive.renderAppMatrix();
@@ -363,8 +405,8 @@
                         UI.switchSection('dashboard-section');
                     }
                 } catch (error) {
-                    console.warn("ดึงข้อมูลไม่สำเร็จ ใช้ Cache แທน");
-                    const cachedUsers = localStorage.getItem(CONFIG.STORAGE_USER_DB);
+                    console.warn("ดึงข้อมูลไม่สำเร็จ ใช้ Cache แแทน");
+                    const cachedUsers = safeStorage.getItem(CONFIG.STORAGE_USER_DB);
                     if (cachedUsers) {
                         state.users = JSON.parse(cachedUsers);
                         AdminInteractive.renderUserList();
@@ -571,14 +613,14 @@
                     await API.postAction(payload);
                     
                     state.users[idInput] = { name: nameInput, roles: [...AdminInteractive.editingRoles] };
-                    localStorage.setItem(CONFIG.STORAGE_USER_DB, JSON.stringify(state.users));
+                    safeStorage.setItem(CONFIG.STORAGE_USER_DB, JSON.stringify(state.users));
                     
                     API.sendLog("Admin Action", "Portal", `จัดการสิทธิ์: ${idInput} (${nameInput})`);
                     UI.showToast("อัปเดตสิทธิ์สำเร็จ", "success");
                     
                     if(nameInput === state.currentUser) {
                         state.currentRoles = [...AdminInteractive.editingRoles];
-                        localStorage.setItem(CONFIG.STORAGE_USER_DATA, JSON.stringify({ name: nameInput, roles: state.currentRoles }));
+                        safeStorage.setItem(CONFIG.STORAGE_USER_DATA, JSON.stringify({ name: nameInput, roles: state.currentRoles }));
                     }
 
                     AdminInteractive.editingUserId = idInput; 
@@ -602,7 +644,7 @@
                         await API.postAction({ action: "deleteUser", id });
                         
                         delete state.users[id];
-                        localStorage.setItem(CONFIG.STORAGE_USER_DB, JSON.stringify(state.users));
+                        safeStorage.setItem(CONFIG.STORAGE_USER_DB, JSON.stringify(state.users));
                         
                         UI.showToast("ลบผู้ใช้สำเร็จ", "success");
                         AdminInteractive.setupNewUser();
@@ -690,7 +732,7 @@
                         appConfig: state.appConfig
                     });
                     
-                    localStorage.setItem(CONFIG.STORAGE_APP_CONFIG, JSON.stringify(state.appConfig));
+                    safeStorage.setItem(CONFIG.STORAGE_APP_CONFIG, JSON.stringify(state.appConfig));
                     UI.showToast("บันทึกตารางสิทธิ์ลงฐานข้อมูลสำเร็จ", "success");
                     
                     AdminInteractive.setupAppPreviewGrid();
@@ -728,8 +770,8 @@
                     setTimeout(()=>document.getElementById('refresh-icon').classList.remove('animate-spin'), 500);
                 });
 
-                const savedToken = localStorage.getItem(CONFIG.STORAGE_SESSION);
-                const savedUserData = localStorage.getItem(CONFIG.STORAGE_USER_DATA);
+                const savedToken = safeStorage.getItem(CONFIG.STORAGE_SESSION);
+                const savedUserData = safeStorage.getItem(CONFIG.STORAGE_USER_DATA);
                 
                 if (savedToken && savedUserData) {
                     try {
@@ -738,7 +780,7 @@
                         state.currentUser = parsedUser.name;
                         state.currentRoles = parsedUser.roles || [];
                         
-                        const cachedApps = localStorage.getItem(CONFIG.STORAGE_APP_CONFIG);
+                        const cachedApps = safeStorage.getItem(CONFIG.STORAGE_APP_CONFIG);
                         state.appConfig = cachedApps ? JSON.parse(cachedApps) : JSON.parse(JSON.stringify(DEFAULT_APP_CONFIG));
                         
                         UI.switchSection('dashboard-section');
@@ -772,10 +814,10 @@
                             state.appConfig = JSON.parse(JSON.stringify(DEFAULT_APP_CONFIG));
                         }
 
-                        localStorage.setItem(CONFIG.STORAGE_SESSION, state.sessionToken);
-                        localStorage.setItem(CONFIG.STORAGE_USER_DATA, JSON.stringify({ name: state.currentUser, roles: state.currentRoles }));
-                        localStorage.setItem(CONFIG.STORAGE_APP_CONFIG, JSON.stringify(state.appConfig));
-                        localStorage.removeItem(CONFIG.STORAGE_USER_DB);
+                        safeStorage.setItem(CONFIG.STORAGE_SESSION, state.sessionToken);
+                        safeStorage.setItem(CONFIG.STORAGE_USER_DATA, JSON.stringify({ name: state.currentUser, roles: state.currentRoles }));
+                        safeStorage.setItem(CONFIG.STORAGE_APP_CONFIG, JSON.stringify(state.appConfig));
+                        safeStorage.removeItem(CONFIG.STORAGE_USER_DB);
 
                         pwdInput.value = '';
                         UI.showToast(`ยินดีต้อนรับ ${state.currentUser}`);
@@ -793,9 +835,9 @@
             },
 
             handleLogout: () => {
-                localStorage.removeItem(CONFIG.STORAGE_SESSION);
-                localStorage.removeItem(CONFIG.STORAGE_USER_DATA);
-                localStorage.removeItem(CONFIG.STORAGE_USER_DB);
+                safeStorage.removeItem(CONFIG.STORAGE_SESSION);
+                safeStorage.removeItem(CONFIG.STORAGE_USER_DATA);
+                safeStorage.removeItem(CONFIG.STORAGE_USER_DB);
                 state.currentUser = null; 
                 state.currentRoles = [];
                 state.sessionToken = null;
