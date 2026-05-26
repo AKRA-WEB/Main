@@ -140,6 +140,9 @@
                     <button id="tab-btn-apps" onclick="AdminInteractive.switchTab('apps')" class="px-5 py-2 rounded-lg font-medium text-slate-500 hover:text-brand-blue transition-all flex items-center gap-2 whitespace-nowrap">
                         <i data-lucide="layout-grid" class="w-4 h-4"></i> ตั้งค่าการเห็นแอป
                     </button>
+                    <button id="tab-btn-perms" onclick="AdminInteractive.switchTab('perms')" class="px-5 py-2 rounded-lg font-medium text-slate-500 hover:text-brand-blue transition-all flex items-center gap-2 whitespace-nowrap">
+                        <i data-lucide="shield-check" class="w-4 h-4"></i> สิทธิ์ละเอียด
+                    </button>
                 </div>
             </div>
             <div class="flex gap-3">
@@ -259,6 +262,35 @@
                 <p><b>หมายเหตุ:</b> การตั้งค่าส่วนนี้จะถูกซิงค์ไปยัง Google Sheets อัตโนมัติ (แผ่นงานชื่อ AppConfig) เพื่อให้การตั้งค่าสะท้อนไปยังพนักงานทุกคนทันทีที่เข้าสู่ระบบครั้งถัดไป</p>
             </div>
         </section>
+
+        <!-- [TAB 3] สิทธิ์ละเอียด -->
+        <section id="tab-content-perms" class="hidden flex-col flex-grow bg-white rounded-2xl shadow-xl border-t-8 border-t-brand-orange overflow-hidden p-6">
+            <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-4">
+                <div>
+                    <h3 class="text-xl font-bold text-brand-blue flex items-center gap-2">
+                        <i data-lucide="shield-check" class="w-6 h-6 text-brand-orange"></i> ตารางสิทธิ์การทำงาน (Permission Matrix)
+                    </h3>
+                    <p class="text-slate-500 text-sm mt-1">กำหนดว่า Role ใดทำ Action อะไรได้ในแต่ละแอป — มีผลทันทีที่พนักงาน Login ครั้งถัดไป</p>
+                </div>
+                <button onclick="AdminInteractive.savePermConfig()" class="bg-brand-orange hover:bg-[#c94804] text-white px-6 py-2.5 rounded-xl font-semibold shadow-md transition-all flex items-center gap-2 shrink-0">
+                    <i data-lucide="save" class="w-4 h-4"></i> บันทึกสิทธิ์
+                </button>
+            </div>
+            <div class="overflow-x-auto border border-slate-200 rounded-xl">
+                <table class="w-full text-left border-collapse min-w-[600px]">
+                    <thead class="bg-slate-50">
+                        <tr id="perm-matrix-header-row" class="border-b border-slate-200">
+                            <th class="p-3 font-bold text-slate-700 bg-slate-100 border-r border-slate-200 min-w-[220px]">แอป / Action</th>
+                        </tr>
+                    </thead>
+                    <tbody id="perm-matrix-body" class="divide-y divide-slate-100"></tbody>
+                </table>
+            </div>
+            <div class="mt-4 p-4 bg-orange-50 text-brand-orange rounded-xl text-sm flex items-start gap-3">
+                <i data-lucide="info" class="w-5 h-5 shrink-0 mt-0.5"></i>
+                <p><b>หมายเหตุ:</b> คอลัมน์ ADMIN ล็อกอยู่เสมอ ไม่สามารถปลด ADMIN ออกจากสิทธิ์ใดได้</p>
+            </div>
+        </section>
     </main>
 
     <script>
@@ -266,7 +298,7 @@
          * 1. CONFIGURATION & DATA
          * ========================================================== */
         const CONFIG = {
-            API_URL: "https://script.google.com/macros/s/AKfycbwv2oGqYocA-k-EN2qjs_rf64gc9kDCG2o2nIKlAW0BDCT0rXLvcgLurCRaQXjuC-OG/exec", 
+            API_URL: "https://script.google.com/macros/s/AKfycbxadfU5XPTKvmp5jJPLP8Wf2zrijHfDIZZGx_vJbtj94LyXEO53RJ_ahEKbLdMbvMk-/exec", 
             STORAGE_USER_DB: "akra_users_db",
             STORAGE_SESSION: "akra_session_token",
             STORAGE_USER_DATA: "akra_user_data",
@@ -326,12 +358,13 @@
             { id: "app-manual", name: "คู่มือ", icon: "book-open", url: "https://akra-web.github.io/SOP/", roles: ["ADMIN", "AKRA", "TRD", "WAREHOUSE", "Cashier"] }
         ];
 
-        const AVAILABLE_ROLES = [
-            { val: "ADMIN", label: "ADMIN", desc: "ผู้ดูแลระบบ", icon: "shield-alert" },
-            { val: "AKRA", label: "AKRA", desc: "พนักงาน AKRA", icon: "building-2" },
-            { val: "TRD", label: "TRD", desc: "พนักงาน TRD", icon: "store" },
-            { val: "WAREHOUSE", label: "WAREHOUSE", desc: "คลังสินค้า", icon: "warehouse" },
-            { val: "Cashier", label: "Cashier", desc: "แคชเชียร์/การเงิน", icon: "calculator" }
+        const DEFAULT_ROLES = [
+            { val: "ADMIN",      label: "ADMIN",      desc: "ผู้ดูแลระบบ",        icon: "shield-alert" },
+            { val: "SUPERVISOR", label: "Supervisor", desc: "หัวหน้างาน",          icon: "crown"        },
+            { val: "AKRA",       label: "AKRA",       desc: "พนักงาน AKRA",       icon: "building-2"   },
+            { val: "TRD",        label: "TRD",        desc: "พนักงาน TRD",        icon: "store"        },
+            { val: "WAREHOUSE",  label: "WAREHOUSE",  desc: "คลังสินค้า",         icon: "warehouse"    },
+            { val: "Cashier",    label: "Cashier",    desc: "แคชเชียร์/การเงิน", icon: "calculator"   }
         ];
 
         let state = {
@@ -339,7 +372,9 @@
             currentUser: null,
             currentRoles: [],
             sessionToken: null,
-            appConfig: [] 
+            appConfig: [],
+            roleConfig: [...DEFAULT_ROLES],
+            permRows: []
         };
 
         const UI = {
@@ -396,10 +431,13 @@
                     
                     if (data.status === 'success' && data.users) {
                         state.users = data.users;
+                        if (data.roleConfig && data.roleConfig.length) state.roleConfig = data.roleConfig;
+                        if (data.permRows) state.permRows = data.permRows;
                         safeStorage.setItem(CONFIG.STORAGE_USER_DB, JSON.stringify(state.users));
                         AdminInteractive.renderUserList();
                         AdminInteractive.setupAppPreviewGrid();
                         AdminInteractive.renderAppMatrix();
+                        AdminInteractive.renderPermMatrix();
                     } else {
                         UI.showToast("คุณไม่มีสิทธิ์ดึงข้อมูลพนักงาน", "error");
                         UI.switchSection('dashboard-section');
@@ -428,20 +466,16 @@
             },
 
             switchTab: (tabName) => {
-                const isUsers = tabName === 'users';
-                document.getElementById('tab-content-users').classList.toggle('hidden', !isUsers);
-                document.getElementById('tab-content-apps').classList.toggle('hidden', isUsers);
-                
-                const btnUsers = document.getElementById('tab-btn-users');
-                const btnApps = document.getElementById('tab-btn-apps');
-
-                if (isUsers) {
-                    btnUsers.className = "px-5 py-2 rounded-lg font-bold bg-white text-brand-blue shadow-sm transition-all flex items-center gap-2 whitespace-nowrap";
-                    btnApps.className = "px-5 py-2 rounded-lg font-medium text-slate-500 hover:text-brand-blue transition-all flex items-center gap-2 whitespace-nowrap";
-                } else {
-                    btnApps.className = "px-5 py-2 rounded-lg font-bold bg-white text-brand-blue shadow-sm transition-all flex items-center gap-2 whitespace-nowrap";
-                    btnUsers.className = "px-5 py-2 rounded-lg font-medium text-slate-500 hover:text-brand-blue transition-all flex items-center gap-2 whitespace-nowrap";
-                }
+                ['users','apps','perms'].forEach(t => {
+                    document.getElementById(`tab-content-${t}`).classList.toggle('hidden', t !== tabName);
+                    const btn = document.getElementById(`tab-btn-${t}`);
+                    if (!btn) return;
+                    if (t === tabName) {
+                        btn.className = "px-5 py-2 rounded-lg font-bold bg-white text-brand-blue shadow-sm transition-all flex items-center gap-2 whitespace-nowrap";
+                    } else {
+                        btn.className = "px-5 py-2 rounded-lg font-medium text-slate-500 hover:text-brand-blue transition-all flex items-center gap-2 whitespace-nowrap";
+                    }
+                });
             },
 
             renderUserList: () => {
@@ -529,7 +563,7 @@
                 const grid = document.getElementById('interactive-role-grid');
                 grid.innerHTML = '';
 
-                AVAILABLE_ROLES.forEach(r => {
+                state.roleConfig.forEach(r => {
                     const isActive = AdminInteractive.editingRoles.includes(r.val);
                     const div = document.createElement('div');
                     
@@ -659,7 +693,7 @@
                 const headerRow = document.getElementById('app-matrix-header-row');
 
                 if (headerRow.children.length === 1) {
-                    AVAILABLE_ROLES.forEach(r => {
+                    state.roleConfig.forEach(r => {
                         const th = document.createElement('th');
                         th.className = "p-4 font-bold text-slate-700 bg-slate-100 text-center border-l border-slate-200 min-w-[100px]";
                         th.innerHTML = `<i data-lucide="${r.icon}" class="w-4 h-4 mx-auto mb-1 text-brand-orange"></i>${r.label}`;
@@ -673,7 +707,7 @@
                     tr.className = "hover:bg-brand-blue/5 transition-colors";
 
                     let roleCells = '';
-                    AVAILABLE_ROLES.forEach(r => {
+                    state.roleConfig.forEach(r => {
                         const hasRole = app.roles.includes(r.val);
                         const isAdminCol = r.val === 'ADMIN';
                         const checkedAttr = hasRole ? 'checked' : '';
@@ -748,7 +782,99 @@
                     btn.disabled = false;
                     lucide.createIcons();
                 }
-            }
+            },
+
+            renderPermMatrix: () => {
+                const headerRow = document.getElementById('perm-matrix-header-row');
+                const tbody = document.getElementById('perm-matrix-body');
+                if (!headerRow || !tbody) return;
+
+                // Build headers from roleConfig (only once)
+                if (headerRow.children.length === 1) {
+                    state.roleConfig.forEach(r => {
+                        const th = document.createElement('th');
+                        th.className = "p-3 font-bold text-slate-700 bg-slate-100 text-center border-l border-slate-200 min-w-[90px] text-sm";
+                        th.innerHTML = r.val === 'ADMIN'
+                            ? `<i data-lucide="${r.icon}" class="w-4 h-4 mx-auto mb-1 text-slate-400"></i>${r.label} 🔒`
+                            : `<i data-lucide="${r.icon}" class="w-4 h-4 mx-auto mb-1 text-brand-orange"></i>${r.label}`;
+                        headerRow.appendChild(th);
+                    });
+                }
+
+                const APP_LABELS = {
+                    'app-gr': '📋 GR — ตรวจรับสินค้า',
+                    'app-po': '📄 PO — สั่งซื้อ',
+                    'app-akra': '📦 AKRA W5',
+                    'app-kpi': '📊 KPI Tracker',
+                    'app-ret': '↩️ Return & Claim'
+                };
+                const PERM_LABELS = {
+                    'receiveGR': 'รับสินค้า (Pending Review)', 'approveGR': 'อนุมัติ GR Completed',
+                    'approvePR': 'อนุมัติ PR → เปิด PO', 'createPO': 'สร้าง Direct PO', 'closePO': 'ปิด APV',
+                    'manageProducts': 'จัดการสินค้า (เพิ่ม/ลบ/แก้ไข)',
+                    'adminDashboard': 'Admin Dashboard + Settings',
+                    'ADD_RET': 'เพิ่มรายการ Return', 'QC_RET': 'QC สินค้าคืน', 'BATCH_RET': 'Batch Return',
+                    'TRACK_CUST': 'ติดตาม Customer', 'ADD_CLM': 'เปิด Claim', 'WH_CLM': 'WH Claim',
+                    'MANAGE_CLM': 'จัดการ Claim', 'AUDIT_CREATE': 'สร้าง Audit', 'AUDIT_TASK': 'Audit Task',
+                    'AUDIT_REVIEW': 'Audit Review'
+                };
+
+                tbody.innerHTML = '';
+                let lastAppId = null;
+
+                state.permRows.forEach(row => {
+                    if (row.appId !== lastAppId) {
+                        lastAppId = row.appId;
+                        const appTr = document.createElement('tr');
+                        appTr.className = "bg-brand-blue/5";
+                        appTr.innerHTML = `<td colspan="${state.roleConfig.length + 1}" class="p-3 font-bold text-brand-blue text-sm">${APP_LABELS[row.appId] || row.appId}</td>`;
+                        tbody.appendChild(appTr);
+                    }
+
+                    const tr = document.createElement('tr');
+                    tr.className = "hover:bg-slate-50 transition-colors";
+                    let cells = `<td class="p-3 pl-6 text-slate-700 text-sm border-r border-slate-100">${PERM_LABELS[row.permKey] || row.permKey}</td>`;
+
+                    state.roleConfig.forEach(r => {
+                        const isChecked = row[r.val] === true;
+                        const isAdminCol = r.val === 'ADMIN';
+                        cells += `
+                            <td class="p-3 text-center border-l border-slate-100">
+                                <label class="inline-flex items-center ${isAdminCol ? 'cursor-not-allowed opacity-40' : 'cursor-pointer'}">
+                                    <input type="checkbox" class="sr-only peer" ${isChecked ? 'checked' : ''} ${isAdminCol ? 'disabled' : ''}
+                                        onchange="AdminInteractive.togglePermRole('${row.appId}','${row.permKey}','${r.val}',this.checked)">
+                                    <div class="w-10 h-5 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-brand-blue relative"></div>
+                                </label>
+                            </td>`;
+                    });
+
+                    tr.innerHTML = cells;
+                    tbody.appendChild(tr);
+                });
+                lucide.createIcons();
+            },
+
+            togglePermRole: (appId, permKey, roleVal, checked) => {
+                const row = state.permRows.find(r => r.appId === appId && r.permKey === permKey);
+                if (row) row[roleVal] = checked;
+            },
+
+            savePermConfig: async () => {
+                const btn = document.querySelector('[onclick="AdminInteractive.savePermConfig()"]');
+                const orig = btn.innerHTML;
+                btn.innerHTML = '<i data-lucide="loader-2" class="w-4 h-4 animate-spin"></i> กำลังบันทึก...';
+                btn.disabled = true;
+                lucide.createIcons();
+                try {
+                    await API.postAction({ action: "savePermConfig", rows: state.permRows });
+                    UI.showToast("บันทึกสิทธิ์สำเร็จ — มีผลครั้งถัดไปที่พนักงาน Login");
+                    API.sendLog("Admin Action", "Portal", "ปรับ Permission Matrix");
+                } catch(e) {
+                    UI.showToast("บันทึกไม่สำเร็จ", "error");
+                } finally {
+                    btn.innerHTML = orig; btn.disabled = false; lucide.createIcons();
+                }
+            },
         };
 
         const App = {
@@ -815,7 +941,7 @@
                         }
 
                         safeStorage.setItem(CONFIG.STORAGE_SESSION, state.sessionToken);
-                        safeStorage.setItem(CONFIG.STORAGE_USER_DATA, JSON.stringify({ name: state.currentUser, roles: state.currentRoles }));
+                        safeStorage.setItem(CONFIG.STORAGE_USER_DATA, JSON.stringify({ name: state.currentUser, roles: state.currentRoles, perms: data.user.perms || {} }));
                         safeStorage.setItem(CONFIG.STORAGE_APP_CONFIG, JSON.stringify(state.appConfig));
                         safeStorage.removeItem(CONFIG.STORAGE_USER_DB);
 
