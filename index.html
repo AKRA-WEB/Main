@@ -81,10 +81,21 @@
             <p class="text-slate-500 mb-8">ลงชื่อเข้าใช้ระบบส่วนกลาง (SSO)</p>
 
             <form id="login-form" class="space-y-5" novalidate>
-                <div>
-                    <input type="password" id="password-input" placeholder="รหัสพนักงาน" 
-                        class="w-full px-4 py-3 rounded-xl bg-slate-50 border border-slate-200 focus:outline-none focus:border-brand-blue focus:ring-2 focus:ring-brand-blue/20 text-center text-lg tracking-widest text-brand-blue transition-all shadow-inner"
-                        required autocomplete="current-password">
+                <div class="space-y-4">
+                    <div class="relative">
+                        <input type="text" id="username-input" placeholder="รหัสพนักงาน (เช่น 250XXX)" 
+                            class="w-full px-4 py-3.5 rounded-xl bg-slate-50 border border-slate-200 focus:outline-none focus:border-brand-blue focus:ring-2 focus:ring-brand-blue/20 text-center text-base font-semibold text-brand-blue transition-all shadow-inner placeholder:text-slate-400"
+                            required autocomplete="username">
+                    </div>
+                    <div class="relative">
+                        <input type="password" id="password-input" placeholder="รหัสผ่าน / PIN" 
+                            class="w-full px-4 py-3.5 rounded-xl bg-slate-50 border border-slate-200 focus:outline-none focus:border-brand-blue focus:ring-2 focus:ring-brand-blue/20 text-center text-lg tracking-widest text-brand-blue transition-all shadow-inner placeholder:text-slate-400 placeholder:tracking-normal"
+                            required autocomplete="current-password">
+                    </div>
+                </div>
+                <div class="flex justify-between items-center px-1 text-xs">
+                    <span class="text-slate-400 font-medium">เข้าสู่ระบบด้วยสิทธิ์ส่วนกลาง</span>
+                    <button type="button" id="forgot-password-btn" class="text-brand-orange hover:text-[#c94804] font-bold transition-colors">ลืมรหัสผ่าน?</button>
                 </div>
                 <button type="submit" id="login-btn" 
                     class="w-full bg-brand-orange hover:bg-[#c94804] text-white font-semibold py-3.5 px-4 rounded-xl transition-all transform hover:scale-[1.02] active:scale-95 flex justify-center items-center shadow-lg shadow-brand-orange/30 disabled:opacity-70 disabled:transform-none">
@@ -115,6 +126,9 @@
                 <div class="w-px h-8 bg-slate-300 mx-1 hidden sm:block"></div>
                 <button id="admin-btn" class="hidden p-2 text-slate-400 hover:text-brand-blue hover:bg-brand-blue/10 rounded-lg transition-all" title="จัดการผู้ใช้งาน">
                     <i data-lucide="settings" class="w-5 h-5"></i>
+                </button>
+                <button id="change-pwd-btn" class="p-2 text-slate-400 hover:text-brand-blue hover:bg-brand-blue/10 rounded-lg transition-all" title="เปลี่ยนรหัสผ่าน">
+                    <i data-lucide="key-round" class="w-5 h-5"></i>
                 </button>
                 <button id="logout-btn" class="p-2 text-slate-400 hover:text-brand-orange hover:bg-brand-orange/10 rounded-lg transition-all" title="ออกจากระบบ">
                     <i data-lucide="log-out" class="w-5 h-5"></i>
@@ -203,6 +217,9 @@
                         <div class="flex gap-2">
                             <button type="button" id="btn-delete-user" class="hidden p-2.5 text-red-500 hover:bg-red-50 rounded-xl transition-colors border border-red-100" title="ลบผู้ใช้นี้">
                                 <i data-lucide="trash-2" class="w-5 h-5"></i>
+                            </button>
+                            <button type="button" id="btn-reset-user-pwd" class="hidden p-2.5 text-brand-orange hover:bg-orange-50 rounded-xl transition-colors border border-brand-orange/10" title="รีเซ็ตรหัสผ่านพนักงาน">
+                                <i data-lucide="key-round" class="w-5 h-5"></i>
                             </button>
                             <button type="submit" id="btn-save-user" class="bg-brand-orange hover:bg-[#c94804] text-white px-6 py-2.5 rounded-xl font-semibold shadow-md shadow-brand-orange/20 transition-all flex items-center gap-2">
                                 <i data-lucide="save" class="w-4 h-4"></i> <span id="save-btn-text">บันทึกข้อมูล</span>
@@ -293,12 +310,70 @@
         </section>
     </main>
 
+    <!-- 4. Modal เปลี่ยนรหัสผ่าน (Change Password Modal) -->
+    <div id="change-password-modal" class="fixed inset-0 z-50 flex items-center justify-center bg-brand-blue/60 backdrop-blur-sm hidden fade-in p-4">
+        <section class="bg-white rounded-3xl p-6 sm:p-8 max-w-md w-full shadow-2xl border-t-8 border-t-brand-orange relative overflow-hidden">
+            <button id="close-pwd-modal-btn" class="absolute top-4 right-4 text-slate-400 hover:text-slate-600 transition-colors">
+                <i data-lucide="x" class="w-6 h-6"></i>
+            </button>
+            <div class="text-center mb-6">
+                <div class="bg-brand-orange/10 p-3.5 rounded-full inline-block mb-3">
+                    <i data-lucide="key-round" class="w-8 h-8 text-brand-orange"></i>
+                </div>
+                <h3 class="text-2xl font-bold text-brand-blue">เปลี่ยนรหัสผ่านใหม่</h3>
+                <p class="text-slate-500 text-xs mt-1">รหัสผ่านใหม่ของคุณต้องเป็นความลับเพื่อความปลอดภัย</p>
+            </div>
+            <form id="change-pwd-form" class="space-y-4" novalidate>
+                <div>
+                    <label class="block text-xs font-semibold text-slate-600 mb-1.5 ml-1">รหัสผ่านปัจจุบัน</label>
+                    <input type="password" id="curr-pwd-input" placeholder="กรอกรหัสผ่านปัจจุบัน" required
+                        class="w-full px-4 py-2.5 rounded-xl bg-slate-50 border border-slate-200 focus:outline-none focus:border-brand-blue focus:ring-1 focus:ring-brand-blue/20 text-sm transition-colors shadow-inner">
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold text-slate-600 mb-1.5 ml-1">รหัสผ่านใหม่</label>
+                    <input type="password" id="new-pwd-input" placeholder="กรอกรหัสผ่านใหม่" required
+                        class="w-full px-4 py-2.5 rounded-xl bg-slate-50 border border-slate-200 focus:outline-none focus:border-brand-blue focus:ring-1 focus:ring-brand-blue/20 text-sm transition-colors shadow-inner">
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold text-slate-600 mb-1.5 ml-1">ยืนยันรหัสผ่านใหม่</label>
+                    <input type="password" id="confirm-pwd-input" placeholder="กรอกรหัสผ่านใหม่อีกครั้ง" required
+                        class="w-full px-4 py-2.5 rounded-xl bg-slate-50 border border-slate-200 focus:outline-none focus:border-brand-blue focus:ring-1 focus:ring-brand-blue/20 text-sm transition-colors shadow-inner">
+                </div>
+                <button type="submit" id="submit-change-pwd-btn"
+                    class="w-full bg-brand-orange hover:bg-[#c94804] text-white font-semibold py-3 px-4 rounded-xl transition-all transform hover:scale-[1.01] active:scale-95 flex justify-center items-center shadow-lg shadow-brand-orange/20 mt-6">
+                    <span id="submit-change-pwd-text">บันทึกรหัสผ่านใหม่</span>
+                </button>
+            </form>
+        </section>
+    </div>
+
+    <!-- 5. Modal ลืมรหัสผ่าน (Forgot Password Modal) -->
+    <div id="forgot-password-modal" class="fixed inset-0 z-50 flex items-center justify-center bg-brand-blue/60 backdrop-blur-sm hidden fade-in p-4">
+        <section class="bg-white rounded-3xl p-6 sm:p-8 max-w-sm w-full shadow-2xl border-t-8 border-t-brand-orange text-center relative overflow-hidden">
+            <button id="close-forgot-modal-btn" class="absolute top-4 right-4 text-slate-400 hover:text-slate-600 transition-colors">
+                <i data-lucide="x" class="w-6 h-6"></i>
+            </button>
+            <div class="bg-brand-orange/10 p-4 rounded-full inline-block mb-4">
+                <i data-lucide="help-circle" class="w-12 h-12 text-brand-orange"></i>
+            </div>
+            <h3 class="text-2xl font-bold text-brand-blue mb-3">ลืมรหัสผ่าน?</h3>
+            <p class="text-slate-600 text-sm leading-relaxed mb-6">
+                หากคุณจำรหัสผ่านไม่ได้ กรุณาติดต่อ <b class="text-brand-blue">ฝ่ายบุคคล (HR)</b> หรือ <b class="text-brand-blue">ผู้ดูแลระบบ (Admin)</b> 
+                เพื่อทำการรีเซ็ตรหัสผ่านกลับเป็น <b>"รหัสพนักงานเริ่มต้น"</b> ของคุณ
+            </p>
+            <button id="confirm-forgot-btn"
+                class="w-full bg-brand-blue hover:bg-[#121670] text-white font-semibold py-3 px-4 rounded-xl transition-all shadow-md">
+                ตกลง, ทราบแล้ว
+            </button>
+        </section>
+    </div>
+
     <script>
         /** =========================================================
          * 1. CONFIGURATION & DATA
          * ========================================================== */
         const CONFIG = {
-            API_URL: "https://script.google.com/macros/s/AKfycbxadfU5XPTKvmp5jJPLP8Wf2zrijHfDIZZGx_vJbtj94LyXEO53RJ_ahEKbLdMbvMk-/exec", 
+            API_URL: "https://script.google.com/macros/s/AKfycbzDMyWRN-js0BF7VjUMtC-yqk4KMZov2r1RBqFNOe0hhhkE4nBY_pd5lgmGGgclSWE_/exec", 
             STORAGE_USER_DB: "akra_users_db",
             STORAGE_SESSION: "akra_session_token",
             STORAGE_USER_DATA: "akra_user_data",
@@ -460,9 +535,32 @@
                 document.getElementById('search-input').addEventListener('input', AdminInteractive.renderUserList);
                 document.getElementById('interactive-form').addEventListener('submit', AdminInteractive.handleSave);
                 document.getElementById('btn-delete-user').addEventListener('click', AdminInteractive.handleDelete);
+                document.getElementById('btn-reset-user-pwd').addEventListener('click', AdminInteractive.handleResetPassword);
                 
                 document.getElementById('interactive-form').classList.add('hidden');
                 document.getElementById('empty-selection-state').classList.remove('hidden');
+            },
+
+            handleResetPassword: async () => {
+                const id = AdminInteractive.editingUserId;
+                if(!id) return;
+                const name = state.users[id].name;
+
+                if (!confirm(`ยืนยันการรีเซ็ตรหัสผ่านของพนักงาน ${name} (${id}) กลับเป็นรหัสเริ่มต้น (รหัสพนักงาน) หรือไม่?`)) return;
+
+                const btn = document.getElementById('btn-reset-user-pwd');
+                const origHtml = btn.innerHTML;
+                btn.disabled = true; btn.innerHTML = '<i data-lucide="loader-2" class="w-4 h-4 animate-spin text-brand-orange"></i>'; lucide.createIcons();
+
+                try {
+                    await API.postAction({ action: "adminResetPassword", id });
+                    UI.showToast(`รีเซ็ตรหัสผ่านของพนักงาน ${name} สำเร็จแล้ว`);
+                    API.sendLog("Admin Action", "Portal", `รีเซ็ตรหัสผ่านพนักงาน: ${id} (${name})`);
+                } catch(e) {
+                    UI.showToast("รีเซ็ตรหัสผ่านไม่สำเร็จ", "error");
+                } finally {
+                    btn.disabled = false; btn.innerHTML = origHtml; lucide.createIcons();
+                }
             },
 
             switchTab: (tabName) => {
@@ -522,6 +620,7 @@
                 document.getElementById('empty-selection-state').classList.add('hidden');
                 document.getElementById('interactive-form').classList.remove('hidden');
                 document.getElementById('btn-delete-user').classList.remove('hidden');
+                document.getElementById('btn-reset-user-pwd').classList.remove('hidden');
                 document.getElementById('role-error-msg').classList.add('hidden');
 
                 AdminInteractive.editingUserId = id;
@@ -542,6 +641,7 @@
                 document.getElementById('empty-selection-state').classList.add('hidden');
                 document.getElementById('interactive-form').classList.remove('hidden');
                 document.getElementById('btn-delete-user').classList.add('hidden'); 
+                document.getElementById('btn-reset-user-pwd').classList.add('hidden'); 
                 document.getElementById('role-error-msg').classList.add('hidden');
 
                 AdminInteractive.editingUserId = null; 
@@ -896,6 +996,27 @@
                     setTimeout(()=>document.getElementById('refresh-icon').classList.remove('animate-spin'), 500);
                 });
 
+                // การเปิด/ปิด Modal เปลี่ยนรหัสผ่าน
+                const pwdModal = document.getElementById('change-password-modal');
+                document.getElementById('change-pwd-btn').addEventListener('click', () => {
+                    document.getElementById('change-pwd-form').reset();
+                    pwdModal.classList.remove('hidden');
+                    lucide.createIcons({ root: pwdModal });
+                });
+                document.getElementById('close-pwd-modal-btn').addEventListener('click', () => {
+                    pwdModal.classList.add('hidden');
+                });
+                document.getElementById('change-pwd-form').addEventListener('submit', App.handleChangePassword);
+
+                // การเปิด/ปิด Modal ลืมรหัสผ่าน
+                const forgotModal = document.getElementById('forgot-password-modal');
+                document.getElementById('forgot-password-btn').addEventListener('click', () => {
+                    forgotModal.classList.remove('hidden');
+                    lucide.createIcons({ root: forgotModal });
+                });
+                document.getElementById('close-forgot-modal-btn').addEventListener('click', () => forgotModal.classList.add('hidden'));
+                document.getElementById('confirm-forgot-btn').addEventListener('click', () => forgotModal.classList.add('hidden'));
+
                 const savedToken = safeStorage.getItem(CONFIG.STORAGE_SESSION);
                 const savedUserData = safeStorage.getItem(CONFIG.STORAGE_USER_DATA);
                 
@@ -917,16 +1038,22 @@
 
             handleLogin: async (e) => {
                 e.preventDefault();
-                const pwdInput = document.getElementById('password-input');
-                const pwd = pwdInput.value.trim();
-                if (!pwd) return;
+                const userEl = document.getElementById('username-input');
+                const pwdEl = document.getElementById('password-input');
+                const username = userEl.value.trim();
+                const pwd = pwdEl.value.trim();
+                
+                if (!username || !pwd) {
+                    UI.showToast("กรุณากรอกรหัสพนักงานและรหัสผ่าน", "warning");
+                    return;
+                }
 
                 const btn = document.getElementById('login-btn');
                 const btnText = document.getElementById('login-btn-text');
                 btn.disabled = true; btnText.innerHTML = '<i data-lucide="loader-2" class="w-5 h-5 animate-spin mr-2 inline"></i> ตรวจสอบ...'; lucide.createIcons();
                 
                 try {
-                    const response = await fetch(`${CONFIG.API_URL}?action=login&id=${encodeURIComponent(pwd)}`);
+                    const response = await fetch(`${CONFIG.API_URL}?action=login&id=${encodeURIComponent(username)}&password=${encodeURIComponent(pwd)}`);
                     const data = await response.json();
 
                     if (data.status === 'success') {
@@ -945,18 +1072,74 @@
                         safeStorage.setItem(CONFIG.STORAGE_APP_CONFIG, JSON.stringify(state.appConfig));
                         safeStorage.removeItem(CONFIG.STORAGE_USER_DB);
 
-                        pwdInput.value = '';
+                        userEl.value = '';
+                        pwdEl.value = '';
                         UI.showToast(`ยินดีต้อนรับ ${state.currentUser}`);
                         UI.switchSection('dashboard-section');
                         App.renderDashboard();
+                    } else if (data.message === 'invalid_password') {
+                        UI.showToast("รหัสผ่านไม่ถูกต้อง", 'error');
+                        pwdEl.focus();
                     } else {
-                        UI.showToast("รหัสไม่ถูกต้อง หรือไม่มีในระบบ", 'error');
-                        pwdInput.focus();
+                        UI.showToast("ไม่พบรหัสพนักงานนี้ในระบบ", 'error');
+                        userEl.focus();
                     }
                 } catch (error) {
                     UI.showToast("เกิดข้อผิดพลาดในการเชื่อมต่อ กรุณาลองใหม่", 'error');
                 } finally {
                     btn.disabled = false; btnText.innerText = 'เข้าสู่ระบบ';
+                }
+            },
+
+            handleChangePassword: async (e) => {
+                e.preventDefault();
+                const currPwd = document.getElementById('curr-pwd-input').value.trim();
+                const newPwd = document.getElementById('new-pwd-input').value.trim();
+                const confirmPwd = document.getElementById('confirm-pwd-input').value.trim();
+
+                if (!currPwd || !newPwd || !confirmPwd) {
+                    UI.showToast("กรุณากรอกข้อมูลให้ครบถ้วน", "warning");
+                    return;
+                }
+                if (newPwd !== confirmPwd) {
+                    UI.showToast("รหัสผ่านใหม่และยืนยันรหัสผ่านไม่ตรงกัน", "warning");
+                    return;
+                }
+                if (newPwd.length < 4) {
+                    UI.showToast("รหัสผ่านใหม่ต้องมีความยาวอย่างน้อย 4 ตัวอักษร", "warning");
+                    return;
+                }
+
+                const btn = document.getElementById('submit-change-pwd-btn');
+                const btnText = document.getElementById('submit-change-pwd-text');
+                btn.disabled = true; btnText.innerHTML = '<i data-lucide="loader-2" class="w-4 h-4 animate-spin mr-2 inline"></i> กำลังบันทึก...'; lucide.createIcons();
+
+                try {
+                    const response = await fetch(CONFIG.API_URL, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+                        body: JSON.stringify({
+                            action: "changePassword",
+                            token: state.sessionToken,
+                            currentPassword: currPwd,
+                            newPassword: newPwd
+                        })
+                    });
+                    const data = await response.json();
+
+                    if (data.status === 'success') {
+                        UI.showToast("เปลี่ยนรหัสผ่านใหม่สำเร็จแล้วครับ");
+                        document.getElementById('change-password-modal').classList.add('hidden');
+                    } else if (data.message === 'invalid_current_password') {
+                        UI.showToast("รหัสผ่านปัจจุบันไม่ถูกต้อง", "error");
+                        document.getElementById('curr-pwd-input').focus();
+                    } else {
+                        UI.showToast(data.message || "เปลี่ยนรหัสผ่านไม่สำเร็จ", "error");
+                    }
+                } catch (error) {
+                    UI.showToast("เชื่อมต่อเซิร์ฟเวอร์ล้มเหลว กรุณาลองใหม่", "error");
+                } finally {
+                    btn.disabled = false; btnText.innerText = 'บันทึกรหัสผ่านใหม่'; lucide.createIcons();
                 }
             },
 
