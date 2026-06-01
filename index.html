@@ -93,8 +93,11 @@
                             required autocomplete="current-password">
                     </div>
                 </div>
-                <div class="flex justify-between items-center px-1 text-xs">
-                    <span class="text-slate-400 font-medium">เข้าสู่ระบบด้วยสิทธิ์ส่วนกลาง</span>
+                <div class="flex justify-between items-center px-1 text-xs select-none">
+                    <label class="inline-flex items-center text-slate-500 font-medium cursor-pointer">
+                        <input type="checkbox" id="remember-id-checkbox" class="rounded border-slate-300 text-brand-orange focus:ring-brand-orange/20 mr-1.5 w-4 h-4 accent-brand-orange">
+                        <span>จำรหัสพนักงาน</span>
+                    </label>
                     <button type="button" id="forgot-password-btn" class="text-brand-orange hover:text-[#c94804] font-bold transition-colors">ลืมรหัสผ่าน?</button>
                 </div>
                 <button type="submit" id="login-btn" 
@@ -1033,6 +1036,17 @@
                         UI.switchSection('dashboard-section');
                         App.renderDashboard();
                     } catch (e) { App.handleLogout(); }
+                } else {
+                    // หากยังไม่ได้เข้าสู่ระบบ ให้ดึงรหัสพนักงานที่เคยจำไว้มากรอกอัตโนมัติ
+                    const rememberedId = safeStorage.getItem("akra_remember_id");
+                    if (rememberedId) {
+                        document.getElementById('username-input').value = rememberedId;
+                        document.getElementById('remember-id-checkbox').checked = true;
+                        // โฟกัสไปที่ช่องรหัสผ่านทันที เพื่อความสะดวกในการป้อนรหัส
+                        setTimeout(() => {
+                            document.getElementById('password-input').focus();
+                        }, 200);
+                    }
                 }
             },
 
@@ -1057,6 +1071,14 @@
                     const data = await response.json();
 
                     if (data.status === 'success') {
+                        // จัดการการจดจำรหัสพนักงาน (Remember Employee ID)
+                        const rememberIdCheckbox = document.getElementById('remember-id-checkbox');
+                        if (rememberIdCheckbox && rememberIdCheckbox.checked) {
+                            safeStorage.setItem("akra_remember_id", username);
+                        } else {
+                            safeStorage.removeItem("akra_remember_id");
+                        }
+
                         state.sessionToken = data.token;
                         state.currentUser = data.user.name;
                         state.currentRoles = data.user.roles || [];
