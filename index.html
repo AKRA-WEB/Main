@@ -382,6 +382,25 @@
             STORAGE_USER_DATA: "akra_user_data",
             STORAGE_APP_CONFIG: "akra_app_config"
         };
+        const CURRENT_VERSION = "20260602.01";
+        async function checkAppVersion() {
+            try {
+                const res = await fetch('version.json?t=' + Date.now());
+                if (!res.ok) return true;
+                const config = await res.json();
+                if (config && config.version && config.version !== CURRENT_VERSION) {
+                    alert('พบเวอร์ชันใหม่ กำลังอัปเดตระบบ...');
+                    const url = new URL(window.location.href);
+                    url.searchParams.set('update', Date.now());
+                    window.location.replace(url.toString());
+                    return false;
+                }
+            } catch (e) {
+                console.warn('Version check skipped:', e);
+            }
+            return true;
+        }
+
 
         // ระบบจัดการข้อมูลสำรองเมื่อเบราว์เซอร์บล็อก localStorage (เช่น โหมดส่วนตัว / iframe)
         const safeStorage = (function() {
@@ -982,6 +1001,9 @@
 
         const App = {
             init: async () => {
+                const isVersionOk = await checkAppVersion();
+                if (!isVersionOk) return;
+
                 lucide.createIcons();
                 AdminInteractive.init();
                 
