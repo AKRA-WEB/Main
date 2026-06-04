@@ -69,7 +69,7 @@
 </head>
 <body class="bg-gradient-to-b from-[#232abc] to-brand-blue min-h-screen text-slate-800 flex items-center justify-center p-4">
 
-    <div id="toast-container" class="fixed top-5 right-5 z-50 flex flex-col gap-3"></div>
+    <div id="toast-container" class="fixed top-5 right-5 z-50 flex flex-col gap-3" aria-live="polite" aria-atomic="true"></div>
 
     <!-- 1. ส่วนลงชื่อเข้าใช้ (Login Section) -->
     <main id="login-section" class="w-full max-w-md fade-in">
@@ -83,12 +83,14 @@
             <form id="login-form" class="space-y-5" novalidate>
                 <div class="space-y-4">
                     <div class="relative">
-                        <input type="text" id="username-input" placeholder="รหัสพนักงาน (เช่น 250XXX)" 
+                        <label for="username-input" class="sr-only">รหัสพนักงาน</label>
+                        <input type="text" id="username-input" name="username" placeholder="รหัสพนักงาน (เช่น 250XXX)"
                             class="w-full px-4 py-3.5 rounded-xl bg-slate-50 border border-slate-200 focus:outline-none focus:border-brand-blue focus:ring-2 focus:ring-brand-blue/20 text-center text-base font-semibold text-brand-blue transition-all shadow-inner placeholder:text-slate-400"
                             required autocomplete="username">
                     </div>
                     <div class="relative">
-                        <input type="password" id="password-input" placeholder="รหัสผ่าน / PIN" 
+                        <label for="password-input" class="sr-only">รหัสผ่านหรือ PIN</label>
+                        <input type="password" id="password-input" name="password" placeholder="รหัสผ่าน / PIN"
                             class="w-full px-4 py-3.5 rounded-xl bg-slate-50 border border-slate-200 focus:outline-none focus:border-brand-blue focus:ring-2 focus:ring-brand-blue/20 text-center text-lg tracking-widest text-brand-blue transition-all shadow-inner placeholder:text-slate-400 placeholder:tracking-normal"
                             required autocomplete="current-password">
                     </div>
@@ -127,13 +129,13 @@
                     <i data-lucide="user" class="w-5 h-5"></i>
                 </div>
                 <div class="w-px h-8 bg-slate-300 mx-1 hidden sm:block"></div>
-                <button id="admin-btn" class="hidden p-2 text-slate-400 hover:text-brand-blue hover:bg-brand-blue/10 rounded-lg transition-all" title="จัดการผู้ใช้งาน">
+                <button type="button" id="admin-btn" class="hidden p-2 text-slate-400 hover:text-brand-blue hover:bg-brand-blue/10 rounded-lg transition-all" title="จัดการผู้ใช้งาน" aria-label="จัดการผู้ใช้งาน">
                     <i data-lucide="settings" class="w-5 h-5"></i>
                 </button>
-                <button id="change-pwd-btn" class="p-2 text-slate-400 hover:text-brand-blue hover:bg-brand-blue/10 rounded-lg transition-all" title="เปลี่ยนรหัสผ่าน">
+                <button type="button" id="change-pwd-btn" class="p-2 text-slate-400 hover:text-brand-blue hover:bg-brand-blue/10 rounded-lg transition-all" title="เปลี่ยนรหัสผ่าน" aria-label="เปลี่ยนรหัสผ่าน">
                     <i data-lucide="key-round" class="w-5 h-5"></i>
                 </button>
-                <button id="logout-btn" class="p-2 text-slate-400 hover:text-brand-orange hover:bg-brand-orange/10 rounded-lg transition-all" title="ออกจากระบบ">
+                <button type="button" id="logout-btn" class="p-2 text-slate-400 hover:text-brand-orange hover:bg-brand-orange/10 rounded-lg transition-all" title="ออกจากระบบ" aria-label="ออกจากระบบ">
                     <i data-lucide="log-out" class="w-5 h-5"></i>
                 </button>
             </nav>
@@ -314,32 +316,32 @@
     </main>
 
     <!-- 4. Modal เปลี่ยนรหัสผ่าน (Change Password Modal) -->
-    <div id="change-password-modal" class="fixed inset-0 z-50 flex items-center justify-center bg-brand-blue/60 backdrop-blur-sm hidden fade-in p-4">
+    <div id="change-password-modal" class="fixed inset-0 z-50 flex items-center justify-center bg-brand-blue/60 backdrop-blur-sm hidden fade-in p-4" role="dialog" aria-modal="true" aria-labelledby="change-password-title">
         <section class="bg-white rounded-3xl p-6 sm:p-8 max-w-md w-full shadow-2xl border-t-8 border-t-brand-orange relative overflow-hidden">
-            <button id="close-pwd-modal-btn" class="absolute top-4 right-4 text-slate-400 hover:text-slate-600 transition-colors">
+            <button type="button" id="close-pwd-modal-btn" class="absolute top-4 right-4 text-slate-400 hover:text-slate-600 transition-colors" aria-label="ปิดหน้าต่างเปลี่ยนรหัสผ่าน">
                 <i data-lucide="x" class="w-6 h-6"></i>
             </button>
             <div class="text-center mb-6">
                 <div class="bg-brand-orange/10 p-3.5 rounded-full inline-block mb-3">
                     <i data-lucide="key-round" class="w-8 h-8 text-brand-orange"></i>
                 </div>
-                <h3 class="text-2xl font-bold text-brand-blue">เปลี่ยนรหัสผ่านใหม่</h3>
+                <h3 id="change-password-title" class="text-2xl font-bold text-brand-blue">เปลี่ยนรหัสผ่านใหม่</h3>
                 <p class="text-slate-500 text-xs mt-1">รหัสผ่านใหม่ของคุณต้องเป็นความลับเพื่อความปลอดภัย</p>
             </div>
             <form id="change-pwd-form" class="space-y-4" novalidate>
                 <div>
-                    <label class="block text-xs font-semibold text-slate-600 mb-1.5 ml-1">รหัสผ่านปัจจุบัน</label>
-                    <input type="password" id="curr-pwd-input" placeholder="กรอกรหัสผ่านปัจจุบัน" required
+                    <label for="curr-pwd-input" class="block text-xs font-semibold text-slate-600 mb-1.5 ml-1">รหัสผ่านปัจจุบัน</label>
+                    <input type="password" id="curr-pwd-input" name="current-password" placeholder="กรอกรหัสผ่านปัจจุบัน" required autocomplete="current-password"
                         class="w-full px-4 py-2.5 rounded-xl bg-slate-50 border border-slate-200 focus:outline-none focus:border-brand-blue focus:ring-1 focus:ring-brand-blue/20 text-sm transition-colors shadow-inner">
                 </div>
                 <div>
-                    <label class="block text-xs font-semibold text-slate-600 mb-1.5 ml-1">รหัสผ่านใหม่</label>
-                    <input type="password" id="new-pwd-input" placeholder="กรอกรหัสผ่านใหม่" required
+                    <label for="new-pwd-input" class="block text-xs font-semibold text-slate-600 mb-1.5 ml-1">รหัสผ่านใหม่</label>
+                    <input type="password" id="new-pwd-input" name="new-password" placeholder="กรอกรหัสผ่านใหม่" required autocomplete="new-password"
                         class="w-full px-4 py-2.5 rounded-xl bg-slate-50 border border-slate-200 focus:outline-none focus:border-brand-blue focus:ring-1 focus:ring-brand-blue/20 text-sm transition-colors shadow-inner">
                 </div>
                 <div>
-                    <label class="block text-xs font-semibold text-slate-600 mb-1.5 ml-1">ยืนยันรหัสผ่านใหม่</label>
-                    <input type="password" id="confirm-pwd-input" placeholder="กรอกรหัสผ่านใหม่อีกครั้ง" required
+                    <label for="confirm-pwd-input" class="block text-xs font-semibold text-slate-600 mb-1.5 ml-1">ยืนยันรหัสผ่านใหม่</label>
+                    <input type="password" id="confirm-pwd-input" name="confirm-password" placeholder="กรอกรหัสผ่านใหม่อีกครั้ง" required autocomplete="new-password"
                         class="w-full px-4 py-2.5 rounded-xl bg-slate-50 border border-slate-200 focus:outline-none focus:border-brand-blue focus:ring-1 focus:ring-brand-blue/20 text-sm transition-colors shadow-inner">
                 </div>
                 <button type="submit" id="submit-change-pwd-btn"
@@ -351,15 +353,15 @@
     </div>
 
     <!-- 5. Modal ลืมรหัสผ่าน (Forgot Password Modal) -->
-    <div id="forgot-password-modal" class="fixed inset-0 z-50 flex items-center justify-center bg-brand-blue/60 backdrop-blur-sm hidden fade-in p-4">
+    <div id="forgot-password-modal" class="fixed inset-0 z-50 flex items-center justify-center bg-brand-blue/60 backdrop-blur-sm hidden fade-in p-4" role="dialog" aria-modal="true" aria-labelledby="forgot-password-title">
         <section class="bg-white rounded-3xl p-6 sm:p-8 max-w-sm w-full shadow-2xl border-t-8 border-t-brand-orange text-center relative overflow-hidden">
-            <button id="close-forgot-modal-btn" class="absolute top-4 right-4 text-slate-400 hover:text-slate-600 transition-colors">
+            <button type="button" id="close-forgot-modal-btn" class="absolute top-4 right-4 text-slate-400 hover:text-slate-600 transition-colors" aria-label="ปิดหน้าต่างลืมรหัสผ่าน">
                 <i data-lucide="x" class="w-6 h-6"></i>
             </button>
             <div class="bg-brand-orange/10 p-4 rounded-full inline-block mb-4">
                 <i data-lucide="help-circle" class="w-12 h-12 text-brand-orange"></i>
             </div>
-            <h3 class="text-2xl font-bold text-brand-blue mb-3">ลืมรหัสผ่าน?</h3>
+            <h3 id="forgot-password-title" class="text-2xl font-bold text-brand-blue mb-3">ลืมรหัสผ่าน?</h3>
             <p class="text-slate-600 text-sm leading-relaxed mb-6">
                 หากคุณจำรหัสผ่านไม่ได้ กรุณาติดต่อ <b class="text-brand-blue">ฝ่ายบุคคล (HR)</b> หรือ <b class="text-brand-blue">ผู้ดูแลระบบ (Admin)</b> 
                 เพื่อทำการรีเซ็ตรหัสผ่านกลับเป็น <b>"รหัสพนักงานเริ่มต้น"</b> ของคุณ
@@ -376,13 +378,13 @@
          * 1. CONFIGURATION & DATA
          * ========================================================== */
         const CONFIG = {
-            API_URL: "https://script.google.com/macros/s/AKfycbzDMyWRN-js0BF7VjUMtC-yqk4KMZov2r1RBqFNOe0hhhkE4nBY_pd5lgmGGgclSWE_/exec", 
+            API_URL: "https://script.google.com/macros/s/AKfycbyQJLwb5HTexG6gxqTehGWlAxfSXVT--CpWnnp2JTcP4xCcMA1vUjSY_eWqPjUKwzq7/exec",
             STORAGE_USER_DB: "akra_users_db",
             STORAGE_SESSION: "akra_session_token",
             STORAGE_USER_DATA: "akra_user_data",
             STORAGE_APP_CONFIG: "akra_app_config"
         };
-        const CURRENT_VERSION = "20260602.01";
+        const CURRENT_VERSION = "20260604.02";
         async function checkAppVersion() {
             try {
                 const res = await fetch('version.json?t=' + Date.now());
@@ -464,10 +466,32 @@
             { val: "Cashier",    label: "Cashier",    desc: "แคชเชียร์/การเงิน", icon: "calculator"   }
         ];
 
+        function escapeHtml(value) {
+            return String(value ?? '').replace(/[&<>"']/g, char => ({
+                '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+            })[char]);
+        }
+
+        function safeIdentifier(value, fallback = '') {
+            const text = String(value ?? '').trim();
+            return /^[A-Za-z0-9_-]{1,80}$/.test(text) ? text : fallback;
+        }
+
+        function safeAppUrl(value) {
+            try {
+                const url = new URL(String(value ?? ''));
+                if (url.protocol === 'https:' && url.hostname === 'akra-web.github.io') return url.toString();
+            } catch (e) {}
+            return '';
+        }
+
         let state = {
             users: {},
+            currentUserId: null,
             currentUser: null,
             currentRoles: [],
+            currentPerms: {},
+            mustChangePassword: false,
             sessionToken: null,
             appConfig: [],
             roleConfig: [...DEFAULT_ROLES],
@@ -483,7 +507,7 @@
                 if (type === 'warning') config = { bg: 'bg-[#E35205]', icon: 'alert-triangle' };
 
                 toast.className = `flex items-center gap-3 ${config.bg} text-white px-5 py-3 rounded-xl shadow-xl toast-slide-in min-w-[250px] font-medium text-sm`;
-                toast.innerHTML = `<i data-lucide="${config.icon}" class="w-5 h-5"></i> <span>${message}</span>`;
+                toast.innerHTML = `<i data-lucide="${config.icon}" class="w-5 h-5"></i> <span>${escapeHtml(message)}</span>`;
                 container.appendChild(toast);
                 lucide.createIcons();
                 setTimeout(() => {
@@ -503,16 +527,31 @@
 
         const API = {
             postAction: async (payload) => {
-                if(state.sessionToken) payload.token = state.sessionToken; 
-                await fetch(CONFIG.API_URL, { 
-                    method: 'POST', 
-                    headers: { 'Content-Type': 'text/plain;charset=utf-8' }, 
-                    body: JSON.stringify(payload) 
-                });
+                if(state.sessionToken) payload.token = state.sessionToken;
+                const controller = new AbortController();
+                const timeoutId = setTimeout(() => controller.abort(), 30000);
+                let response;
+                try {
+                    response = await fetch(CONFIG.API_URL, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+                        body: JSON.stringify(payload),
+                        signal: controller.signal
+                    });
+                } finally {
+                    clearTimeout(timeoutId);
+                }
+                const data = await response.json();
+                if (!response.ok || data.status !== 'success') {
+                    const error = new Error(data.message || 'request_failed');
+                    error.code = data.message || 'request_failed';
+                    throw error;
+                }
+                return data;
             },
             sendLog: (action, appName, details) => {
                 if(!state.currentUser) return;
-                API.postAction({ action: "log", app: appName, details, user: state.currentUser }).catch(()=>{});
+                API.postAction({ action: "log", app: appName, details }).catch(()=>{});
             }
         };
 
@@ -522,11 +561,12 @@
 
             fetchAdminData: async () => {
                 document.getElementById('list-loading-state').classList.remove('hidden');
+                let loadedFromServer = false;
                 try {
-                    const res = await fetch(`${CONFIG.API_URL}?action=getAdminData&token=${encodeURIComponent(state.sessionToken)}`);
-                    const data = await res.json();
-                    
+                    const data = await API.postAction({ action: 'getAdminData' });
+
                     if (data.status === 'success' && data.users) {
+                        loadedFromServer = true;
                         state.users = data.users;
                         if (data.roleConfig && data.roleConfig.length) state.roleConfig = data.roleConfig;
                         if (data.permRows) state.permRows = data.permRows;
@@ -551,6 +591,7 @@
                     }
                 }
                 document.getElementById('list-loading-state').classList.add('hidden');
+                return loadedFromServer;
             },
 
             init: () => {
@@ -610,24 +651,31 @@
                     
                     const roles = Array.isArray(data.roles) ? data.roles : [];
                     const shortRoles = roles.slice(0, 2).join(', ') + (roles.length > 2 ? '...' : '');
-                    
-                    const div = document.createElement('div');
-                    div.className = `p-3 rounded-xl cursor-pointer transition-all border border-transparent hover:bg-white hover:border-slate-200 hover:shadow-sm flex items-center gap-3 ${AdminInteractive.editingUserId === id ? 'bg-white border-brand-orange/50 shadow-md ring-1 ring-brand-orange/20' : ''}`;
-                    div.onclick = () => AdminInteractive.selectUser(id);
-                    
-                    div.innerHTML = `
-                        <div class="w-10 h-10 rounded-full bg-brand-blue/10 text-brand-blue flex items-center justify-center font-bold text-sm shrink-0 border border-brand-blue/20">
-                            ${data.name.substring(0, 1).toUpperCase()}
-                        </div>
-                        <div class="flex-grow min-w-0">
-                            <p class="font-bold text-slate-800 truncate leading-tight">${data.name}</p>
-                            <p class="text-xs font-mono text-slate-500">${id}</p>
-                        </div>
-                        <div class="shrink-0 text-right">
-                            <span class="text-[10px] bg-slate-100 text-slate-600 px-2 py-1 rounded-md font-medium">${shortRoles || 'No Role'}</span>
-                        </div>
-                    `;
-                    listEl.appendChild(div);
+
+                    const button = document.createElement('button');
+                    button.type = 'button';
+                    button.className = `w-full p-3 rounded-xl cursor-pointer transition-all border border-transparent hover:bg-white hover:border-slate-200 hover:shadow-sm flex items-center gap-3 text-left ${AdminInteractive.editingUserId === id ? 'bg-white border-brand-orange/50 shadow-md ring-1 ring-brand-orange/20' : ''}`;
+                    button.addEventListener('click', () => AdminInteractive.selectUser(id));
+
+                    const avatar = document.createElement('span');
+                    avatar.className = 'w-10 h-10 rounded-full bg-brand-blue/10 text-brand-blue flex items-center justify-center font-bold text-sm shrink-0 border border-brand-blue/20';
+                    avatar.textContent = String(data.name || '').substring(0, 1).toUpperCase();
+
+                    const content = document.createElement('span');
+                    content.className = 'flex-grow min-w-0';
+                    const name = document.createElement('span');
+                    name.className = 'block font-bold text-slate-800 truncate leading-tight';
+                    name.textContent = data.name;
+                    const userId = document.createElement('span');
+                    userId.className = 'block text-xs font-mono text-slate-500';
+                    userId.textContent = id;
+                    content.append(name, userId);
+
+                    const roleBadge = document.createElement('span');
+                    roleBadge.className = 'shrink-0 text-[10px] bg-slate-100 text-slate-600 px-2 py-1 rounded-md font-medium';
+                    roleBadge.textContent = shortRoles || 'No Role';
+                    button.append(avatar, content, roleBadge);
+                    listEl.appendChild(button);
                 }
 
                 if(count === 0) listEl.innerHTML = `<div class="p-6 text-center text-slate-400 text-sm"><i data-lucide="user-x" class="w-8 h-8 mx-auto mb-2 opacity-50"></i>ไม่พบชื่อนี้</div>`;
@@ -687,10 +735,12 @@
 
                 state.roleConfig.forEach(r => {
                     const isActive = AdminInteractive.editingRoles.includes(r.val);
-                    const div = document.createElement('div');
-                    
+                    const div = document.createElement('button');
+                    div.type = 'button';
+
                     div.className = `role-card cursor-pointer border-2 rounded-2xl p-4 flex flex-col items-center justify-center text-center transition-all duration-200 group relative overflow-hidden h-32 ${isActive ? 'active border-brand-orange bg-[#fffaf5]' : 'border-slate-200 hover:border-slate-300 bg-white'}`;
-                    div.onclick = () => AdminInteractive.toggleRole(r.val);
+                    div.setAttribute('aria-pressed', String(isActive));
+                    div.addEventListener('click', () => AdminInteractive.toggleRole(r.val));
                     
                     const iconBg = isActive ? 'bg-brand-orange text-white' : 'bg-slate-100 text-slate-400 group-hover:bg-slate-200';
                     const checkMark = isActive ? `<div class="absolute top-2 right-2 text-brand-orange bg-white rounded-full p-0.5 shadow-sm"><i data-lucide="check-circle-2" class="w-4 h-4"></i></div>` : '';
@@ -698,10 +748,10 @@
                     div.innerHTML = `
                         ${checkMark}
                         <div class="icon-bg w-10 h-10 rounded-full flex items-center justify-center mb-2 transition-colors ${iconBg}">
-                            <i data-lucide="${r.icon}" class="w-5 h-5"></i>
+                            <i data-lucide="${safeIdentifier(r.icon, 'shield')}" class="w-5 h-5"></i>
                         </div>
-                        <h4 class="font-bold text-sm text-slate-800">${r.label}</h4>
-                        <p class="text-[10px] text-slate-500 leading-tight mt-1 px-1">${r.desc}</p>
+                        <span class="font-bold text-sm text-slate-800">${escapeHtml(r.label)}</span>
+                        <span class="text-[10px] text-slate-500 leading-tight mt-1 px-1">${escapeHtml(r.desc)}</span>
                     `;
                     grid.appendChild(div);
                 });
@@ -722,20 +772,23 @@
                 const grid = document.getElementById('interactive-app-preview');
                 grid.innerHTML = '';
                 state.appConfig.forEach(app => {
-                    grid.innerHTML += `
-                        <div id="preview-app-${app.id}" class="app-preview-card border-2 border-slate-200 bg-white rounded-xl p-2 flex flex-col items-center justify-center text-center">
+                    const appId = safeIdentifier(app.id);
+                    if (!appId) return;
+                    grid.insertAdjacentHTML('beforeend', `
+                        <div id="preview-app-${appId}" class="app-preview-card border-2 border-slate-200 bg-white rounded-xl p-2 flex flex-col items-center justify-center text-center">
                             <div class="w-8 h-8 rounded-lg bg-slate-100 text-slate-500 flex items-center justify-center mb-1 transition-colors">
-                                <i data-lucide="${app.icon}" class="w-4 h-4"></i>
+                                <i data-lucide="${safeIdentifier(app.icon, 'box')}" class="w-4 h-4"></i>
                             </div>
-                            <span class="text-[9px] font-bold leading-tight line-clamp-2">${app.name}</span>
+                            <span class="text-[9px] font-bold leading-tight line-clamp-2">${escapeHtml(app.name)}</span>
                         </div>
-                    `;
+                    `);
                 });
             },
-
             updateAppPreview: () => {
                 state.appConfig.forEach(app => {
-                    const el = document.getElementById(`preview-app-${app.id}`);
+                    const appId = safeIdentifier(app.id);
+                    if (!appId) return;
+                    const el = document.getElementById(`preview-app-${appId}`);
                     if (!el) return;
                     
                     const isUnlocked = app.roles.some(role => AdminInteractive.editingRoles.includes(role));
@@ -774,9 +827,15 @@
                     API.sendLog("Admin Action", "Portal", `จัดการสิทธิ์: ${idInput} (${nameInput})`);
                     UI.showToast("อัปเดตสิทธิ์สำเร็จ", "success");
                     
-                    if(nameInput === state.currentUser) {
+                    if(idInput === state.currentUserId) {
                         state.currentRoles = [...AdminInteractive.editingRoles];
-                        safeStorage.setItem(CONFIG.STORAGE_USER_DATA, JSON.stringify({ name: nameInput, roles: state.currentRoles }));
+                        safeStorage.setItem(CONFIG.STORAGE_USER_DATA, JSON.stringify({
+                            id: state.currentUserId,
+                            name: nameInput,
+                            roles: state.currentRoles,
+                            perms: state.currentPerms,
+                            mustChangePassword: state.mustChangePassword
+                        }));
                     }
 
                     AdminInteractive.editingUserId = idInput; 
@@ -818,7 +877,7 @@
                     state.roleConfig.forEach(r => {
                         const th = document.createElement('th');
                         th.className = "p-4 font-bold text-slate-700 bg-slate-100 text-center border-l border-slate-200 min-w-[100px]";
-                        th.innerHTML = `<i data-lucide="${r.icon}" class="w-4 h-4 mx-auto mb-1 text-brand-orange"></i>${r.label}`;
+                        th.innerHTML = `<i data-lucide="${safeIdentifier(r.icon, 'shield')}" class="w-4 h-4 mx-auto mb-1 text-brand-orange"></i>${escapeHtml(r.label)}`;
                         headerRow.appendChild(th);
                     });
                 }
@@ -830,6 +889,9 @@
 
                     let roleCells = '';
                     state.roleConfig.forEach(r => {
+                        const appId = safeIdentifier(app.id);
+                        const roleVal = safeIdentifier(r.val);
+                        if (!appId || !roleVal) return;
                         const hasRole = app.roles.includes(r.val);
                         const isAdminCol = r.val === 'ADMIN';
                         const checkedAttr = hasRole ? 'checked' : '';
@@ -840,7 +902,7 @@
                             <td class="p-4 text-center border-l border-slate-100 align-middle">
                                 <label class="inline-flex items-center ${cursorClass}">
                                     <input type="checkbox" class="sr-only peer" ${checkedAttr} ${disabledAttr} 
-                                           onchange="AdminInteractive.toggleMatrixRole('${app.id}', '${r.val}')">
+                                           onchange="AdminInteractive.toggleMatrixRole('${appId}', '${roleVal}')">
                                     <div class="w-11 h-6 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-brand-blue relative"></div>
                                 </label>
                             </td>
@@ -851,9 +913,9 @@
                         <td class="p-4 font-medium text-slate-800 border-r border-slate-200 bg-white">
                             <div class="flex items-center gap-3">
                                 <div class="w-8 h-8 rounded-lg bg-slate-100 text-slate-500 flex items-center justify-center shrink-0">
-                                    <i data-lucide="${app.icon}" class="w-4 h-4"></i>
+                                    <i data-lucide="${safeIdentifier(app.icon, 'box')}" class="w-4 h-4"></i>
                                 </div>
-                                <span>${app.name}</span>
+                                <span>${escapeHtml(app.name)}</span>
                             </div>
                         </td>
                         ${roleCells}
@@ -917,8 +979,8 @@
                         const th = document.createElement('th');
                         th.className = "p-3 font-bold text-slate-700 bg-slate-100 text-center border-l border-slate-200 min-w-[90px] text-sm";
                         th.innerHTML = r.val === 'ADMIN'
-                            ? `<i data-lucide="${r.icon}" class="w-4 h-4 mx-auto mb-1 text-slate-400"></i>${r.label} 🔒`
-                            : `<i data-lucide="${r.icon}" class="w-4 h-4 mx-auto mb-1 text-brand-orange"></i>${r.label}`;
+                            ? `<i data-lucide="${safeIdentifier(r.icon, 'shield')}" class="w-4 h-4 mx-auto mb-1 text-slate-400"></i>${escapeHtml(r.label)} 🔒`
+                            : `<i data-lucide="${safeIdentifier(r.icon, 'shield')}" class="w-4 h-4 mx-auto mb-1 text-brand-orange"></i>${escapeHtml(r.label)}`;
                         headerRow.appendChild(th);
                     });
                 }
@@ -949,22 +1011,25 @@
                         lastAppId = row.appId;
                         const appTr = document.createElement('tr');
                         appTr.className = "bg-brand-blue/5";
-                        appTr.innerHTML = `<td colspan="${state.roleConfig.length + 1}" class="p-3 font-bold text-brand-blue text-sm">${APP_LABELS[row.appId] || row.appId}</td>`;
+                        appTr.innerHTML = `<td colspan="${state.roleConfig.length + 1}" class="p-3 font-bold text-brand-blue text-sm">${escapeHtml(APP_LABELS[row.appId] || row.appId)}</td>`;
                         tbody.appendChild(appTr);
                     }
 
                     const tr = document.createElement('tr');
                     tr.className = "hover:bg-slate-50 transition-colors";
-                    let cells = `<td class="p-3 pl-6 text-slate-700 text-sm border-r border-slate-100">${PERM_LABELS[row.permKey] || row.permKey}</td>`;
-
+                    let cells = `<td class="p-3 pl-6 text-slate-700 text-sm border-r border-slate-100">${escapeHtml(PERM_LABELS[row.permKey] || row.permKey)}</td>`;
                     state.roleConfig.forEach(r => {
+                        const appId = safeIdentifier(row.appId);
+                        const permKey = safeIdentifier(row.permKey);
+                        const roleVal = safeIdentifier(r.val);
+                        if (!appId || !permKey || !roleVal) return;
                         const isChecked = row[r.val] === true;
                         const isAdminCol = r.val === 'ADMIN';
                         cells += `
                             <td class="p-3 text-center border-l border-slate-100">
                                 <label class="inline-flex items-center ${isAdminCol ? 'cursor-not-allowed opacity-40' : 'cursor-pointer'}">
                                     <input type="checkbox" class="sr-only peer" ${isChecked ? 'checked' : ''} ${isAdminCol ? 'disabled' : ''}
-                                        onchange="AdminInteractive.togglePermRole('${row.appId}','${row.permKey}','${r.val}',this.checked)">
+                                        onchange="AdminInteractive.togglePermRole('${appId}','${permKey}','${roleVal}',this.checked)">
                                     <div class="w-10 h-5 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-brand-blue relative"></div>
                                 </label>
                             </td>`;
@@ -1000,6 +1065,41 @@
         };
 
         const App = {
+            saveSession: (data) => {
+                state.sessionToken = data.token;
+                state.currentUserId = data.user.id || null;
+                state.currentUser = data.user.name;
+                state.currentRoles = data.user.roles || [];
+                state.currentPerms = data.user.perms || {};
+                state.mustChangePassword = data.user.mustChangePassword === true;
+                state.appConfig = data.appConfig && data.appConfig.length > 0
+                    ? data.appConfig
+                    : JSON.parse(JSON.stringify(DEFAULT_APP_CONFIG));
+
+                safeStorage.setItem(CONFIG.STORAGE_SESSION, state.sessionToken);
+                safeStorage.setItem(CONFIG.STORAGE_USER_DATA, JSON.stringify({
+                    id: state.currentUserId,
+                    name: state.currentUser,
+                    roles: state.currentRoles,
+                    perms: state.currentPerms,
+                    mustChangePassword: state.mustChangePassword
+                }));
+                safeStorage.setItem(CONFIG.STORAGE_APP_CONFIG, JSON.stringify(state.appConfig));
+            },
+
+            refreshSession: async () => {
+                const data = await API.postAction({ action: 'refreshSession' });
+                App.saveSession(data);
+            },
+
+            openChangePasswordModal: () => {
+                const pwdModal = document.getElementById('change-password-modal');
+                document.getElementById('change-pwd-form').reset();
+                pwdModal.classList.remove('hidden');
+                lucide.createIcons({ root: pwdModal });
+                setTimeout(() => document.getElementById('curr-pwd-input').focus(), 0);
+            },
+
             init: async () => {
                 const isVersionOk = await checkAppVersion();
                 if (!isVersionOk) return;
@@ -1016,19 +1116,22 @@
                 });
                 document.getElementById('refresh-data-btn').addEventListener('click', async () => {
                     document.getElementById('refresh-icon').classList.add('animate-spin');
-                    await AdminInteractive.fetchAdminData();
-                    UI.showToast("อัปเดตข้อมูลล่าสุดจากเซิร์ฟเวอร์แล้ว");
+                    const loadedFromServer = await AdminInteractive.fetchAdminData();
+                    UI.showToast(
+                        loadedFromServer ? "อัปเดตข้อมูลล่าสุดจากเซิร์ฟเวอร์แล้ว" : "ไม่สามารถดึงข้อมูลล่าสุดได้ กำลังใช้ข้อมูลสำรอง",
+                        loadedFromServer ? "success" : "warning"
+                    );
                     setTimeout(()=>document.getElementById('refresh-icon').classList.remove('animate-spin'), 500);
                 });
 
                 // การเปิด/ปิด Modal เปลี่ยนรหัสผ่าน
                 const pwdModal = document.getElementById('change-password-modal');
-                document.getElementById('change-pwd-btn').addEventListener('click', () => {
-                    document.getElementById('change-pwd-form').reset();
-                    pwdModal.classList.remove('hidden');
-                    lucide.createIcons({ root: pwdModal });
-                });
+                document.getElementById('change-pwd-btn').addEventListener('click', App.openChangePasswordModal);
                 document.getElementById('close-pwd-modal-btn').addEventListener('click', () => {
+                    if (state.mustChangePassword) {
+                        UI.showToast('กรุณาเปลี่ยนรหัสผ่านเริ่มต้นก่อนใช้งาน', 'warning');
+                        return;
+                    }
                     pwdModal.classList.add('hidden');
                 });
                 document.getElementById('change-pwd-form').addEventListener('submit', App.handleChangePassword);
@@ -1038,9 +1141,15 @@
                 document.getElementById('forgot-password-btn').addEventListener('click', () => {
                     forgotModal.classList.remove('hidden');
                     lucide.createIcons({ root: forgotModal });
+                    setTimeout(() => document.getElementById('confirm-forgot-btn').focus(), 0);
                 });
                 document.getElementById('close-forgot-modal-btn').addEventListener('click', () => forgotModal.classList.add('hidden'));
                 document.getElementById('confirm-forgot-btn').addEventListener('click', () => forgotModal.classList.add('hidden'));
+                document.addEventListener('keydown', event => {
+                    if (event.key !== 'Escape') return;
+                    if (!forgotModal.classList.contains('hidden')) forgotModal.classList.add('hidden');
+                    if (!pwdModal.classList.contains('hidden') && !state.mustChangePassword) pwdModal.classList.add('hidden');
+                });
 
                 const savedToken = safeStorage.getItem(CONFIG.STORAGE_SESSION);
                 const savedUserData = safeStorage.getItem(CONFIG.STORAGE_USER_DATA);
@@ -1049,15 +1158,19 @@
                     try {
                         const parsedUser = JSON.parse(savedUserData);
                         state.sessionToken = savedToken;
+                        state.currentUserId = parsedUser.id || null;
                         state.currentUser = parsedUser.name;
                         state.currentRoles = parsedUser.roles || [];
-                        
-                        const cachedApps = safeStorage.getItem(CONFIG.STORAGE_APP_CONFIG);
-                        state.appConfig = cachedApps ? JSON.parse(cachedApps) : JSON.parse(JSON.stringify(DEFAULT_APP_CONFIG));
-                        
+                        state.currentPerms = parsedUser.perms || {};
+                        state.mustChangePassword = parsedUser.mustChangePassword === true;
+                        await App.refreshSession();
                         UI.switchSection('dashboard-section');
                         App.renderDashboard();
-                    } catch (e) { App.handleLogout(); }
+                        if (state.mustChangePassword) App.openChangePasswordModal();
+                    } catch (e) {
+                        UI.showToast('เซสชันหมดอายุหรือสิทธิ์ถูกเปลี่ยน กรุณาเข้าสู่ระบบใหม่', 'warning');
+                        App.handleLogout();
+                    }
                 } else {
                     // หากยังไม่ได้เข้าสู่ระบบ ให้ดึงรหัสพนักงานที่เคยจำไว้มากรอกอัตโนมัติ
                     const rememberedId = safeStorage.getItem("akra_remember_id");
@@ -1089,9 +1202,7 @@
                 btn.disabled = true; btnText.innerHTML = '<i data-lucide="loader-2" class="w-5 h-5 animate-spin mr-2 inline"></i> ตรวจสอบ...'; lucide.createIcons();
                 
                 try {
-                    const response = await fetch(`${CONFIG.API_URL}?action=login&id=${encodeURIComponent(username)}&password=${encodeURIComponent(pwd)}`);
-                    const data = await response.json();
-
+                    const data = await API.postAction({ action: 'login', id: username, password: pwd });
                     if (data.status === 'success') {
                         // จัดการการจดจำรหัสพนักงาน (Remember Employee ID)
                         const rememberIdCheckbox = document.getElementById('remember-id-checkbox');
@@ -1101,19 +1212,7 @@
                             safeStorage.removeItem("akra_remember_id");
                         }
 
-                        state.sessionToken = data.token;
-                        state.currentUser = data.user.name;
-                        state.currentRoles = data.user.roles || [];
-                        
-                        if (data.appConfig && data.appConfig.length > 0) {
-                            state.appConfig = data.appConfig;
-                        } else {
-                            state.appConfig = JSON.parse(JSON.stringify(DEFAULT_APP_CONFIG));
-                        }
-
-                        safeStorage.setItem(CONFIG.STORAGE_SESSION, state.sessionToken);
-                        safeStorage.setItem(CONFIG.STORAGE_USER_DATA, JSON.stringify({ name: state.currentUser, roles: state.currentRoles, perms: data.user.perms || {} }));
-                        safeStorage.setItem(CONFIG.STORAGE_APP_CONFIG, JSON.stringify(state.appConfig));
+                        App.saveSession(data);
                         safeStorage.removeItem(CONFIG.STORAGE_USER_DB);
 
                         userEl.value = '';
@@ -1121,15 +1220,23 @@
                         UI.showToast(`ยินดีต้อนรับ ${state.currentUser}`);
                         UI.switchSection('dashboard-section');
                         App.renderDashboard();
-                    } else if (data.message === 'invalid_password') {
-                        UI.showToast("รหัสผ่านไม่ถูกต้อง", 'error');
-                        pwdEl.focus();
-                    } else {
-                        UI.showToast("ไม่พบรหัสพนักงานนี้ในระบบ", 'error');
-                        userEl.focus();
+                        if (state.mustChangePassword) {
+                            UI.showToast('กรุณาเปลี่ยนรหัสผ่านเริ่มต้นก่อนใช้งาน', 'warning');
+                            App.openChangePasswordModal();
+                        }
                     }
                 } catch (error) {
-                    UI.showToast("เกิดข้อผิดพลาดในการเชื่อมต่อ กรุณาลองใหม่", 'error');
+                    if (error.code === 'invalid_password') {
+                        UI.showToast("รหัสผ่านไม่ถูกต้อง", 'error');
+                        pwdEl.focus();
+                    } else if (error.code === 'user_not_found') {
+                        UI.showToast("ไม่พบรหัสพนักงานนี้ในระบบ", 'error');
+                        userEl.focus();
+                    } else if (error.code === 'too_many_attempts') {
+                        UI.showToast("ลองเข้าสู่ระบบหลายครั้งเกินไป กรุณารอ 10 นาที", 'error');
+                    } else {
+                        UI.showToast("เกิดข้อผิดพลาดในการเชื่อมต่อ กรุณาลองใหม่", 'error');
+                    }
                 } finally {
                     btn.disabled = false; btnText.innerText = 'เข้าสู่ระบบ';
                 }
@@ -1159,29 +1266,32 @@
                 btn.disabled = true; btnText.innerHTML = '<i data-lucide="loader-2" class="w-4 h-4 animate-spin mr-2 inline"></i> กำลังบันทึก...'; lucide.createIcons();
 
                 try {
-                    const response = await fetch(CONFIG.API_URL, {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-                        body: JSON.stringify({
-                            action: "changePassword",
-                            token: state.sessionToken,
-                            currentPassword: currPwd,
-                            newPassword: newPwd
-                        })
+                    const data = await API.postAction({
+                        action: "changePassword",
+                        currentPassword: currPwd,
+                        newPassword: newPwd
                     });
-                    const data = await response.json();
-
-                    if (data.status === 'success') {
-                        UI.showToast("เปลี่ยนรหัสผ่านใหม่สำเร็จแล้วครับ");
-                        document.getElementById('change-password-modal').classList.add('hidden');
-                    } else if (data.message === 'invalid_current_password') {
+                    if (data.token) {
+                        state.sessionToken = data.token;
+                        state.mustChangePassword = false;
+                        safeStorage.setItem(CONFIG.STORAGE_SESSION, state.sessionToken);
+                        safeStorage.setItem(CONFIG.STORAGE_USER_DATA, JSON.stringify({
+                            id: state.currentUserId,
+                            name: state.currentUser,
+                            roles: state.currentRoles,
+                            perms: state.currentPerms,
+                            mustChangePassword: false
+                        }));
+                    }
+                    UI.showToast("เปลี่ยนรหัสผ่านใหม่สำเร็จแล้วครับ");
+                    document.getElementById('change-password-modal').classList.add('hidden');
+                } catch (error) {
+                    if (error.code === 'invalid_current_password') {
                         UI.showToast("รหัสผ่านปัจจุบันไม่ถูกต้อง", "error");
                         document.getElementById('curr-pwd-input').focus();
                     } else {
-                        UI.showToast(data.message || "เปลี่ยนรหัสผ่านไม่สำเร็จ", "error");
+                        UI.showToast("เปลี่ยนรหัสผ่านไม่สำเร็จ", "error");
                     }
-                } catch (error) {
-                    UI.showToast("เชื่อมต่อเซิร์ฟเวอร์ล้มเหลว กรุณาลองใหม่", "error");
                 } finally {
                     btn.disabled = false; btnText.innerText = 'บันทึกรหัสผ่านใหม่'; lucide.createIcons();
                 }
@@ -1191,15 +1301,25 @@
                 safeStorage.removeItem(CONFIG.STORAGE_SESSION);
                 safeStorage.removeItem(CONFIG.STORAGE_USER_DATA);
                 safeStorage.removeItem(CONFIG.STORAGE_USER_DB);
-                state.currentUser = null; 
+                state.currentUserId = null;
+                state.currentUser = null;
                 state.currentRoles = [];
+                state.currentPerms = {};
+                state.mustChangePassword = false;
                 state.sessionToken = null;
                 UI.switchSection('login-section');
             },
 
             renderDashboard: () => {
-                const badges = state.currentRoles.map(r => `<span class="inline-block bg-brand-blue/10 text-brand-blue text-[10px] font-bold px-2 py-0.5 rounded ml-1 border border-brand-blue/20">${r}</span>`).join('');
-                document.getElementById('user-name-display').innerHTML = `${state.currentUser} ${badges}`;
+                const userDisplay = document.getElementById('user-name-display');
+                userDisplay.replaceChildren();
+                userDisplay.append(document.createTextNode(String(state.currentUser || '')));
+                state.currentRoles.forEach(role => {
+                    const badge = document.createElement('span');
+                    badge.className = 'inline-block bg-brand-blue/10 text-brand-blue text-[10px] font-bold px-2 py-0.5 rounded ml-1 border border-brand-blue/20';
+                    badge.textContent = role;
+                    userDisplay.appendChild(badge);
+                });
 
                 const adminBtn = document.getElementById('admin-btn');
                 state.currentRoles.includes("ADMIN") ? adminBtn.classList.remove('hidden') : adminBtn.classList.add('hidden');
@@ -1212,15 +1332,24 @@
                     grid.innerHTML = `<div class="col-span-full bg-white border border-slate-200 rounded-3xl p-12 text-center shadow-lg"><i data-lucide="lock" class="w-16 h-16 text-slate-200 mx-auto mb-4"></i><h3 class="text-xl font-bold text-slate-400">ไม่มีสิทธิ์ใช้งาน</h3></div>`;
                 } else {
                     allowedApps.forEach(app => {
-                        grid.innerHTML += `
-                            <button onclick="AKRA_SSO.openApp('${app.url}', '${app.id}')" 
-                                class="bg-white p-6 rounded-2xl border-2 border-transparent hover:border-brand-orange transition-all transform hover:-translate-y-1 text-left group flex flex-col h-full shadow-lg hover:shadow-brand-orange/20">
-                                <div class="bg-slate-50 w-12 h-12 rounded-xl flex items-center justify-center mb-4 group-hover:bg-brand-orange transition-colors border border-slate-100">
-                                    <i data-lucide="${app.icon}" class="text-brand-blue group-hover:text-white w-6 h-6 transition-colors"></i>
-                                </div>
-                                <h3 class="text-lg font-bold mb-1 text-brand-blue group-hover:text-brand-orange transition-colors">${app.name}</h3>
-                            </button>
-                        `;
+                        const appUrl = safeAppUrl(app.url);
+                        const appId = safeIdentifier(app.id);
+                        if (!appUrl || !appId) return;
+
+                        const button = document.createElement('button');
+                        button.type = 'button';
+                        button.className = 'bg-white p-6 rounded-2xl border-2 border-transparent hover:border-brand-orange transition-all transform hover:-translate-y-1 text-left group flex flex-col h-full shadow-lg hover:shadow-brand-orange/20';
+                        button.addEventListener('click', () => AKRA_SSO.openApp(appUrl, appId));
+
+                        const iconBox = document.createElement('div');
+                        iconBox.className = 'bg-slate-50 w-12 h-12 rounded-xl flex items-center justify-center mb-4 group-hover:bg-brand-orange transition-colors border border-slate-100';
+                        iconBox.innerHTML = `<i data-lucide="${safeIdentifier(app.icon, 'box')}" class="text-brand-blue group-hover:text-white w-6 h-6 transition-colors"></i>`;
+
+                        const title = document.createElement('h3');
+                        title.className = 'text-lg font-bold mb-1 text-brand-blue group-hover:text-brand-orange transition-colors';
+                        title.textContent = app.name;
+                        button.append(iconBox, title);
+                        grid.appendChild(button);
                     });
                 }
                 lucide.createIcons();
@@ -1230,8 +1359,20 @@
         const AKRA_SSO = {
             openApp: function(url, appId) {
                 if(!state.sessionToken) return App.handleLogout();
-                
-                window.open(`${url}?sso=${encodeURIComponent(state.sessionToken)}`, '_blank');
+                if(state.mustChangePassword) {
+                    UI.showToast('กรุณาเปลี่ยนรหัสผ่านเริ่มต้นก่อนเปิดแอป', 'warning');
+                    App.openChangePasswordModal();
+                    return;
+                }
+
+                const safeUrl = safeAppUrl(url);
+                if (!safeUrl) {
+                    UI.showToast('ไม่สามารถเปิดแอปนี้ได้ เนื่องจาก URL ไม่ถูกต้อง', 'error');
+                    return;
+                }
+                const target = new URL(safeUrl);
+                target.searchParams.set('sso', state.sessionToken);
+                window.open(target.toString(), '_blank', 'noopener');
                 API.sendLog("Open App", appId, `${state.currentUser} เปิดแอป`);
             }
         };
