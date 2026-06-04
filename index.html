@@ -71,8 +71,17 @@
 
     <div id="toast-container" class="fixed top-5 right-5 z-50 flex flex-col gap-3" aria-live="polite" aria-atomic="true"></div>
 
+    <!-- 0. ส่วนตรวจสอบเซสชันเริ่มต้น -->
+    <main id="boot-section" class="w-full max-w-md fade-in">
+        <section class="bg-white rounded-3xl p-8 shadow-2xl text-center border-t-8 border-t-brand-orange relative overflow-hidden">
+            <div class="w-12 h-12 mx-auto mb-5 rounded-full border-4 border-brand-blue/20 border-t-brand-orange animate-spin"></div>
+            <h1 class="text-3xl font-bold mb-2 text-brand-blue tracking-tight">AKRA-TRD WEB</h1>
+            <p class="text-slate-500">กำลังตรวจสอบเซสชัน...</p>
+        </section>
+    </main>
+
     <!-- 1. ส่วนลงชื่อเข้าใช้ (Login Section) -->
-    <main id="login-section" class="w-full max-w-md fade-in">
+    <main id="login-section" class="w-full max-w-md hidden fade-in">
         <section class="bg-white rounded-3xl p-8 shadow-2xl text-center border-t-8 border-t-brand-orange relative overflow-hidden">
             <div class="bg-brand-blue/10 p-4 rounded-full inline-block mb-4 shadow-sm">
                 <i data-lucide="shield-check" class="w-12 h-12 text-brand-blue"></i>
@@ -384,7 +393,7 @@
             STORAGE_USER_DATA: "akra_user_data",
             STORAGE_APP_CONFIG: "akra_app_config"
         };
-        const CURRENT_VERSION = "20260604.03";
+        const CURRENT_VERSION = "20260604.04";
         async function checkAppVersion() {
             try {
                 const res = await fetch('version.json?t=' + Date.now());
@@ -516,7 +525,7 @@
                 }, 3000);
             },
             switchSection: (sectionId) => {
-                ['login-section', 'dashboard-section', 'admin-section'].forEach(sec => {
+                ['boot-section', 'login-section', 'dashboard-section', 'admin-section'].forEach(sec => {
                     document.getElementById(sec).classList.toggle('hidden', sec !== sectionId);
                 });
                 if(sectionId === 'admin-section') {
@@ -1198,6 +1207,7 @@
                             document.getElementById('password-input').focus();
                         }, 200);
                     }
+                    UI.switchSection('login-section');
                 }
             },
 
