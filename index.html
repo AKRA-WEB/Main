@@ -384,7 +384,7 @@
             STORAGE_USER_DATA: "akra_user_data",
             STORAGE_APP_CONFIG: "akra_app_config"
         };
-        const CURRENT_VERSION = "20260604.02";
+        const CURRENT_VERSION = "20260604.03";
         async function checkAppVersion() {
             try {
                 const res = await fetch('version.json?t=' + Date.now());
@@ -1155,21 +1155,37 @@
                 const savedUserData = safeStorage.getItem(CONFIG.STORAGE_USER_DATA);
                 
                 if (savedToken && savedUserData) {
+                    let parsedUser;
                     try {
-                        const parsedUser = JSON.parse(savedUserData);
-                        state.sessionToken = savedToken;
-                        state.currentUserId = parsedUser.id || null;
-                        state.currentUser = parsedUser.name;
-                        state.currentRoles = parsedUser.roles || [];
-                        state.currentPerms = parsedUser.perms || {};
-                        state.mustChangePassword = parsedUser.mustChangePassword === true;
+                        parsedUser = JSON.parse(savedUserData);
+                    } catch (e) {
+                        // ข้อมูลเซสชันที่บันทึกไว้เสียหาย — บังคับเข้าสู่ระบบใหม่
+                        App.handleLogout();
+                        return;
+                    }
+                    state.sessionToken = savedToken;
+                    state.currentUserId = parsedUser.id || null;
+                    state.currentUser = parsedUser.name;
+                    state.currentRoles = parsedUser.roles || [];
+                    state.currentPerms = parsedUser.perms || {};
+                    state.mustChangePassword = parsedUser.mustChangePassword === true;
+                    try {
                         await App.refreshSession();
                         UI.switchSection('dashboard-section');
                         App.renderDashboard();
                         if (state.mustChangePassword) App.openChangePasswordModal();
                     } catch (e) {
-                        UI.showToast('เซสชันหมดอายุหรือสิทธิ์ถูกเปลี่ยน กรุณาเข้าสู่ระบบใหม่', 'warning');
-                        App.handleLogout();
+                        if (e.code === 'invalid_or_expired_token') {
+                            // Token หมดอายุจริงหรือสิทธิ์ถูกถอน — ต้องเข้าสู่ระบบใหม่
+                            UI.showToast('เซสชันหมดอายุหรือสิทธิ์ถูกเปลี่ยน กรุณาเข้าสู่ระบบใหม่', 'warning');
+                            App.handleLogout();
+                        } else {
+                            // เชื่อมต่อเซิร์ฟเวอร์ไม่ได้ (network / timeout / cold start) — ใช้ข้อมูลที่บันทึกไว้ ไม่ล้าง Token
+                            UI.switchSection('dashboard-section');
+                            App.renderDashboard();
+                            if (state.mustChangePassword) App.openChangePasswordModal();
+                            UI.showToast('เชื่อมต่อเซิร์ฟเวอร์ไม่ได้ กำลังใช้ข้อมูลล่าสุดที่บันทึกไว้', 'warning');
+                        }
                     }
                 } else {
                     // หากยังไม่ได้เข้าสู่ระบบ ให้ดึงรหัสพนักงานที่เคยจำไว้มากรอกอัตโนมัติ
