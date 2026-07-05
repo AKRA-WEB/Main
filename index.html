@@ -8,27 +8,8 @@
     <!-- ฟอนต์ Noto Sans Thai -->
     <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Thai:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     
-    <!-- Tailwind CSS CDN -->
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script>
-        tailwind.config = {
-            theme: {
-                extend: {
-                    colors: {
-                        brand: {
-                            blue: '#171C8F',
-                            orange: '#E35205',
-                            white: '#FFFFFF',
-                            gray: '#f8fafc'
-                        }
-                    },
-                    fontFamily: {
-                        sans: ['"Noto Sans Thai"', 'sans-serif'],
-                    }
-                }
-            }
-        }
-    </script>
+    <!-- Tailwind CSS (precompiled; see tailwind.config.js / tailwind.src.css) -->
+    <link rel="stylesheet" href="tailwind.css">
 
     <!-- Lucide Icons -->
     <script src="https://unpkg.com/lucide@latest"></script>
@@ -393,7 +374,7 @@
             STORAGE_USER_DATA: "akra_user_data",
             STORAGE_APP_CONFIG: "akra_app_config"
         };
-        const CURRENT_VERSION = "20260611.01";
+        const CURRENT_VERSION = "20260705.01";
         async function checkAppVersion() {
             try {
                 const res = await fetch('version.json?t=' + Date.now());
@@ -719,7 +700,11 @@
             },
 
             init: () => {
-                document.getElementById('search-input').addEventListener('input', AdminInteractive.renderUserList);
+                let searchDebounceTimer = null;
+                document.getElementById('search-input').addEventListener('input', () => {
+                    clearTimeout(searchDebounceTimer);
+                    searchDebounceTimer = setTimeout(AdminInteractive.renderUserList, 200);
+                });
                 document.getElementById('interactive-form').addEventListener('submit', AdminInteractive.handleSave);
                 document.getElementById('btn-delete-user').addEventListener('click', AdminInteractive.handleDelete);
                 document.getElementById('btn-reset-user-pwd').addEventListener('click', AdminInteractive.handleResetPassword);
@@ -802,9 +787,11 @@
                     listEl.appendChild(button);
                 }
 
-                if(count === 0) listEl.innerHTML = `<div class="p-6 text-center text-slate-400 text-sm"><i data-lucide="user-x" class="w-8 h-8 mx-auto mb-2 opacity-50"></i>ไม่พบชื่อนี้</div>`;
+                if(count === 0) {
+                    listEl.innerHTML = `<div class="p-6 text-center text-slate-400 text-sm"><i data-lucide="user-x" class="w-8 h-8 mx-auto mb-2 opacity-50"></i>ไม่พบชื่อนี้</div>`;
+                    lucide.createIcons({ root: listEl });
+                }
                 document.getElementById('user-count').innerText = count;
-                lucide.createIcons();
             },
 
             selectUser: (id) => {
