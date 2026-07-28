@@ -374,7 +374,7 @@
             STORAGE_USER_DATA: "akra_user_data",
             STORAGE_APP_CONFIG: "akra_app_config"
         };
-        const CURRENT_VERSION = "20260705.01";
+        const CURRENT_VERSION = "20260728.01";
         async function checkAppVersion() {
             try {
                 const res = await fetch('version.json?t=' + Date.now());
@@ -585,6 +585,44 @@
             return '';
         }
 
+        function parseCachedUserData(value) {
+            const parsed = JSON.parse(value);
+            if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) throw new Error('invalid_cached_user');
+            if (typeof parsed.id !== 'string' || typeof parsed.name !== 'string' || !Array.isArray(parsed.roles)) {
+                throw new Error('invalid_cached_user');
+            }
+            if (!parsed.roles.every(role => typeof role === 'string')) throw new Error('invalid_cached_user');
+
+            return {
+                id: parsed.id,
+                name: parsed.name,
+                roles: parsed.roles,
+                perms: parsed.perms && typeof parsed.perms === 'object' && !Array.isArray(parsed.perms)
+                    ? parsed.perms
+                    : {},
+                mustChangePassword: parsed.mustChangePassword === true
+            };
+        }
+
+        function parseCachedAppConfig(value) {
+            if (!value) return [];
+            try {
+                const parsed = JSON.parse(value);
+                if (!Array.isArray(parsed)) return [];
+                return parsed.filter(app => (
+                    app &&
+                    typeof app === 'object' &&
+                    typeof app.name === 'string' &&
+                    Array.isArray(app.roles) &&
+                    app.roles.every(role => typeof role === 'string') &&
+                    safeIdentifier(app.id) &&
+                    safeAppUrl(app.url)
+                ));
+            } catch (e) {
+                return [];
+            }
+        }
+
         let state = {
             users: {},
             currentUserId: null,
@@ -593,6 +631,8 @@
             currentPerms: {},
             mustChangePassword: false,
             sessionToken: null,
+            sessionEpoch: 0,
+            sessionRefreshPending: false,
             appConfig: [],
             roleConfig: [...DEFAULT_ROLES],
             permRows: []
@@ -1183,6 +1223,7 @@
                 state.currentRoles = data.user.roles || [];
                 state.currentPerms = data.user.perms || {};
                 state.mustChangePassword = data.user.mustChangePassword === true;
+                state.sessionRefreshPending = false;
                 state.appConfig = data.appConfig && data.appConfig.length > 0
                     ? data.appConfig
                     : JSON.parse(JSON.stringify(DEFAULT_APP_CONFIG));
@@ -1199,8 +1240,24 @@
             },
 
             refreshSession: async () => {
-                const data = await API.postAction({ action: 'refreshSession' });
+                const refreshToken = state.sessionToken;
+                const refreshEpoch = state.sessionEpoch;
+                let data;
+                try {
+                    data = await API.postAction({ action: 'refreshSession' });
+                } catch (error) {
+                    if (state.sessionEpoch !== refreshEpoch || state.sessionToken !== refreshToken) return false;
+                    throw error;
+                }
+                if (state.sessionEpoch !== refreshEpoch || state.sessionToken !== refreshToken) return false;
                 App.saveSession(data);
+                return true;
+            },
+
+            blockIfSessionRefreshing: () => {
+                if (!state.sessionRefreshPending) return false;
+                UI.showToast('กำลังตรวจสอบสิทธิ์ล่าสุด กรุณารอสักครู่', 'warning');
+                return true;
             },
 
             openChangePasswordModal: () => {
@@ -1221,7 +1278,10 @@
                 
                 document.getElementById('login-form').addEventListener('submit', App.handleLogin);
                 document.getElementById('logout-btn').addEventListener('click', App.handleLogout);
-                document.getElementById('admin-btn').addEventListener('click', () => UI.switchSection('admin-section'));
+                document.getElementById('admin-btn').addEventListener('click', () => {
+                    if (App.blockIfSessionRefreshing()) return;
+                    UI.switchSection('admin-section');
+                });
                 document.getElementById('back-to-dash-btn').addEventListener('click', () => {
                     UI.switchSection('dashboard-section');
                     App.renderDashboard(); 
@@ -1269,33 +1329,42 @@
                 if (savedToken && savedUserData) {
                     let parsedUser;
                     try {
-                        parsedUser = JSON.parse(savedUserData);
+                        parsedUser = parseCachedUserData(savedUserData);
                     } catch (e) {
                         // ข้อมูลเซสชันที่บันทึกไว้เสียหาย — บังคับเข้าสู่ระบบใหม่
                         App.handleLogout();
                         return;
                     }
                     state.sessionToken = savedToken;
+                    state.sessionEpoch += 1;
                     state.currentUserId = parsedUser.id || null;
                     state.currentUser = parsedUser.name;
                     state.currentRoles = parsedUser.roles || [];
                     state.currentPerms = parsedUser.perms || {};
                     state.mustChangePassword = parsedUser.mustChangePassword === true;
+                    state.sessionRefreshPending = true;
+                    state.appConfig = parseCachedAppConfig(safeStorage.getItem(CONFIG.STORAGE_APP_CONFIG));
+                    const cachedMustChangePassword = state.mustChangePassword;
+
+                    UI.switchSection('dashboard-section');
+                    App.renderDashboard();
+                    if (state.mustChangePassword) App.openChangePasswordModal();
+
                     try {
-                        await App.refreshSession();
-                        UI.switchSection('dashboard-section');
+                        const refreshApplied = await App.refreshSession();
+                        if (!refreshApplied) return;
                         App.renderDashboard();
-                        if (state.mustChangePassword) App.openChangePasswordModal();
+                        if (state.mustChangePassword && pwdModal.classList.contains('hidden')) App.openChangePasswordModal();
+                        else if (!state.mustChangePassword && cachedMustChangePassword) pwdModal.classList.add('hidden');
                     } catch (e) {
                         if (e.code === 'invalid_or_expired_token') {
                             // Token หมดอายุจริงหรือสิทธิ์ถูกถอน — ต้องเข้าสู่ระบบใหม่
+                            pwdModal.classList.add('hidden');
                             UI.showToast('เซสชันหมดอายุหรือสิทธิ์ถูกเปลี่ยน กรุณาเข้าสู่ระบบใหม่', 'warning');
                             App.handleLogout();
                         } else {
                             // เชื่อมต่อเซิร์ฟเวอร์ไม่ได้ (network / timeout / cold start) — ใช้ข้อมูลที่บันทึกไว้ ไม่ล้าง Token
-                            UI.switchSection('dashboard-section');
-                            App.renderDashboard();
-                            if (state.mustChangePassword) App.openChangePasswordModal();
+                            state.sessionRefreshPending = false;
                             UI.showToast('เชื่อมต่อเซิร์ฟเวอร์ไม่ได้ กำลังใช้ข้อมูลล่าสุดที่บันทึกไว้', 'warning');
                         }
                     }
@@ -1341,6 +1410,7 @@
                             safeStorage.removeItem("akra_remember_id");
                         }
 
+                        state.sessionEpoch += 1;
                         App.saveSession(data);
                         safeStorage.removeItem(CONFIG.STORAGE_USER_DB);
 
@@ -1393,6 +1463,7 @@
                 const btn = document.getElementById('submit-change-pwd-btn');
                 const btnText = document.getElementById('submit-change-pwd-text');
                 btn.disabled = true; btnText.innerHTML = '<i data-lucide="loader-2" class="w-4 h-4 animate-spin mr-2 inline"></i> กำลังบันทึก...'; lucide.createIcons();
+                const changeSessionEpoch = state.sessionEpoch;
 
                 try {
                     const data = await API.postAction({
@@ -1400,9 +1471,11 @@
                         currentPassword: currPwd,
                         newPassword: newPwd
                     });
+                    if (state.sessionEpoch !== changeSessionEpoch) return;
                     if (data.token) {
                         state.sessionToken = data.token;
                         state.mustChangePassword = false;
+                        state.sessionRefreshPending = true;
                         safeStorage.setItem(CONFIG.STORAGE_SESSION, state.sessionToken);
                         safeStorage.setItem(CONFIG.STORAGE_USER_DATA, JSON.stringify({
                             id: state.currentUserId,
@@ -1414,6 +1487,24 @@
                     }
                     UI.showToast("เปลี่ยนรหัสผ่านใหม่สำเร็จแล้วครับ");
                     document.getElementById('change-password-modal').classList.add('hidden');
+                    if (data.token) {
+                        try {
+                            const refreshApplied = await App.refreshSession();
+                            if (refreshApplied) {
+                                App.renderDashboard();
+                                if (state.mustChangePassword) App.openChangePasswordModal();
+                            }
+                        } catch (refreshError) {
+                            if (state.sessionEpoch !== changeSessionEpoch) return;
+                            if (refreshError.code === 'invalid_or_expired_token') {
+                                UI.showToast('เซสชันหมดอายุหรือสิทธิ์ถูกเปลี่ยน กรุณาเข้าสู่ระบบใหม่', 'warning');
+                                App.handleLogout();
+                            } else {
+                                state.sessionRefreshPending = false;
+                                UI.showToast('เปลี่ยนรหัสผ่านสำเร็จ แต่ไม่สามารถตรวจสอบสิทธิ์ล่าสุดได้ กำลังใช้ข้อมูลที่บันทึกไว้', 'warning');
+                            }
+                        }
+                    }
                 } catch (error) {
                     if (error.code === 'invalid_current_password') {
                         UI.showToast("รหัสผ่านปัจจุบันไม่ถูกต้อง", "error");
@@ -1427,6 +1518,7 @@
             },
 
             handleLogout: () => {
+                state.sessionEpoch += 1;
                 safeStorage.removeItem(CONFIG.STORAGE_SESSION);
                 safeStorage.removeItem(CONFIG.STORAGE_USER_DATA);
                 safeStorage.removeItem(CONFIG.STORAGE_USER_DB);
@@ -1436,6 +1528,7 @@
                 state.currentPerms = {};
                 state.mustChangePassword = false;
                 state.sessionToken = null;
+                state.sessionRefreshPending = false;
                 UI.switchSection('login-section');
             },
 
@@ -1488,6 +1581,7 @@
         const AKRA_SSO = {
             openApp: function(url, appId) {
                 if(!state.sessionToken) return App.handleLogout();
+                if(App.blockIfSessionRefreshing()) return;
                 if(state.mustChangePassword) {
                     UI.showToast('กรุณาเปลี่ยนรหัสผ่านเริ่มต้นก่อนเปิดแอป', 'warning');
                     App.openChangePasswordModal();
