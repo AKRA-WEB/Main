@@ -374,7 +374,7 @@
             STORAGE_USER_DATA: "akra_user_data",
             STORAGE_APP_CONFIG: "akra_app_config"
         };
-        const CURRENT_VERSION = "20260728.01";
+        const CURRENT_VERSION = "20260728.02";
         async function checkAppVersion() {
             try {
                 const res = await fetch('version.json?t=' + Date.now());
@@ -633,6 +633,7 @@
             sessionToken: null,
             sessionEpoch: 0,
             sessionRefreshPending: false,
+            pendingNavigation: null,
             appConfig: [],
             roleConfig: [...DEFAULT_ROLES],
             permRows: []
@@ -1254,10 +1255,80 @@
                 return true;
             },
 
-            blockIfSessionRefreshing: () => {
+            closePendingNavigation: () => {
+                const pending = state.pendingNavigation;
+                state.pendingNavigation = null;
+                if (pending && pending.popup && !pending.popup.closed) {
+                    try { pending.popup.close(); } catch (e) {}
+                }
+            },
+
+            queueNavigationIfRefreshing: (intent) => {
                 if (!state.sessionRefreshPending) return false;
-                UI.showToast('กำลังตรวจสอบสิทธิ์ล่าสุด กรุณารอสักครู่', 'warning');
+
+                const previous = state.pendingNavigation;
+                let popup = previous && previous.type === 'app' && previous.popup && !previous.popup.closed
+                    ? previous.popup
+                    : null;
+                if (previous && previous.type === 'app' && intent.type !== 'app' && popup) {
+                    try { popup.close(); } catch (e) {}
+                    popup = null;
+                }
+                if (intent.type === 'app' && !popup) {
+                    popup = window.open('about:blank', '_blank');
+                    if (popup) {
+                        try {
+                            popup.opener = null;
+                            popup.document.title = 'AKRA Portal';
+                            popup.document.body.textContent = 'กำลังตรวจสอบสิทธิ์ กรุณารอสักครู่...';
+                            popup.document.body.style.cssText = 'font-family:system-ui,sans-serif;padding:32px;color:#171C8F';
+                        } catch (e) {}
+                    }
+                }
+
+                state.pendingNavigation = {
+                    type: intent.type,
+                    appId: intent.appId || null,
+                    sessionEpoch: state.sessionEpoch,
+                    popup: popup
+                };
+                UI.showToast('กำลังตรวจสอบสิทธิ์ล่าสุด ระบบจะเปิดให้อัตโนมัติ', 'warning');
                 return true;
+            },
+
+            runPendingNavigation: () => {
+                if (state.sessionRefreshPending || !state.pendingNavigation) return;
+                const pending = state.pendingNavigation;
+                state.pendingNavigation = null;
+
+                if (pending.sessionEpoch !== state.sessionEpoch || !state.sessionToken) {
+                    if (pending.popup && !pending.popup.closed) {
+                        try { pending.popup.close(); } catch (e) {}
+                    }
+                    return;
+                }
+
+                if (pending.type === 'admin') {
+                    if (!state.currentRoles.includes('ADMIN')) {
+                        UI.showToast('คุณไม่มีสิทธิ์เข้าหน้าผู้ดูแลระบบ', 'warning');
+                        return;
+                    }
+                    UI.switchSection('admin-section');
+                    return;
+                }
+
+                const app = state.appConfig.find(item => (
+                    item.id === pending.appId &&
+                    item.roles.some(role => state.currentRoles.includes(role))
+                ));
+                if (!app) {
+                    if (pending.popup && !pending.popup.closed) {
+                        try { pending.popup.close(); } catch (e) {}
+                    }
+                    UI.showToast('สิทธิ์ใช้งานแอปนี้ถูกเปลี่ยน กรุณาเลือกแอปอีกครั้ง', 'warning');
+                    return;
+                }
+                AKRA_SSO.openApp(app.url, app.id, pending.popup, true);
             },
 
             openChangePasswordModal: () => {
@@ -1279,7 +1350,7 @@
                 document.getElementById('login-form').addEventListener('submit', App.handleLogin);
                 document.getElementById('logout-btn').addEventListener('click', App.handleLogout);
                 document.getElementById('admin-btn').addEventListener('click', () => {
-                    if (App.blockIfSessionRefreshing()) return;
+                    if (App.queueNavigationIfRefreshing({ type: 'admin' })) return;
                     UI.switchSection('admin-section');
                 });
                 document.getElementById('back-to-dash-btn').addEventListener('click', () => {
@@ -1356,6 +1427,7 @@
                         App.renderDashboard();
                         if (state.mustChangePassword && pwdModal.classList.contains('hidden')) App.openChangePasswordModal();
                         else if (!state.mustChangePassword && cachedMustChangePassword) pwdModal.classList.add('hidden');
+                        App.runPendingNavigation();
                     } catch (e) {
                         if (e.code === 'invalid_or_expired_token') {
                             // Token หมดอายุจริงหรือสิทธิ์ถูกถอน — ต้องเข้าสู่ระบบใหม่
@@ -1366,6 +1438,7 @@
                             // เชื่อมต่อเซิร์ฟเวอร์ไม่ได้ (network / timeout / cold start) — ใช้ข้อมูลที่บันทึกไว้ ไม่ล้าง Token
                             state.sessionRefreshPending = false;
                             UI.showToast('เชื่อมต่อเซิร์ฟเวอร์ไม่ได้ กำลังใช้ข้อมูลล่าสุดที่บันทึกไว้', 'warning');
+                            App.runPendingNavigation();
                         }
                     }
                 } else {
@@ -1493,6 +1566,7 @@
                             if (refreshApplied) {
                                 App.renderDashboard();
                                 if (state.mustChangePassword) App.openChangePasswordModal();
+                                App.runPendingNavigation();
                             }
                         } catch (refreshError) {
                             if (state.sessionEpoch !== changeSessionEpoch) return;
@@ -1502,6 +1576,7 @@
                             } else {
                                 state.sessionRefreshPending = false;
                                 UI.showToast('เปลี่ยนรหัสผ่านสำเร็จ แต่ไม่สามารถตรวจสอบสิทธิ์ล่าสุดได้ กำลังใช้ข้อมูลที่บันทึกไว้', 'warning');
+                                App.runPendingNavigation();
                             }
                         }
                     }
@@ -1519,6 +1594,7 @@
 
             handleLogout: () => {
                 state.sessionEpoch += 1;
+                App.closePendingNavigation();
                 safeStorage.removeItem(CONFIG.STORAGE_SESSION);
                 safeStorage.removeItem(CONFIG.STORAGE_USER_DATA);
                 safeStorage.removeItem(CONFIG.STORAGE_USER_DB);
@@ -1579,10 +1655,13 @@
         };
 
         const AKRA_SSO = {
-            openApp: function(url, appId) {
+            openApp: function(url, appId, pendingPopup, wasQueued) {
                 if(!state.sessionToken) return App.handleLogout();
-                if(App.blockIfSessionRefreshing()) return;
+                if(App.queueNavigationIfRefreshing({ type: 'app', appId: appId })) return;
                 if(state.mustChangePassword) {
+                    if (pendingPopup && !pendingPopup.closed) {
+                        try { pendingPopup.close(); } catch (e) {}
+                    }
                     UI.showToast('กรุณาเปลี่ยนรหัสผ่านเริ่มต้นก่อนเปิดแอป', 'warning');
                     App.openChangePasswordModal();
                     return;
@@ -1590,12 +1669,21 @@
 
                 const safeUrl = safeAppUrl(url);
                 if (!safeUrl) {
+                    if (pendingPopup && !pendingPopup.closed) {
+                        try { pendingPopup.close(); } catch (e) {}
+                    }
                     UI.showToast('ไม่สามารถเปิดแอปนี้ได้ เนื่องจาก URL ไม่ถูกต้อง', 'error');
                     return;
                 }
                 const target = new URL(safeUrl);
                 target.searchParams.set('sso', state.sessionToken);
-                window.open(target.toString(), '_blank', 'noopener');
+                if (pendingPopup && !pendingPopup.closed) {
+                    pendingPopup.location.replace(target.toString());
+                } else if (wasQueued) {
+                    window.location.assign(target.toString());
+                } else {
+                    window.open(target.toString(), '_blank', 'noopener');
+                }
                 API.sendLog("Open App", appId, `${state.currentUser} เปิดแอป`);
             }
         };
