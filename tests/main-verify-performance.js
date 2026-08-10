@@ -162,16 +162,16 @@ const cashier = createRuntime({
 });
 cashier.context.verifyAndDecodeToken = () => ({ id: 'U2', exp: Date.now() + 60000 });
 cashier.context.getPermConfig = () => ({ 'app-po': { createPO: ['Cashier'] } });
-cashier.context.getAppConfig = () => ([{ id: 'app-po', roles: ['Cashier'] }]);
+cashier.context.getAppConfig = () => ([{ id: 'app-tracking', roles: ['Cashier'] }]);
 cashier.context.getAuthorizationSnapshot_ = () => ({
-  appConfig: [{ id: 'app-po', roles: ['Cashier'] }],
+  appConfig: [{ id: 'app-tracking', roles: ['Cashier'] }],
   permConfig: { 'app-po': { createPO: ['Cashier'] } }
 });
-const cashierAllowed = callDoGet(cashier, { action: 'verifyToken', token: 'fixture.jwt.token', appId: 'app-po' });
+const cashierAllowed = callDoGet(cashier, { action: 'verifyToken', token: 'fixture.jwt.token', appId: 'app-tracking' });
 assert.strictEqual(cashierAllowed.valid, true, 'Cashier should enter PO when Main AppConfig allows it');
 
 cashierRow[3] = 'v1$default$2000$salt$hash';
-const passwordChangeDenied = callDoGet(cashier, { action: 'verifyToken', token: 'fixture.jwt.token', appId: 'app-po' });
+const passwordChangeDenied = callDoGet(cashier, { action: 'verifyToken', token: 'fixture.jwt.token', appId: 'app-tracking' });
 assert.deepStrictEqual(
   passwordChangeDenied,
   { valid: false, reason: 'mandatory_password_change_required' },
@@ -179,12 +179,12 @@ assert.deepStrictEqual(
 );
 cashierRow[3] = 'v1$user$2000$salt$hash';
 
-cashier.context.getAppConfig = () => ([{ id: 'app-po', roles: ['AKRA'] }]);
+cashier.context.getAppConfig = () => ([{ id: 'app-tracking', roles: ['AKRA'] }]);
 cashier.context.getAuthorizationSnapshot_ = () => ({
-  appConfig: [{ id: 'app-po', roles: ['AKRA'] }],
+  appConfig: [{ id: 'app-tracking', roles: ['AKRA'] }],
   permConfig: { 'app-po': { createPO: ['Cashier'] } }
 });
-const cashierDenied = callDoGet(cashier, { action: 'verifyToken', token: 'fixture.jwt.token', appId: 'app-po' });
+const cashierDenied = callDoGet(cashier, { action: 'verifyToken', token: 'fixture.jwt.token', appId: 'app-tracking' });
 assert.deepStrictEqual(
   cashierDenied,
   { valid: false, reason: 'permission_denied' },
@@ -226,7 +226,7 @@ let refreshSnapshotReadCount = 0;
 validRefresh.context.getAuthorizationSnapshot_ = () => {
   refreshSnapshotReadCount += 1;
   return {
-    appConfig: [{ id: 'app-po', roles: ['ADMIN'] }],
+    appConfig: [{ id: 'app-tracking', roles: ['ADMIN'] }],
     permConfig: { 'app-po': { createPO: ['ADMIN'] } }
   };
 };
@@ -248,7 +248,7 @@ const snapshotRuntime = createRuntime({
   getSheetByName(name) {
     if (name === 'AppConfig') return { getDataRange: () => ({ getValues: () => {
       appConfigReads += 1;
-      return [['AppID', 'Name', 'Icon', 'URL', 'Roles'], ['app-po', 'PO', 'box', 'https://akra-web.github.io/PO/', 'ADMIN,Cashier']];
+      return [['AppID', 'Name', 'Icon', 'URL', 'Roles'], ['app-tracking', 'PO', 'box', 'https://akra-web.github.io/TrackingPO/', 'ADMIN,Cashier']];
     } }) };
     if (name === 'PermConfig') return { getDataRange: () => ({ getValues: () => {
       permConfigReads += 1;
@@ -258,7 +258,7 @@ const snapshotRuntime = createRuntime({
   }
 });
 const snapshot = snapshotRuntime.context.getAuthorizationSnapshot_(snapshotRuntime.context.SpreadsheetApp.openById('fixture'));
-assert.strictEqual(snapshot.appConfig[0].id, 'app-po');
+assert.strictEqual(snapshot.appConfig[0].id, 'app-tracking');
 assert.deepStrictEqual(JSON.parse(JSON.stringify(snapshot.permConfig)), { 'app-po': { createPO: ['ADMIN', 'Cashier'] } });
 snapshotRuntime.context.getAppConfig(snapshotRuntime.context.SpreadsheetApp.openById('fixture'));
 snapshotRuntime.context.getPermConfig(snapshotRuntime.context.SpreadsheetApp.openById('fixture'));

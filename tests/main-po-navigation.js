@@ -11,7 +11,7 @@ const openSource = html.slice(openStart, openEnd);
 
 assert(openStart >= 0, 'Main must define app navigation');
 assert(
-  openSource.includes("appId !== 'app-po' && App.queueNavigationIfRefreshing"),
+  openSource.includes("appId !== 'app-tracking' && App.queueNavigationIfRefreshing"),
   'PO navigation must not wait for the redundant Main session refresh'
 );
 
@@ -31,7 +31,7 @@ const context = vm.createContext({
   safeAppUrl: url => url,
   window: { open(url) { openedUrls.push(url); } }
 });
-vm.runInContext(`${html.slice(objectStart, objectEnd)}; globalThis.openPO = () => AKRA_SSO.openApp('https://akra-web.github.io/PO/', 'app-po');`, context);
+vm.runInContext(`${html.slice(objectStart, objectEnd)}; globalThis.openPO = () => AKRA_SSO.openApp('https://akra-web.github.io/TrackingPO/', 'app-tracking');`, context);
 
 const samples = [];
 for (let i = 0; i < 20; i += 1) {

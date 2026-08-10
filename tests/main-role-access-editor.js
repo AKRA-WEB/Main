@@ -11,6 +11,7 @@ assert(html.includes('id="role-access-selector"'), 'admin UI must offer a role-f
 assert(html.includes('id="role-access-editor"'), 'admin UI must show app entry and action permissions together');
 assert(html.includes('saveRoleAccess: async () =>'), 'admin UI must offer one save operation for role access');
 assert(html.includes('authorizationLoaded: false'), 'authorization editing must start disabled until authoritative data loads');
+assert(html.includes('"app-po": "app-tracking"'), 'Main client dependency map must attach PO permissions to the registered TrackingPO app');
 
 const fetchStart = html.indexOf('fetchAdminData: async (force = false) =>');
 const fetchEnd = html.indexOf('\n            init: () =>', fetchStart);
@@ -154,7 +155,7 @@ function createSheet(initialRows, failWriteNumber = 0) {
 
 const oldAppRows = [
   ['AppID', 'Name', 'Icon', 'URL', 'Roles'],
-  ['app-po', 'PO', 'box', 'https://akra-web.github.io/PO/', 'ADMIN']
+  ['app-tracking', 'PO', 'box', 'https://akra-web.github.io/TrackingPO/', 'ADMIN']
 ];
 const oldPermRows = [
   ['AppID', 'PermKey', 'ADMIN', 'Cashier'],
@@ -169,7 +170,7 @@ const adminData = context.buildAdminData({
     return null;
   }
 });
-assert.strictEqual(adminData.appConfig[0].id, 'app-po', 'Admin data must use authoritative AppConfig rows');
+assert.strictEqual(adminData.appConfig[0].id, 'app-tracking', 'Admin data must use authoritative AppConfig rows');
 assert.strictEqual(adminData.authorizationRevision, oldRevision, 'Admin data revision must match the same authoritative matrices');
 lockEvents.length = 0;
 const appSheet = createSheet(oldAppRows);
@@ -181,7 +182,7 @@ const spreadsheet = {
 
 assert.throws(
   () => context.saveAuthorizationConfig_(spreadsheet, [{
-    id: 'app-po', name: 'PO', icon: 'box', url: 'https://akra-web.github.io/PO/', roles: ['Cashier']
+    id: 'app-tracking', name: 'PO', icon: 'box', url: 'https://akra-web.github.io/TrackingPO/', roles: ['Cashier']
   }], [{ appId: 'app-po', permKey: 'createPO', Cashier: true }], oldRevision),
   /controlled_write_failure/,
   'controlled second-sheet failure must surface to the caller'
@@ -198,7 +199,7 @@ assert.throws(
     getSheetByName(name) { return name === 'AppConfig' ? rollbackFailureAppSheet : name === 'PermConfig' ? rollbackFailurePermSheet : null; },
     insertSheet() { throw new Error('unexpected insert'); }
   }, [{
-    id: 'app-po', name: 'PO', icon: 'box', url: 'https://akra-web.github.io/PO/', roles: ['Cashier']
+    id: 'app-tracking', name: 'PO', icon: 'box', url: 'https://akra-web.github.io/TrackingPO/', roles: ['Cashier']
   }], [{ appId: 'app-po', permKey: 'createPO', Cashier: true }], oldRevision),
   /authorization_rollback_failed/,
   'rollback failure must surface a distinct authorization error'
@@ -217,7 +218,7 @@ const savedRevision = context.saveAuthorizationConfig_({
   getSheetByName(name) { return name === 'AppConfig' ? savedAppSheet : name === 'PermConfig' ? savedPermSheet : null; },
   insertSheet() { throw new Error('unexpected insert'); }
 }, [{
-  id: 'app-po', name: 'PO', icon: 'box', url: 'https://akra-web.github.io/PO/', roles: ['Cashier']
+  id: 'app-tracking', name: 'PO', icon: 'box', url: 'https://akra-web.github.io/TrackingPO/', roles: ['Cashier']
 }], [{ appId: 'app-po', permKey: 'createPO', Cashier: true }], oldRevision);
 assert(String(savedAppSheet.rows()[1][4]).split(',').includes('ADMIN'), 'successful unified save must persist ADMIN app access');
 assert.strictEqual(savedPermSheet.rows()[1][3], true, 'successful unified save must persist action access');
@@ -251,7 +252,7 @@ function callLegacyRollbackFailure(action, appFailureWrites, permFailureWrites) 
         ? {
             action,
             token: 'fixture-token',
-            appConfig: [{ id: 'app-po', name: 'PO', icon: 'box', url: 'https://akra-web.github.io/PO/', roles: ['ADMIN'] }]
+            appConfig: [{ id: 'app-tracking', name: 'PO', icon: 'box', url: 'https://akra-web.github.io/TrackingPO/', roles: ['ADMIN'] }]
           }
         : {
             action,
@@ -280,7 +281,7 @@ assert.throws(
 );
 assert.throws(
   () => context.saveAuthorizationConfig_(spreadsheet, [{
-    id: 'app-po', name: 'PO', icon: 'box', url: 'https://akra-web.github.io/PO/', roles: ['Cashier']
+    id: 'app-tracking', name: 'PO', icon: 'box', url: 'https://akra-web.github.io/TrackingPO/', roles: ['Cashier']
   }], [{ appId: 'app-po', permKey: 'createPO', Cashier: true }], 'stale-revision'),
   /stale_authorization_config/,
   'stale full-matrix submissions must not overwrite newer authorization data'
@@ -292,9 +293,22 @@ assert.throws(
 );
 
 const normalizedAppRows = vm.runInContext(`buildAppConfigRows_([{
-  id: 'app-po', name: 'PO', icon: 'box', url: 'https://akra-web.github.io/PO/', roles: ['Cashier']
+  id: 'app-tracking', name: 'PO', icon: 'box', url: 'https://akra-web.github.io/TrackingPO/', roles: ['Cashier']
 }])`, context);
 assert(String(normalizedAppRows[1][4]).split(',').includes('ADMIN'), 'AppConfig must always retain ADMIN access');
+
+const trackingAppRows = vm.runInContext(`buildAppConfigRows_([{
+  id: 'app-tracking', name: 'PO', icon: 'box', url: 'https://akra-web.github.io/TrackingPO/', roles: ['Cashier']
+}])`, context);
+const trackingPermRows = [
+  ['AppID', 'PermKey', 'ADMIN', 'Cashier'],
+  ['app-po', 'createPO', true, true]
+];
+assert.strictEqual(context.requiredAppIdForPermission_('app-po'), 'app-tracking', 'PO permissions must resolve to the registered TrackingPO entry');
+assert.doesNotThrow(
+  () => context.validateAuthorizationRows_(trackingAppRows, trackingPermRows),
+  'server validation must accept app-po permissions when app-tracking entry access is present'
+);
 
 assert.throws(
   () => context.validateAuthorizationRows_(
@@ -311,14 +325,14 @@ const clientState = {
   authorizationLoaded: true,
   authorizationSaving: false,
   authorizationDirty: false,
-  appConfig: [{ id: 'app-po', roles: ['ADMIN', 'Cashier'] }],
+  appConfig: [{ id: 'app-tracking', roles: ['ADMIN', 'Cashier'] }],
   permRows: [{ appId: 'app-po', permKey: 'createPO', ADMIN: true, Cashier: true }]
 };
 const confirmMessages = [];
 let confirmResult = false;
 const client = vm.createContext({
   state: clientState,
-  PERMISSION_APP_DEPENDENCIES: {},
+  PERMISSION_APP_DEPENDENCIES: { 'app-po': 'app-tracking' },
   document: { getElementById() { return null; } },
   confirm(message) { confirmMessages.push(message); return confirmResult; }
 });
@@ -326,20 +340,20 @@ vm.runInContext(`const AdminInteractive = {
   ${html.slice(dependencyStart, dependencyEnd)}
   renderRoleAccessEditor() {}, renderAppMatrix() {}, renderPermMatrix() {}
 }; globalThis.editor = AdminInteractive;`, client);
-vm.runInContext(`editor.setAppRole('app-po', 'Cashier', false)`, client);
+vm.runInContext(`editor.setAppRole('app-tracking', 'Cashier', false)`, client);
 assert(clientState.appConfig[0].roles.includes('Cashier'), 'cancelled dependency confirmation must retain app access');
 assert.strictEqual(clientState.permRows[0].Cashier, true, 'cancelled dependency confirmation must retain actions');
 assert(confirmMessages[0].includes('createPO'), 'confirmation must name affected actions');
 
 confirmResult = true;
-vm.runInContext(`editor.setAppRole('app-po', 'Cashier', false)`, client);
+vm.runInContext(`editor.setAppRole('app-tracking', 'Cashier', false)`, client);
 assert(!clientState.appConfig[0].roles.includes('Cashier'), 'confirmed disable must remove app access');
 assert.strictEqual(clientState.permRows[0].Cashier, false, 'confirmed disable must clear dependent actions');
 assert.strictEqual(clientState.authorizationDirty, true, 'authorization changes must mark the editor dirty');
 
 clientState.authorizationDirty = false;
 clientState.authorizationSaving = true;
-vm.runInContext(`editor.setAppRole('app-po', 'Cashier', true)`, client);
+vm.runInContext(`editor.setAppRole('app-tracking', 'Cashier', true)`, client);
 assert(!clientState.appConfig[0].roles.includes('Cashier'), 'app access must not mutate while an authorization save is in flight');
 assert.strictEqual(clientState.authorizationDirty, false, 'blocked in-flight edits must not mark the editor dirty');
 clientState.authorizationSaving = false;
@@ -411,7 +425,7 @@ async function verifyLatestAdminLoadWins() {
   const payload = (name, revision) => ({
     status: 'success',
     users: { U1: { name: 'Reviewer', roles: ['ADMIN'] } },
-    appConfig: [{ id: 'app-po', name, roles: ['ADMIN', 'Cashier'] }],
+    appConfig: [{ id: 'app-tracking', name, roles: ['ADMIN', 'Cashier'] }],
     roleConfig: [{ val: 'ADMIN' }, { val: 'Cashier' }],
     permRows: [{ appId: 'app-po', permKey: 'createPO', ADMIN: true, Cashier: true }],
     authorizationRevision: revision
@@ -454,7 +468,7 @@ async function verifyLatestAdminLoadWins() {
   loadState.sessionToken = 'next-session-token';
   loadState.authorizationLoaded = false;
   loadState.authorizationRevision = null;
-  loadState.appConfig = [{ id: 'app-po', name: 'next session state', roles: ['ADMIN'] }];
+  loadState.appConfig = [{ id: 'app-tracking', name: 'next session state', roles: ['ADMIN'] }];
   const storageWriteCountBeforePriorSessionResponse = storageWrites.length;
   deferredLoads[4].resolve(payload('prior session response', 'prior-session-revision'));
   await priorSessionLoad;
@@ -471,7 +485,7 @@ async function verifySharedSaveGate() {
     authorizationSaving: false,
     authorizationDirty: true,
     authorizationRevision: 'revision-1',
-    appConfig: [{ id: 'app-po', roles: ['ADMIN', 'Cashier'] }],
+    appConfig: [{ id: 'app-tracking', roles: ['ADMIN', 'Cashier'] }],
     permRows: [{ appId: 'app-po', permKey: 'createPO', ADMIN: true, Cashier: true }]
   };
   const button = { innerHTML: 'Save', disabled: false };

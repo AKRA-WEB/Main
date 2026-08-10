@@ -402,7 +402,7 @@
             STORAGE_USER_DATA: "akra_user_data",
             STORAGE_APP_CONFIG: "akra_app_config"
         };
-        const CURRENT_VERSION = "20260810.01";
+        const CURRENT_VERSION = "20260810.02";
         async function checkAppVersion() {
             try {
                 const res = await fetch('version.json?t=' + Date.now());
@@ -586,6 +586,7 @@
         ];
 
         const PERMISSION_APP_DEPENDENCIES = {
+            "app-po": "app-tracking",
             "app-akra": "app-w5",
             "app-ret": "app-damage"
         };
@@ -1894,7 +1895,7 @@
         const AKRA_SSO = {
             openApp: function(url, appId, pendingPopup, wasQueued) {
                 if(!state.sessionToken) return App.handleLogout();
-                if(appId !== 'app-po' && App.queueNavigationIfRefreshing({ type: 'app', appId: appId })) return;
+                if(appId !== 'app-tracking' && App.queueNavigationIfRefreshing({ type: 'app', appId: appId })) return;
                 if(state.mustChangePassword) {
                     if (pendingPopup && !pendingPopup.closed) {
                         try { pendingPopup.close(); } catch (e) {}
