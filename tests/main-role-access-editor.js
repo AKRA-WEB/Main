@@ -319,6 +319,22 @@ assert.throws(
   'action permission without required app access must be rejected server-side'
 );
 
+const reconcileStart = html.indexOf('function reconcileAuthorizationDependencies(');
+const reconcileEnd = html.indexOf('\n        function authorizationControlLabel', reconcileStart);
+assert(reconcileStart >= 0 && reconcileEnd > reconcileStart, 'legacy authorization must be reconciled before Admin can save it');
+const reconcileClient = vm.createContext({ PERMISSION_APP_DEPENDENCIES: { 'app-po': 'app-tracking' } });
+vm.runInContext(`${html.slice(reconcileStart, reconcileEnd)}; globalThis.reconcileAuthorizationDependencies = reconcileAuthorizationDependencies;`, reconcileClient);
+const legacyApps = [{ id: 'app-tracking', roles: ['ADMIN'] }];
+const legacyPerms = [{ appId: 'app-po', permKey: 'createPO', ADMIN: true, SUPERVISOR: true }];
+const legacyRepairs = reconcileClient.reconcileAuthorizationDependencies(
+  legacyApps,
+  legacyPerms,
+  [{ val: 'ADMIN' }, { val: 'SUPERVISOR' }]
+);
+assert.deepStrictEqual(legacyApps[0].roles, ['ADMIN', 'SUPERVISOR'], 'legacy action grants must retain the action and add required app access');
+assert.strictEqual(legacyPerms[0].SUPERVISOR, true, 'legacy reconciliation must not revoke an existing action grant');
+assert.strictEqual(legacyRepairs.length, 1, 'legacy reconciliation must report each app-access repair for review');
+
 const dependencyStart = html.indexOf('getDependentPermissions:');
 const dependencyEnd = html.indexOf('\n            saveRoleAccess:', dependencyStart);
 const clientState = {
@@ -375,6 +391,7 @@ async function verifyLatestAdminLoadWins() {
   const deferredLoads = [];
   const discardConfirmMessages = [];
   const storageWrites = [];
+  const adminToasts = [];
   let allowDirtyDiscard = true;
   const loadState = {
     users: {},
@@ -392,12 +409,13 @@ async function verifyLatestAdminLoadWins() {
   const loadClient = vm.createContext({
     console,
     state: loadState,
+    PERMISSION_APP_DEPENDENCIES: { 'app-po': 'app-tracking' },
     API: {
       postAction() {
         return new Promise((resolve, reject) => deferredLoads.push({ resolve, reject }));
       }
     },
-    UI: { showToast() {}, switchSection() {} },
+    UI: { showToast(message, type) { adminToasts.push([message, type]); }, switchSection() {} },
     safeStorage: {
       getItem() { return null; },
       setItem(key, value) { storageWrites.push([key, value]); }
@@ -413,6 +431,7 @@ async function verifyLatestAdminLoadWins() {
       return allowDirtyDiscard;
     }
   });
+  vm.runInContext(`${html.slice(reconcileStart, reconcileEnd)};`, loadClient);
   vm.runInContext(`const AdminInteractive = {
     adminDataLoadEpoch: 0,
     syncAuthorizationControls() {}, renderUserList() {}, setupAppPreviewGrid() {},
@@ -425,7 +444,7 @@ async function verifyLatestAdminLoadWins() {
   const payload = (name, revision) => ({
     status: 'success',
     users: { U1: { name: 'Reviewer', roles: ['ADMIN'] } },
-    appConfig: [{ id: 'app-tracking', name, roles: ['ADMIN', 'Cashier'] }],
+    appConfig: [{ id: 'app-tracking', name, roles: ['ADMIN'] }],
     roleConfig: [{ val: 'ADMIN' }, { val: 'Cashier' }],
     permRows: [{ appId: 'app-po', permKey: 'createPO', ADMIN: true, Cashier: true }],
     authorizationRevision: revision
@@ -433,6 +452,9 @@ async function verifyLatestAdminLoadWins() {
 
   deferredLoads[1].resolve(payload('newer response', 'newer-revision'));
   await secondLoad;
+  assert(loadState.appConfig[0].roles.includes('Cashier'), 'authoritative legacy data must gain required app access before the Admin saves');
+  assert.strictEqual(loadState.authorizationDirty, true, 'a repaired legacy matrix must require explicit Admin review and save');
+  assert(adminToasts.some(([message, type]) => type === 'warning' && message.includes('กรุณาตรวจสอบและบันทึก')), 'the Admin must be warned that legacy access was repaired but not yet saved');
   loadState.appConfig[0].roles = ['ADMIN'];
   loadState.authorizationDirty = true;
   deferredLoads[0].resolve(payload('older response', 'older-revision'));

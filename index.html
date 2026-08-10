@@ -402,7 +402,7 @@
             STORAGE_USER_DATA: "akra_user_data",
             STORAGE_APP_CONFIG: "akra_app_config"
         };
-        const CURRENT_VERSION = "20260810.02";
+        const CURRENT_VERSION = "20260810.03";
         async function checkAppVersion() {
             try {
                 const res = await fetch('version.json?t=' + Date.now());
@@ -611,6 +611,24 @@
             return /^[A-Za-z0-9_-]{1,80}$/.test(text) ? text : fallback;
         }
 
+        function reconcileAuthorizationDependencies(appConfig, permRows, roleConfig) {
+            if (!Array.isArray(appConfig) || !Array.isArray(permRows) || !Array.isArray(roleConfig)) return [];
+            const appsById = new Map(appConfig.map(app => [app.id, app]));
+            const repairs = [];
+            permRows.forEach(row => {
+                const requiredAppId = PERMISSION_APP_DEPENDENCIES[row.appId] || row.appId;
+                const requiredApp = appsById.get(requiredAppId);
+                if (!requiredApp || !Array.isArray(requiredApp.roles)) return;
+                roleConfig.forEach(role => {
+                    const roleVal = role && role.val;
+                    if (!roleVal || row[roleVal] !== true || requiredApp.roles.includes(roleVal)) return;
+                    requiredApp.roles.push(roleVal);
+                    repairs.push({ appId: requiredAppId, permissionAppId: row.appId, permKey: row.permKey, roleVal });
+                });
+            });
+            return repairs;
+        }
+
         function authorizationControlLabel(type, app, permission, role) {
             const appId = safeIdentifier(app && app.id);
             const appName = String((app && app.name) || appId);
@@ -811,12 +829,19 @@
                         state.authorizationDirty = false;
                         safeStorage.setItem(CONFIG.STORAGE_USER_DB, JSON.stringify(state.users));
                         safeStorage.setItem(CONFIG.STORAGE_APP_CONFIG, JSON.stringify(state.appConfig));
+                        const dependencyRepairs = reconcileAuthorizationDependencies(state.appConfig, state.permRows, state.roleConfig);
+                        state.authorizationDirty = dependencyRepairs.length > 0;
                         AdminInteractive.renderUserList();
                         AdminInteractive.setupAppPreviewGrid();
                         AdminInteractive.renderRoleAccessEditor();
                         AdminInteractive.renderAppMatrix();
                         AdminInteractive.renderPermMatrix();
-                        AdminInteractive.syncAuthorizationControls('โหลดสิทธิ์ล่าสุดแล้ว พร้อมแก้ไขและบันทึก');
+                        if (dependencyRepairs.length) {
+                            UI.showToast(`พบสิทธิ์เข้าแอปที่ขาด ${dependencyRepairs.length} รายการ ระบบเติมตาม Action เดิมแล้ว กรุณาตรวจสอบและบันทึก`, 'warning');
+                        }
+                        AdminInteractive.syncAuthorizationControls(dependencyRepairs.length
+                            ? `เติมสิทธิ์เข้าแอปที่ Action เดิมจำเป็นต้องใช้ ${dependencyRepairs.length} รายการแล้ว กรุณาตรวจสอบและบันทึก`
+                            : 'โหลดสิทธิ์ล่าสุดแล้ว พร้อมแก้ไขและบันทึก');
                     } else {
                         UI.showToast("คุณไม่มีสิทธิ์ดึงข้อมูลพนักงาน", "error");
                         UI.switchSection('dashboard-section');
