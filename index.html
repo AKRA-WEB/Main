@@ -4,18 +4,27 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>AKRA Portal | Centralized System</title>
-    
+    <link rel="preconnect" href="https://script.google.com">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+
     <!-- ฟอนต์ Noto Sans Thai -->
-    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Thai:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Thai:wght@300;400;500;600;700&display=swap" rel="stylesheet" media="print" onload="this.media='all'">
+    <noscript><link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Thai:wght@300;400;500;600;700&display=swap" rel="stylesheet"></noscript>
     
     <!-- Tailwind CSS (precompiled; see tailwind.config.js / tailwind.src.css) -->
     <link rel="stylesheet" href="tailwind.css">
 
     <!-- Lucide Icons -->
-    <script src="https://unpkg.com/lucide@latest"></script>
+    <script src="assets/lucide-0.468.0.min.js" defer></script>
     
     <style>
         .fade-in { animation: fadeIn 0.3s ease-out forwards; }
+        .admin-overflow-guard { overflow-x: hidden; }
+        .authorization-switch:focus-visible + .authorization-switch-track {
+            outline: 3px solid #E35205;
+            outline-offset: 3px;
+        }
         @keyframes fadeIn {
             from { opacity: 0; transform: translateY(10px); }
             to { opacity: 1; transform: translateY(0); }
@@ -139,10 +148,10 @@
     </main>
 
     <!-- 3. ส่วนจัดการผู้ใช้งาน (Admin Section) -->
-    <main id="admin-section" class="w-full max-w-7xl hidden fade-in py-6 h-screen max-h-[900px] flex flex-col">
-        <header class="flex flex-col sm:flex-row justify-between items-center mb-6 bg-white p-5 rounded-2xl shadow-lg shrink-0 gap-4">
-            <div class="flex items-center gap-4 w-full sm:w-auto">
-                <div class="bg-slate-100 p-1.5 rounded-xl flex gap-1 shadow-inner shrink-0 overflow-x-auto w-full sm:w-auto">
+    <main id="admin-section" class="w-full max-w-7xl hidden fade-in py-6 h-screen max-h-[900px] flex flex-col admin-overflow-guard">
+        <header class="flex flex-col sm:flex-row justify-between items-center mb-6 bg-white p-5 rounded-2xl shadow-lg shrink-0 gap-4 min-w-0">
+            <div class="flex items-center gap-4 w-full sm:w-auto min-w-0">
+                <div class="bg-slate-100 p-1.5 rounded-xl flex gap-1 shadow-inner shrink-0 overflow-x-auto w-full sm:w-auto min-w-0">
                     <button id="tab-btn-users" onclick="AdminInteractive.switchTab('users')" class="px-5 py-2 rounded-lg font-bold bg-white text-brand-blue shadow-sm transition-all flex items-center gap-2 whitespace-nowrap">
                         <i data-lucide="users" class="w-4 h-4"></i> จัดการพนักงาน
                     </button>
@@ -247,14 +256,33 @@
 
         <!-- [TAB 2] จัดการแอป -->
         <section id="tab-content-apps" class="hidden flex flex-col flex-grow bg-white rounded-2xl shadow-xl border-t-8 border-t-brand-blue overflow-hidden p-6">
+            <div class="mb-6 p-5 bg-slate-50 border border-slate-200 rounded-2xl">
+                <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-4">
+                    <div>
+                        <h3 class="text-xl font-bold text-brand-blue flex items-center gap-2">
+                            <i data-lucide="user-cog" class="w-6 h-6 text-brand-orange"></i> จัดสิทธิ์ตาม Role
+                        </h3>
+                        <p class="text-slate-500 text-sm mt-1">เลือก Role แล้วกำหนดทั้งสิทธิ์เข้าแอปและสิทธิ์การทำงานในจอเดียว</p>
+                    </div>
+                    <div class="flex flex-col sm:flex-row gap-3 w-full sm:w-auto">
+                        <select id="role-access-selector" aria-describedby="authorization-load-status" onchange="AdminInteractive.selectRoleAccess(this.value)" class="px-4 py-2.5 rounded-xl bg-white border border-slate-200 text-brand-blue font-semibold min-w-[180px]" disabled></select>
+                        <button id="save-role-access-btn" onclick="AdminInteractive.saveRoleAccess()" class="bg-brand-orange hover:bg-[#c94804] text-white px-6 py-2.5 rounded-xl font-semibold shadow-md transition-all flex items-center justify-center gap-2 shrink-0" disabled>
+                            <i data-lucide="save" class="w-4 h-4"></i> บันทึกสิทธิ์ Role นี้
+                        </button>
+                    </div>
+                </div>
+                <p id="authorization-load-status" role="status" aria-live="polite" class="text-sm text-slate-500 mb-3">กำลังโหลดสิทธิ์ล่าสุด...</p>
+                <div id="role-access-editor" class="grid grid-cols-1 md:grid-cols-2 gap-3"></div>
+            </div>
+
             <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-4">
                 <div>
-                    <h3 class="text-xl font-bold text-brand-blue flex items-center gap-2">
+                    <h3 class="text-lg font-bold text-brand-blue flex items-center gap-2">
                         <i data-lucide="sliders" class="w-6 h-6 text-brand-orange"></i> ตารางสิทธิ์การมองเห็นแอป (App-Role Matrix)
                     </h3>
-                    <p class="text-slate-500 text-sm mt-1">กำหนดว่าแอปพลิเคชันไหน อนุญาตให้กลุ่มใด (Role) ใช้งานได้บ้าง</p>
+                    <p class="text-slate-500 text-sm mt-1">มุมมองขั้นสูงสำหรับเปรียบเทียบทุก Role พร้อมกัน</p>
                 </div>
-                <button onclick="AdminInteractive.saveAppConfig()" class="bg-brand-blue hover:bg-[#121670] text-white px-6 py-2.5 rounded-xl font-semibold shadow-md transition-all flex items-center gap-2 shrink-0">
+                <button id="save-app-config-btn" onclick="AdminInteractive.saveAppConfig()" class="bg-brand-blue hover:bg-[#121670] text-white px-6 py-2.5 rounded-xl font-semibold shadow-md transition-all flex items-center gap-2 shrink-0" disabled>
                     <i data-lucide="save" class="w-4 h-4"></i> บันทึกการตั้งค่าแอป
                 </button>
             </div>
@@ -284,7 +312,7 @@
                     </h3>
                     <p class="text-slate-500 text-sm mt-1">กำหนดว่า Role ใดทำ Action อะไรได้ในแต่ละแอป — มีผลทันทีที่พนักงาน Login ครั้งถัดไป</p>
                 </div>
-                <button onclick="AdminInteractive.savePermConfig()" class="bg-brand-orange hover:bg-[#c94804] text-white px-6 py-2.5 rounded-xl font-semibold shadow-md transition-all flex items-center gap-2 shrink-0">
+                <button id="save-perm-config-btn" onclick="AdminInteractive.savePermConfig()" class="bg-brand-orange hover:bg-[#c94804] text-white px-6 py-2.5 rounded-xl font-semibold shadow-md transition-all flex items-center gap-2 shrink-0" disabled>
                     <i data-lucide="save" class="w-4 h-4"></i> บันทึกสิทธิ์
                 </button>
             </div>
@@ -374,7 +402,7 @@
             STORAGE_USER_DATA: "akra_user_data",
             STORAGE_APP_CONFIG: "akra_app_config"
         };
-        const CURRENT_VERSION = "20260728.02";
+        const CURRENT_VERSION = "20260810.01";
         async function checkAppVersion() {
             try {
                 const res = await fetch('version.json?t=' + Date.now());
@@ -557,6 +585,11 @@
             { id: "app-manual", name: "คู่มือ", icon: "book-open", url: "https://akra-web.github.io/SOP/", roles: ["ADMIN", "AKRA", "TRD", "WAREHOUSE", "Cashier"] }
         ];
 
+        const PERMISSION_APP_DEPENDENCIES = {
+            "app-akra": "app-w5",
+            "app-ret": "app-damage"
+        };
+
         const DEFAULT_ROLES = [
             { val: "ADMIN",      label: "ADMIN",      desc: "ผู้ดูแลระบบ",        icon: "shield-alert" },
             { val: "SUPERVISOR", label: "Supervisor", desc: "หัวหน้างาน",          icon: "crown"        },
@@ -575,6 +608,19 @@
         function safeIdentifier(value, fallback = '') {
             const text = String(value ?? '').trim();
             return /^[A-Za-z0-9_-]{1,80}$/.test(text) ? text : fallback;
+        }
+
+        function authorizationControlLabel(type, app, permission, role) {
+            const appId = safeIdentifier(app && app.id);
+            const appName = String((app && app.name) || appId);
+            const roleVal = safeIdentifier(role && role.val);
+            const roleLabel = String((role && role.label) || roleVal);
+            if (type === 'permission') {
+                const permKey = safeIdentifier(permission && permission.key);
+                const permLabel = String((permission && permission.label) || permKey);
+                return `สิทธิ์การทำงาน ${permLabel} [${appId}:${permKey}] สำหรับ ${roleLabel} (${roleVal})`;
+            }
+            return `สิทธิ์เข้าแอป ${appName} (${appId}) สำหรับ ${roleLabel} (${roleVal})`;
         }
 
         function safeAppUrl(value) {
@@ -636,7 +682,11 @@
             pendingNavigation: null,
             appConfig: [],
             roleConfig: [...DEFAULT_ROLES],
-            permRows: []
+            permRows: [],
+            authorizationLoaded: false,
+            authorizationSaving: false,
+            authorizationDirty: false,
+            authorizationRevision: null
         };
 
         const UI = {
@@ -704,34 +754,82 @@
         const AdminInteractive = {
             editingUserId: null,
             editingRoles: [],
+            focusedRole: null,
+            adminDataLoadEpoch: 0,
 
-            fetchAdminData: async () => {
+            syncAuthorizationControls: (message) => {
+                const disabled = !state.authorizationLoaded || state.authorizationSaving;
+                ['refresh-data-btn', 'role-access-selector', 'save-role-access-btn', 'save-app-config-btn', 'save-perm-config-btn'].forEach(id => {
+                    const control = document.getElementById(id);
+                    if (control) control.disabled = disabled;
+                });
+                if (disabled) {
+                    document.querySelectorAll('#role-access-editor input, #app-permission-matrix input, #perm-matrix-body input').forEach(control => {
+                        control.disabled = true;
+                    });
+                }
+                const status = document.getElementById('authorization-load-status');
+                if (status && message) status.textContent = message;
+            },
+
+            requireAuthorizationReady: () => {
+                if (state.authorizationLoaded && state.authorizationRevision) return true;
+                UI.showToast('ยังโหลดสิทธิ์ล่าสุดไม่สำเร็จ จึงยังไม่สามารถบันทึกได้', 'warning');
+                return false;
+            },
+
+            handleAuthorizationSaveError: async (error, fallbackMessage) => {
+                const errorCode = String(error && error.code || '');
+                const isConflict = errorCode.includes('stale_authorization_config') || errorCode.includes('incomplete_authorization_config');
+                UI.showToast(isConflict ? 'สิทธิ์ถูกเปลี่ยนจากที่อื่น ระบบกำลังโหลดข้อมูลล่าสุดใหม่' : `${fallbackMessage} ระบบกำลังตรวจสอบข้อมูลล่าสุดใหม่`, 'error');
+                await AdminInteractive.fetchAdminData(true);
+            },
+
+            fetchAdminData: async (force = false) => {
+                if (state.authorizationSaving && !force) return null;
+                if (state.authorizationDirty && !force && !confirm('มีการเปลี่ยนแปลงสิทธิ์ที่ยังไม่ได้บันทึก การโหลดข้อมูลล่าสุดจะยกเลิกการเปลี่ยนแปลงเหล่านี้\nยืนยันดำเนินการหรือไม่?')) return null;
+                const requestEpoch = ++AdminInteractive.adminDataLoadEpoch;
+                const requestSessionEpoch = state.sessionEpoch;
+                state.authorizationLoaded = false;
+                state.authorizationRevision = null;
+                AdminInteractive.syncAuthorizationControls('กำลังโหลดสิทธิ์ล่าสุด...');
                 document.getElementById('list-loading-state').classList.remove('hidden');
                 let loadedFromServer = false;
                 try {
                     const data = await API.postAction({ action: 'getAdminData' });
+                    if (requestEpoch !== AdminInteractive.adminDataLoadEpoch || requestSessionEpoch !== state.sessionEpoch) return null;
 
-                    if (data.status === 'success' && data.users) {
+                    if (data.status === 'success' && data.users && Array.isArray(data.appConfig) && Array.isArray(data.permRows) && data.authorizationRevision) {
                         loadedFromServer = true;
                         state.users = data.users;
+                        state.appConfig = data.appConfig;
                         if (data.roleConfig && data.roleConfig.length) state.roleConfig = data.roleConfig;
-                        if (data.permRows) state.permRows = data.permRows;
+                        state.permRows = data.permRows;
+                        state.authorizationRevision = data.authorizationRevision;
+                        state.authorizationLoaded = true;
+                        state.authorizationDirty = false;
                         safeStorage.setItem(CONFIG.STORAGE_USER_DB, JSON.stringify(state.users));
+                        safeStorage.setItem(CONFIG.STORAGE_APP_CONFIG, JSON.stringify(state.appConfig));
                         AdminInteractive.renderUserList();
                         AdminInteractive.setupAppPreviewGrid();
+                        AdminInteractive.renderRoleAccessEditor();
                         AdminInteractive.renderAppMatrix();
                         AdminInteractive.renderPermMatrix();
+                        AdminInteractive.syncAuthorizationControls('โหลดสิทธิ์ล่าสุดแล้ว พร้อมแก้ไขและบันทึก');
                     } else {
                         UI.showToast("คุณไม่มีสิทธิ์ดึงข้อมูลพนักงาน", "error");
                         UI.switchSection('dashboard-section');
                     }
                 } catch (error) {
+                    if (requestEpoch !== AdminInteractive.adminDataLoadEpoch || requestSessionEpoch !== state.sessionEpoch) return null;
                     console.warn("ดึงข้อมูลไม่สำเร็จ ใช้ Cache แທน");
+                    state.authorizationLoaded = false;
+                    state.authorizationRevision = null;
+                    AdminInteractive.syncAuthorizationControls('โหลดสิทธิ์ล่าสุดไม่สำเร็จ ปิดการแก้ไขเพื่อป้องกันข้อมูลถูกเขียนทับ');
                     const cachedUsers = safeStorage.getItem(CONFIG.STORAGE_USER_DB);
                     if (cachedUsers) {
                         state.users = JSON.parse(cachedUsers);
                         AdminInteractive.renderUserList();
-                        AdminInteractive.renderAppMatrix();
                     } else {
                         UI.showToast("ไม่สามารถโหลดรายชื่อพนักงานได้", "error");
                     }
@@ -787,6 +885,8 @@
                         btn.className = "px-5 py-2 rounded-lg font-medium text-slate-500 hover:text-brand-blue transition-all flex items-center gap-2 whitespace-nowrap";
                     }
                 });
+                if (tabName === 'apps') AdminInteractive.renderRoleAccessEditor();
+                if (tabName === 'perms') AdminInteractive.renderPermMatrix();
             },
 
             renderUserList: () => {
@@ -1021,9 +1121,169 @@
                 }
             },
 
+            selectRoleAccess: (roleVal) => {
+                if (!state.authorizationLoaded) return;
+                if (!state.roleConfig.some(role => role.val === roleVal)) return;
+                AdminInteractive.focusedRole = roleVal;
+                AdminInteractive.renderRoleAccessEditor();
+            },
+
+            renderRoleAccessEditor: () => {
+                const selector = document.getElementById('role-access-selector');
+                const editor = document.getElementById('role-access-editor');
+                if (!selector || !editor || !state.roleConfig.length) return;
+                if (!state.authorizationLoaded) {
+                    editor.innerHTML = '<p class="md:col-span-2 text-sm text-slate-500 bg-slate-50 border border-slate-200 rounded-xl p-4">รอโหลด AppConfig และ PermConfig ล่าสุดก่อนแก้ไข</p>';
+                    return;
+                }
+
+                if (!state.roleConfig.some(role => role.val === AdminInteractive.focusedRole)) {
+                    const cashierRole = state.roleConfig.find(role => role.val === 'Cashier');
+                    const editableRole = state.roleConfig.find(role => role.val !== 'ADMIN');
+                    AdminInteractive.focusedRole = (cashierRole || editableRole || state.roleConfig[0]).val;
+                }
+
+                selector.innerHTML = state.roleConfig.map(role => (
+                    `<option value="${safeIdentifier(role.val)}">${escapeHtml(role.label)} (${escapeHtml(role.val)})</option>`
+                )).join('');
+                selector.value = AdminInteractive.focusedRole;
+                editor.innerHTML = '';
+
+                const roleVal = safeIdentifier(AdminInteractive.focusedRole);
+                const focusedRole = state.roleConfig.find(role => role.val === AdminInteractive.focusedRole);
+                const isAdmin = roleVal === 'ADMIN';
+                state.appConfig.forEach(app => {
+                    const appId = safeIdentifier(app.id);
+                    if (!appId || !roleVal) return;
+                    const canEnter = app.roles.includes(AdminInteractive.focusedRole);
+                    const permissionRows = state.permRows.filter(row =>
+                        (PERMISSION_APP_DEPENDENCIES[row.appId] || row.appId) === app.id
+                    );
+                    const actionControls = permissionRows.length
+                        ? permissionRows.map(row => {
+                            const permissionAppId = safeIdentifier(row.appId);
+                            const permKey = safeIdentifier(row.permKey);
+                            if (!permissionAppId || !permKey) return '';
+                            const checked = row[AdminInteractive.focusedRole] === true;
+                            return `<label class="flex items-center justify-between gap-3 text-xs text-slate-600 py-1">
+                                <span>${escapeHtml(row.permKey)}</span>
+                                <input type="checkbox" ${checked ? 'checked' : ''} ${isAdmin || !canEnter ? 'disabled' : ''}
+                                    aria-label="${escapeHtml(authorizationControlLabel('permission', { id: row.appId, name: app.name }, { key: row.permKey, label: row.permKey }, focusedRole))}"
+                                    onchange="AdminInteractive.togglePermRole('${permissionAppId}','${permKey}','${roleVal}',this.checked)"
+                                    class="w-4 h-4 accent-brand-blue disabled:opacity-40">
+                            </label>`;
+                        }).join('')
+                        : '<p class="text-xs text-slate-400">แอปนี้ไม่มีสิทธิ์ Action เพิ่มเติม</p>';
+
+                    const card = document.createElement('article');
+                    card.className = `bg-white border rounded-xl p-4 ${canEnter ? 'border-brand-blue/30' : 'border-slate-200'}`;
+                    card.innerHTML = `<div class="flex items-center justify-between gap-3 mb-3">
+                        <div class="flex items-center gap-2 min-w-0">
+                            <i data-lucide="${safeIdentifier(app.icon, 'box')}" class="w-4 h-4 text-brand-orange shrink-0"></i>
+                            <span class="font-semibold text-slate-800 truncate">${escapeHtml(app.name)}</span>
+                        </div>
+                        <label class="flex items-center gap-2 text-xs font-semibold text-brand-blue shrink-0 ${isAdmin ? 'opacity-50' : 'cursor-pointer'}">
+                            เข้าแอป
+                            <input type="checkbox" ${canEnter ? 'checked' : ''} ${isAdmin ? 'disabled' : ''}
+                                aria-label="${escapeHtml(authorizationControlLabel('app', app, null, focusedRole))}"
+                                onchange="AdminInteractive.setAppRole('${appId}','${roleVal}',this.checked)"
+                                class="w-4 h-4 accent-brand-blue">
+                        </label>
+                    </div><div class="border-t border-slate-100 pt-2">${actionControls}</div>`;
+                    editor.appendChild(card);
+                });
+                lucide.createIcons({ root: editor });
+            },
+
+            getDependentPermissions: (appId, roleVal) => state.permRows.filter(row =>
+                (PERMISSION_APP_DEPENDENCIES[row.appId] || row.appId) === appId && row[roleVal] === true
+            ),
+
+            markAuthorizationDirty: () => {
+                state.authorizationDirty = true;
+                const status = document.getElementById('authorization-load-status');
+                if (status) status.textContent = 'มีการเปลี่ยนแปลงที่ยังไม่ได้บันทึก';
+            },
+
+            setAppRole: (appId, roleVal, checked) => {
+                if (!state.authorizationLoaded || state.authorizationSaving) return;
+                const app = state.appConfig.find(item => item.id === appId);
+                if (!app || roleVal === 'ADMIN') return;
+                const index = app.roles.indexOf(roleVal);
+                const dependentPermissions = AdminInteractive.getDependentPermissions(appId, roleVal);
+                let changed = false;
+                if (!checked && index !== -1 && dependentPermissions.length) {
+                    const affected = dependentPermissions.map(row => row.permKey).join(', ');
+                    if (!confirm(`การปิดสิทธิ์เข้าแอปจะยกเลิก Action ต่อไปนี้ด้วย: ${affected}\nยืนยันดำเนินการหรือไม่?`)) {
+                        AdminInteractive.renderRoleAccessEditor();
+                        AdminInteractive.renderAppMatrix();
+                        return;
+                    }
+                    dependentPermissions.forEach(row => { row[roleVal] = false; });
+                    changed = true;
+                }
+                if (checked && index === -1) { app.roles.push(roleVal); changed = true; }
+                if (!checked && index !== -1) { app.roles.splice(index, 1); changed = true; }
+                if (changed) AdminInteractive.markAuthorizationDirty();
+                AdminInteractive.renderRoleAccessEditor();
+                AdminInteractive.renderAppMatrix();
+                AdminInteractive.renderPermMatrix();
+            },
+
+            saveAuthorizationChanges: async (button, successMessage, logDetails) => {
+                if (!AdminInteractive.requireAuthorizationReady() || state.authorizationSaving) return false;
+                const originalHtml = button.innerHTML;
+                state.authorizationSaving = true;
+                AdminInteractive.syncAuthorizationControls('กำลังบันทึกสิทธิ์ กรุณารอสักครู่...');
+                button.innerHTML = '<i data-lucide="loader-2" class="w-4 h-4 animate-spin"></i> กำลังบันทึก...';
+                lucide.createIcons({ root: button });
+                try {
+                    const data = await API.postAction({
+                        action: "saveAuthorizationConfig",
+                        appConfig: state.appConfig,
+                        rows: state.permRows,
+                        authorizationRevision: state.authorizationRevision
+                    });
+                    if (!data.authorizationRevision) throw new Error('invalid_authorization_save_response');
+                    state.authorizationRevision = data.authorizationRevision;
+                    state.authorizationDirty = false;
+                    safeStorage.setItem(CONFIG.STORAGE_APP_CONFIG, JSON.stringify(state.appConfig));
+                    UI.showToast(successMessage, 'success');
+                    if (logDetails) API.sendLog('Admin Action', 'Portal', logDetails);
+                    return true;
+                } catch (error) {
+                    await AdminInteractive.handleAuthorizationSaveError(error, 'บันทึกไม่สำเร็จ ระบบคงสิทธิ์ชุดเดิมไว้');
+                    return false;
+                } finally {
+                    state.authorizationSaving = false;
+                    button.innerHTML = originalHtml;
+                    if (state.authorizationLoaded) {
+                        AdminInteractive.renderRoleAccessEditor();
+                        AdminInteractive.renderAppMatrix();
+                        AdminInteractive.renderPermMatrix();
+                        AdminInteractive.setupAppPreviewGrid();
+                        if (AdminInteractive.editingUserId) AdminInteractive.updateAppPreview();
+                    }
+                    AdminInteractive.syncAuthorizationControls(state.authorizationLoaded
+                        ? (state.authorizationDirty ? 'มีการเปลี่ยนแปลงที่ยังไม่ได้บันทึก' : 'โหลดสิทธิ์ล่าสุดแล้ว พร้อมแก้ไขและบันทึก')
+                        : undefined);
+                    lucide.createIcons({ root: button });
+                }
+            },
+
+            saveRoleAccess: async () => AdminInteractive.saveAuthorizationChanges(
+                document.getElementById('save-role-access-btn'),
+                `บันทึกสิทธิ์ ${AdminInteractive.focusedRole} สำเร็จ`,
+                `ปรับสิทธิ์ Role: ${AdminInteractive.focusedRole}`
+            ),
+
             renderAppMatrix: () => {
                 const tbody = document.getElementById('app-permission-matrix');
                 const headerRow = document.getElementById('app-matrix-header-row');
+                if (!state.authorizationLoaded) {
+                    tbody.innerHTML = '';
+                    return;
+                }
 
                 if (headerRow.children.length === 1) {
                     state.roleConfig.forEach(r => {
@@ -1053,9 +1313,10 @@
                         roleCells += `
                             <td class="p-4 text-center border-l border-slate-100 align-middle">
                                 <label class="inline-flex items-center ${cursorClass}">
-                                    <input type="checkbox" class="sr-only peer" ${checkedAttr} ${disabledAttr} 
+                                    <input type="checkbox" class="sr-only peer authorization-switch" ${checkedAttr} ${disabledAttr}
+                                           aria-label="${escapeHtml(authorizationControlLabel('app', app, null, r))}"
                                            onchange="AdminInteractive.toggleMatrixRole('${appId}', '${roleVal}')">
-                                    <div class="w-11 h-6 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-brand-blue relative"></div>
+                                    <div class="authorization-switch-track w-11 h-6 bg-slate-200 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-brand-blue relative"></div>
                                 </label>
                             </td>
                         `;
@@ -1080,50 +1341,22 @@
             toggleMatrixRole: (appId, roleVal) => {
                 const app = state.appConfig.find(a => a.id === appId);
                 if(!app) return;
-
                 const roleIdx = app.roles.indexOf(roleVal);
-                if (roleIdx > -1) {
-                    app.roles.splice(roleIdx, 1);
-                } else {
-                    app.roles.push(roleVal);
-                }
+                AdminInteractive.setAppRole(appId, roleVal, roleIdx === -1);
             },
-
-            saveAppConfig: async () => {
-                const btn = document.querySelector('[onclick="AdminInteractive.saveAppConfig()"]');
-                const originalHtml = btn.innerHTML;
-                btn.innerHTML = '<i data-lucide="loader-2" class="w-4 h-4 animate-spin"></i> กำลังบันทึกไปยังฐานข้อมูล...';
-                btn.disabled = true;
-                lucide.createIcons();
-
-                try {
-                    await API.postAction({
-                        action: "saveAppConfig",
-                        appConfig: state.appConfig
-                    });
-                    
-                    safeStorage.setItem(CONFIG.STORAGE_APP_CONFIG, JSON.stringify(state.appConfig));
-                    UI.showToast("บันทึกตารางสิทธิ์ลงฐานข้อมูลสำเร็จ", "success");
-                    
-                    AdminInteractive.setupAppPreviewGrid();
-                    if(AdminInteractive.editingUserId) {
-                        AdminInteractive.updateAppPreview();
-                    }
-                    API.sendLog("Admin Action", "Portal", "ปรับปรุงตารางสิทธิ์การเข้าแอปบน Database");
-                    
-                } catch (error) {
-                    UI.showToast("บันทึกไม่สำเร็จ ลองใหม่อีกครั้ง", "error");
-                } finally {
-                    btn.innerHTML = originalHtml;
-                    btn.disabled = false;
-                    lucide.createIcons();
-                }
-            },
-
+            saveAppConfig: async () => AdminInteractive.saveAuthorizationChanges(
+                document.getElementById('save-app-config-btn'),
+                'บันทึกตารางสิทธิ์ลงฐานข้อมูลสำเร็จ',
+                'ปรับปรุงตารางสิทธิ์การเข้าแอปบน Database'
+            ),
             renderPermMatrix: () => {
                 const headerRow = document.getElementById('perm-matrix-header-row');
                 const tbody = document.getElementById('perm-matrix-body');
                 if (!headerRow || !tbody) return;
+                if (!state.authorizationLoaded) {
+                    tbody.innerHTML = '';
+                    return;
+                }
 
                 // Build headers from roleConfig (only once)
                 if (headerRow.children.length === 1) {
@@ -1180,9 +1413,10 @@
                         cells += `
                             <td class="p-3 text-center border-l border-slate-100">
                                 <label class="inline-flex items-center ${isAdminCol ? 'cursor-not-allowed opacity-40' : 'cursor-pointer'}">
-                                    <input type="checkbox" class="sr-only peer" ${isChecked ? 'checked' : ''} ${isAdminCol ? 'disabled' : ''}
+                                    <input type="checkbox" class="sr-only peer authorization-switch" ${isChecked ? 'checked' : ''} ${isAdminCol ? 'disabled' : ''}
+                                        aria-label="${escapeHtml(authorizationControlLabel('permission', { id: row.appId, name: APP_LABELS[row.appId] || row.appId }, { key: row.permKey, label: PERM_LABELS[row.permKey] || row.permKey }, r))}"
                                         onchange="AdminInteractive.togglePermRole('${appId}','${permKey}','${roleVal}',this.checked)">
-                                    <div class="w-10 h-5 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-brand-blue relative"></div>
+                                    <div class="authorization-switch-track w-10 h-5 bg-slate-200 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-brand-blue relative"></div>
                                 </label>
                             </td>`;
                     });
@@ -1194,26 +1428,26 @@
             },
 
             togglePermRole: (appId, permKey, roleVal, checked) => {
+                if (!state.authorizationLoaded || state.authorizationSaving) return;
                 const row = state.permRows.find(r => r.appId === appId && r.permKey === permKey);
-                if (row) row[roleVal] = checked;
+                if (!row || roleVal === 'ADMIN') return;
+                if (row[roleVal] === checked) return;
+                row[roleVal] = checked;
+                if (checked) {
+                    const requiredAppId = PERMISSION_APP_DEPENDENCIES[appId] || appId;
+                    const requiredApp = state.appConfig.find(app => app.id === requiredAppId);
+                    if (requiredApp && !requiredApp.roles.includes(roleVal)) requiredApp.roles.push(roleVal);
+                }
+                AdminInteractive.markAuthorizationDirty();
+                AdminInteractive.renderRoleAccessEditor();
+                AdminInteractive.renderAppMatrix();
             },
 
-            savePermConfig: async () => {
-                const btn = document.querySelector('[onclick="AdminInteractive.savePermConfig()"]');
-                const orig = btn.innerHTML;
-                btn.innerHTML = '<i data-lucide="loader-2" class="w-4 h-4 animate-spin"></i> กำลังบันทึก...';
-                btn.disabled = true;
-                lucide.createIcons();
-                try {
-                    await API.postAction({ action: "savePermConfig", rows: state.permRows });
-                    UI.showToast("บันทึกสิทธิ์สำเร็จ — มีผลครั้งถัดไปที่พนักงาน Login");
-                    API.sendLog("Admin Action", "Portal", "ปรับ Permission Matrix");
-                } catch(e) {
-                    UI.showToast("บันทึกไม่สำเร็จ", "error");
-                } finally {
-                    btn.innerHTML = orig; btn.disabled = false; lucide.createIcons();
-                }
-            },
+            savePermConfig: async () => AdminInteractive.saveAuthorizationChanges(
+                document.getElementById('save-perm-config-btn'),
+                'บันทึกสิทธิ์สำเร็จ — มีผลครั้งถัดไปที่พนักงาน Login',
+                'ปรับ Permission Matrix'
+            ),
         };
 
         const App = {
@@ -1340,9 +1574,8 @@
             },
 
             init: async () => {
-                const isVersionOk = await checkAppVersion();
-                if (!isVersionOk) return;
                 AppVersionGuard.start({ current: CURRENT_VERSION, readActions: ['log', 'getAdminData', 'login', 'refreshSession'] });
+                setTimeout(checkAppVersion, 0);
 
                 lucide.createIcons();
                 AdminInteractive.init();
@@ -1360,6 +1593,10 @@
                 document.getElementById('refresh-data-btn').addEventListener('click', async () => {
                     document.getElementById('refresh-icon').classList.add('animate-spin');
                     const loadedFromServer = await AdminInteractive.fetchAdminData();
+                    if (loadedFromServer === null) {
+                        document.getElementById('refresh-icon').classList.remove('animate-spin');
+                        return;
+                    }
                     UI.showToast(
                         loadedFromServer ? "อัปเดตข้อมูลล่าสุดจากเซิร์ฟเวอร์แล้ว" : "ไม่สามารถดึงข้อมูลล่าสุดได้ กำลังใช้ข้อมูลสำรอง",
                         loadedFromServer ? "success" : "warning"
@@ -1657,7 +1894,7 @@
         const AKRA_SSO = {
             openApp: function(url, appId, pendingPopup, wasQueued) {
                 if(!state.sessionToken) return App.handleLogout();
-                if(App.queueNavigationIfRefreshing({ type: 'app', appId: appId })) return;
+                if(appId !== 'app-po' && App.queueNavigationIfRefreshing({ type: 'app', appId: appId })) return;
                 if(state.mustChangePassword) {
                     if (pendingPopup && !pendingPopup.closed) {
                         try { pendingPopup.close(); } catch (e) {}
