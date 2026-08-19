@@ -128,6 +128,7 @@
                     <i data-lucide="user" class="w-5 h-5"></i>
                 </div>
                 <div class="w-px h-8 bg-slate-300 mx-1 hidden sm:block"></div>
+                <a href="executive-dashboard.html" id="exec-btn" class="hidden p-2 text-slate-400 hover:text-brand-blue hover:bg-brand-blue/10 rounded-lg transition-all" title="Executive Cockpit Dashboard" aria-label="Executive Cockpit Dashboard"><i data-lucide="bar-chart-3" class="w-5 h-5"></i></a>
                 <button type="button" id="admin-btn" class="hidden p-2 text-slate-400 hover:text-brand-blue hover:bg-brand-blue/10 rounded-lg transition-all" title="จัดการผู้ใช้งาน" aria-label="จัดการผู้ใช้งาน">
                     <i data-lucide="settings" class="w-5 h-5"></i>
                 </button>
@@ -402,7 +403,7 @@
             STORAGE_USER_DATA: "akra_user_data",
             STORAGE_APP_CONFIG: "akra_app_config"
         };
-        const CURRENT_VERSION = "20260810.03";
+        const CURRENT_VERSION = "20260819.10";
         async function checkAppVersion() {
             try {
                 const res = await fetch('version.json?t=' + Date.now());
@@ -1884,6 +1885,7 @@
 
                 const adminBtn = document.getElementById('admin-btn');
                 state.currentRoles.includes("ADMIN") ? adminBtn.classList.remove('hidden') : adminBtn.classList.add('hidden');
+                const execBtn = document.getElementById('exec-btn'); if (execBtn) { (state.currentRoles.includes("ADMIN") || state.currentRoles.includes("SUPERVISOR")) ? execBtn.classList.remove('hidden') : execBtn.classList.add('hidden'); }
 
                 const grid = document.getElementById('app-grid');
                 grid.innerHTML = ''; 

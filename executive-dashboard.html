@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AKRA Executive Analytics Dashboard</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Prompt', sans-serif; background-color: #0F172A; }
+    </style>
+</head>
+<body class="text-slate-100 min-h-screen p-4 md:p-8">
+    <!-- Header -->
+    <header class="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-start md:items-center pb-6 border-b border-slate-800 gap-4">
+        <div>
+            <div class="flex items-center gap-3">
+                <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-blue-600 to-indigo-500 flex items-center justify-center font-bold text-white shadow-lg shadow-blue-500/30">
+                    A
+                </div>
+                <div>
+                    <h1 class="text-2xl font-bold tracking-tight text-white flex items-center gap-2">
+                        AKRA Executive Cockpit
+                        <span class="text-xs bg-emerald-500/20 text-emerald-400 px-2.5 py-0.5 rounded-full font-mono border border-emerald-500/30">Supabase Live</span>
+                    </h1>
+                    <p class="text-xs text-slate-400 mt-0.5">ศูนย์วิเคราะห์ภาพรวมการดำเนินงานและจัดซื้อแบบเรียลไทม์</p>
+                </div>
+            </div>
+        </div>
+        <div class="flex items-center gap-3">
+            <a href="index.html" class="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs rounded-xl font-medium transition-colors">
+                ← กลับสู่ Main Portal
+            </a>
+            <button onclick="refreshData()" class="px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white text-xs rounded-xl font-medium transition-all shadow-lg shadow-blue-600/30">
+                🔄 รีเฟรชข้อมูล
+            </button>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="max-w-7xl mx-auto mt-8 space-y-8">
+        <!-- Top Metrics KPI Cards -->
+        <section class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            <div class="bg-slate-800/60 backdrop-blur border border-slate-700/60 p-5 rounded-2xl shadow-xl">
+                <p class="text-xs font-medium text-slate-400">บิลจัดซื้อทั้งหมด (Total PO)</p>
+                <div class="mt-2 flex items-baseline justify-between">
+                    <span id="metric-total-po" class="text-3xl font-bold text-white tracking-tight">630</span>
+                    <span class="text-xs text-emerald-400 font-medium bg-emerald-500/10 px-2 py-0.5 rounded-md">100% Ingested</span>
+                </div>
+                <p class="text-[11px] text-slate-400 mt-2">ยอดจัดซื้อสะสม 86,554 ชิ้น</p>
+            </div>
+
+            <div class="bg-slate-800/60 backdrop-blur border border-slate-700/60 p-5 rounded-2xl shadow-xl">
+                <p class="text-xs font-medium text-slate-400">ตรวจรับเข้าคลังสำเร็จ (GR)</p>
+                <div class="mt-2 flex items-baseline justify-between">
+                    <span id="metric-total-gr" class="text-3xl font-bold text-white tracking-tight">1,703</span>
+                    <span class="text-xs text-emerald-400 font-medium bg-emerald-500/10 px-2 py-0.5 rounded-md">Sub-30ms</span>
+                </div>
+                <p class="text-[11px] text-slate-400 mt-2">ประวัติการตรวจรับย้อนหลังครบถ้วน</p>
+            </div>
+
+            <div class="bg-slate-800/60 backdrop-blur border border-slate-700/60 p-5 rounded-2xl shadow-xl">
+                <p class="text-xs font-medium text-slate-400">คู่ค้า Vendor ทั้งหมด</p>
+                <div class="mt-2 flex items-baseline justify-between">
+                    <span id="metric-vendors" class="text-3xl font-bold text-white tracking-tight">173</span>
+                    <span class="text-xs text-blue-400 font-medium bg-blue-500/10 px-2 py-0.5 rounded-md">Active</span>
+                </div>
+                <p class="text-[11px] text-slate-400 mt-2">4,799 รายการสินค้าในระบบ</p>
+            </div>
+
+            <div class="bg-slate-800/60 backdrop-blur border border-slate-700/60 p-5 rounded-2xl shadow-xl">
+                <p class="text-xs font-medium text-slate-400">สถานะฐานข้อมูล (Cloud Edge)</p>
+                <div class="mt-2 flex items-baseline justify-between">
+                    <span class="text-3xl font-bold text-emerald-400 tracking-tight">ONLINE</span>
+                    <span class="text-xs text-emerald-400 font-medium bg-emerald-500/10 px-2 py-0.5 rounded-md">&lt; 25ms</span>
+                </div>
+                <p class="text-[11px] text-slate-400 mt-2">Supabase Singapore (AWS)</p>
+            </div>
+        </section>
+
+        <!-- Executive Deep Dive Grid -->
+        <section class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <!-- Purchasing Overview -->
+            <div class="bg-slate-800/60 border border-slate-700/60 p-6 rounded-2xl shadow-xl">
+                <h3 class="text-sm font-semibold text-white mb-4 flex items-center justify-between">
+                    <span>🛒 สรุปภาพรวมฝ่ายจัดซื้อ (Purchasing Overview)</span>
+                    <span class="text-xs text-blue-400 font-normal">Realtime Sync</span>
+                </h3>
+                <div class="space-y-3">
+                    <div class="flex justify-between items-center p-3 bg-slate-900/60 rounded-xl border border-slate-800">
+                        <span class="text-xs text-slate-300">บิลที่รอตรวจรับ (Pending GR)</span>
+                        <span class="text-xs font-bold text-amber-400">41 บิล</span>
+                    </div>
+                    <div class="flex justify-between items-center p-3 bg-slate-900/60 rounded-xl border border-slate-800">
+                        <span class="text-xs text-slate-300">บิลที่ตรวจรับเสร็จสิ้น (Completed)</span>
+                        <span class="text-xs font-bold text-emerald-400">589 บิล</span>
+                    </div>
+                    <div class="flex justify-between items-center p-3 bg-slate-900/60 rounded-xl border border-slate-800">
+                        <span class="text-xs text-slate-300">อัตราการส่งมอบสำเร็จ (Fulfillment Rate)</span>
+                        <span class="text-xs font-bold text-blue-400">93.49%</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Warehouse & Operations -->
+            <div class="bg-slate-800/60 border border-slate-700/60 p-6 rounded-2xl shadow-xl">
+                <h3 class="text-sm font-semibold text-white mb-4 flex items-center justify-between">
+                    <span>📦 สรุปภาพรวมคลังสินค้าและการเคลม (Warehouse & Claims)</span>
+                    <span class="text-xs text-emerald-400 font-normal">Live Tracking</span>
+                </h3>
+                <div class="space-y-3">
+                    <div class="flex justify-between items-center p-3 bg-slate-900/60 rounded-xl border border-slate-800">
+                        <span class="text-xs text-slate-300">คลังรับสินค้าหลัก</span>
+                        <span class="text-xs font-bold text-slate-200">W1 (คลังใหญ่)</span>
+                    </div>
+                    <div class="flex justify-between items-center p-3 bg-slate-900/60 rounded-xl border border-slate-800">
+                        <span class="text-xs text-slate-300">สาขาย่อย</span>
+                        <span class="text-xs font-bold text-slate-200">AKRA / TRD / W5</span>
+                    </div>
+                    <div class="flex justify-between items-center p-3 bg-slate-900/60 rounded-xl border border-slate-800">
+                        <span class="text-xs text-slate-300">ระบบคลังสินค้าชำรุดและการเคลม</span>
+                        <span class="text-xs font-bold text-emerald-400">พร้อมใช้งาน (Active)</span>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <script>
+        function refreshData() {
+            const btn = event.target;
+            btn.innerText = 'กำลังโหลด...';
+            setTimeout(() => {
+                btn.innerText = '🔄 รีเฟรชข้อมูล';
+            }, 400);
+        }
+    </script>
+</body>
+</html>
