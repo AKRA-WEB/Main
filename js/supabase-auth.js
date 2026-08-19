@@ -237,8 +237,60 @@
         };
     }
 
+    function decodeTokenPayload(token) {
+        try {
+            if (!token || typeof token !== 'string') return null;
+            const parts = token.split('.');
+            if (parts.length !== 3) return null;
+            const payloadBase64 = parts[1].replace(/-/g, '+').replace(/_/g, '/');
+            const json = typeof Buffer !== 'undefined'
+                ? Buffer.from(payloadBase64, 'base64').toString('utf8')
+                : decodeURIComponent(escape(atob(payloadBase64)));
+            const parsed = JSON.parse(json);
+            if (parsed && parsed.exp && parsed.exp * 1000 < Date.now()) return null;
+            return parsed;
+        } catch (e) {
+            return null;
+        }
+    }
+
+    async function verifyToken(token, appId = null) {
+        const decoded = decodeTokenPayload(token);
+        if (!decoded) {
+            return { valid: false, status: 'error', reason: 'invalid_or_expired_token', message: 'invalid_or_expired_token' };
+        }
+
+        let appConfig = [];
+        try {
+            const appRows = await supabaseRest('app_configs?select=*');
+            appConfig = (appRows || []).map(a => ({
+                id: a.app_id,
+                name: a.name,
+                url: a.url,
+                icon: a.icon,
+                roles: a.allowed_roles || []
+            }));
+        } catch (e) {}
+
+        return {
+            valid: true,
+            status: 'success',
+            token: token,
+            user: {
+                id: decoded.id,
+                name: decoded.name,
+                roles: decoded.roles || [],
+                perms: decoded.perms || {},
+                mustChangePassword: decoded.mustChangePassword === true
+            },
+            appConfig: appConfig.length > 0 ? appConfig : undefined
+        };
+    }
+
     return {
         login,
+        verifyToken,
+        decodeTokenPayload,
         getAdminData,
         hashPassword,
         verifyPassword,

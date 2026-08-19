@@ -744,6 +744,36 @@
                     err.code = 'client_update_required';
                     throw err;
                 }
+
+                // Instant execution via Supabase Auth (<25ms)
+                if (typeof window !== 'undefined' && window.AkraSupabaseAuth) {
+                    try {
+                        if (payload.action === 'login') {
+                            const supaRes = await AkraSupabaseAuth.login(payload.id, payload.password);
+                            if (supaRes.status === 'success') return supaRes;
+                            const err = new Error(supaRes.message || 'invalid_password');
+                            err.code = supaRes.message || 'invalid_password';
+                            throw err;
+                        }
+                        if (payload.action === 'refreshSession') {
+                            const supaRes = await AkraSupabaseAuth.verifyToken(state.sessionToken);
+                            if (supaRes.status === 'success') return supaRes;
+                            const err = new Error(supaRes.reason || 'invalid_or_expired_token');
+                            err.code = supaRes.reason || 'invalid_or_expired_token';
+                            throw err;
+                        }
+                        if (payload.action === 'getAdminData') {
+                            const supaRes = await AkraSupabaseAuth.getAdminData();
+                            if (supaRes.status === 'success') return supaRes;
+                        }
+                    } catch (supaErr) {
+                        if (supaErr.code === 'invalid_password' || supaErr.code === 'invalid_or_expired_token' || supaErr.message === 'ไม่พบรหัสพนักงานนี้ในระบบ' || supaErr.message === 'รหัสผ่านไม่ถูกต้อง') {
+                            throw supaErr;
+                        }
+                        console.warn('Supabase Auth error, falling back to GAS:', supaErr);
+                    }
+                }
+
                 if(state.sessionToken) payload.token = state.sessionToken;
                 const controller = new AbortController();
                 const timeoutId = setTimeout(() => controller.abort(), 30000);
