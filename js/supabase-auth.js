@@ -144,17 +144,17 @@
         // 1. Fetch user from Supabase
         const users = await supabaseRest(`users?username=eq.${encodeURIComponent(cleanUser)}&select=*`);
         if (!users || users.length === 0) {
-            return { status: 'error', message: 'ไม่พบรหัสพนักงานนี้ในระบบ' };
+            return { status: 'error', code: 'user_not_found', message: 'ไม่พบรหัสพนักงานนี้ในระบบ' };
         }
         const user = users[0];
         if (user.status !== 'Active') {
-            return { status: 'error', message: 'บัญชีนี้ถูกระงับการใช้งาน กรุณาติดต่อผู้ดูแลระบบ' };
+            return { status: 'error', code: 'account_inactive', message: 'บัญชีนี้ถูกระงับการใช้งาน กรุณาติดต่อผู้ดูแลระบบ' };
         }
 
         // 2. Verify password hash
         const isMatch = await verifyPassword(password, user.password_hash);
         if (!isMatch) {
-            return { status: 'error', message: 'รหัสผ่านไม่ถูกต้อง' };
+            return { status: 'error', code: 'invalid_password', message: 'รหัสผ่านไม่ถูกต้อง' };
         }
 
         // 3. Fetch App and Perm Configs

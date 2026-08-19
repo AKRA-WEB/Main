@@ -750,27 +750,30 @@
                     try {
                         if (payload.action === 'login') {
                             const supaRes = await AkraSupabaseAuth.login(payload.id, payload.password);
-                            if (supaRes.status === 'success') return supaRes;
-                            const err = new Error(supaRes.message || 'invalid_password');
-                            err.code = supaRes.message || 'invalid_password';
-                            throw err;
-                        }
-                        if (payload.action === 'refreshSession') {
+                            if (supaRes && supaRes.status === 'success') return supaRes;
+                            if (supaRes && supaRes.code === 'invalid_password') {
+                                const err = new Error(supaRes.message || 'invalid_password');
+                                err.code = 'invalid_password';
+                                throw err;
+                            }
+                            // If user is not yet in Supabase, seamlessly fallback to Google Apps Script login below!
+                        } else if (payload.action === 'refreshSession') {
                             const supaRes = await AkraSupabaseAuth.verifyToken(state.sessionToken);
-                            if (supaRes.status === 'success') return supaRes;
-                            const err = new Error(supaRes.reason || 'invalid_or_expired_token');
-                            err.code = supaRes.reason || 'invalid_or_expired_token';
-                            throw err;
-                        }
-                        if (payload.action === 'getAdminData') {
+                            if (supaRes && supaRes.status === 'success') return supaRes;
+                            if (supaRes && supaRes.code === 'invalid_or_expired_token') {
+                                const err = new Error(supaRes.message || 'invalid_or_expired_token');
+                                err.code = 'invalid_or_expired_token';
+                                throw err;
+                            }
+                        } else if (payload.action === 'getAdminData') {
                             const supaRes = await AkraSupabaseAuth.getAdminData();
-                            if (supaRes.status === 'success') return supaRes;
+                            if (supaRes && supaRes.status === 'success') return supaRes;
                         }
                     } catch (supaErr) {
-                        if (supaErr.code === 'invalid_password' || supaErr.code === 'invalid_or_expired_token' || supaErr.message === 'ไม่พบรหัสพนักงานนี้ในระบบ' || supaErr.message === 'รหัสผ่านไม่ถูกต้อง') {
+                        if (supaErr.code === 'invalid_password' || supaErr.code === 'invalid_or_expired_token') {
                             throw supaErr;
                         }
-                        console.warn('Supabase Auth error, falling back to GAS:', supaErr);
+                        console.warn('Supabase Auth notice, trying GAS fallback:', supaErr);
                     }
                 }
 
@@ -1793,16 +1796,19 @@
                         }
                     }
                 } catch (error) {
-                    if (error.code === 'invalid_password') {
+                    if (error.code === 'invalid_password' || error.message === 'รหัสผ่านไม่ถูกต้อง' || (error.message && error.message.includes('รหัสผ่านไม่ถูกต้อง'))) {
                         UI.showToast("รหัสผ่านไม่ถูกต้อง", 'error');
                         pwdEl.focus();
-                    } else if (error.code === 'user_not_found') {
+                    } else if (error.code === 'user_not_found' || error.message === 'ไม่พบรหัสพนักงานนี้ในระบบ' || (error.message && error.message.includes('ไม่พบรหัสพนักงาน'))) {
                         UI.showToast("ไม่พบรหัสพนักงานนี้ในระบบ", 'error');
                         userEl.focus();
+                    } else if (error.code === 'account_inactive' || (error.message && error.message.includes('ถูกระงับการใช้งาน'))) {
+                        UI.showToast(error.message || "บัญชีนี้ถูกระงับการใช้งาน กรุณาติดต่อผู้ดูแลระบบ", 'error');
                     } else if (error.code === 'too_many_attempts') {
                         UI.showToast("ลองเข้าสู่ระบบหลายครั้งเกินไป กรุณารอ 10 นาที", 'error');
                     } else {
-                        UI.showToast("เกิดข้อผิดพลาดในการเชื่อมต่อ กรุณาลองใหม่", 'error');
+                        const userMsg = error.message && error.message !== 'request_failed' && !error.message.includes('fetch') ? error.message : "เกิดข้อผิดพลาดในการเชื่อมต่อ กรุณาลองใหม่";
+                        UI.showToast(userMsg, 'error');
                     }
                 } finally {
                     btn.disabled = false; btnText.innerText = 'เข้าสู่ระบบ';
