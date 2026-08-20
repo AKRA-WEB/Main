@@ -16,7 +16,6 @@
     <link rel="stylesheet" href="tailwind.css">
 
     <!-- Lucide Icons -->
-    <script src="js/supabase-auth.js"></script>
     <script src="assets/lucide-0.468.0.min.js" defer></script>
     
     <style>
@@ -404,7 +403,7 @@
             STORAGE_USER_DATA: "akra_user_data",
             STORAGE_APP_CONFIG: "akra_app_config"
         };
-        const CURRENT_VERSION = "20260820.02";
+        const CURRENT_VERSION = "20260820.03";
         async function checkAppVersion() {
             try {
                 const res = await fetch('version.json?t=' + Date.now());
@@ -743,38 +742,6 @@
                     const err = new Error('client_update_required');
                     err.code = 'client_update_required';
                     throw err;
-                }
-
-                // Instant execution via Supabase Auth (<25ms)
-                if (typeof window !== 'undefined' && window.AkraSupabaseAuth) {
-                    try {
-                        if (payload.action === 'login') {
-                            const supaRes = await AkraSupabaseAuth.login(payload.id, payload.password);
-                            if (supaRes && supaRes.status === 'success') return supaRes;
-                            if (supaRes && supaRes.code === 'invalid_password') {
-                                const err = new Error(supaRes.message || 'invalid_password');
-                                err.code = 'invalid_password';
-                                throw err;
-                            }
-                            // If user is not yet in Supabase, seamlessly fallback to Google Apps Script login below!
-                        } else if (payload.action === 'refreshSession') {
-                            const supaRes = await AkraSupabaseAuth.verifyToken(state.sessionToken);
-                            if (supaRes && supaRes.status === 'success') return supaRes;
-                            if (supaRes && supaRes.code === 'invalid_or_expired_token') {
-                                const err = new Error(supaRes.message || 'invalid_or_expired_token');
-                                err.code = 'invalid_or_expired_token';
-                                throw err;
-                            }
-                        } else if (payload.action === 'getAdminData') {
-                            const supaRes = await AkraSupabaseAuth.getAdminData();
-                            if (supaRes && supaRes.status === 'success') return supaRes;
-                        }
-                    } catch (supaErr) {
-                        if (supaErr.code === 'invalid_password' || supaErr.code === 'invalid_or_expired_token') {
-                            throw supaErr;
-                        }
-                        console.warn('Supabase Auth notice, trying GAS fallback:', supaErr);
-                    }
                 }
 
                 if(state.sessionToken) payload.token = state.sessionToken;
