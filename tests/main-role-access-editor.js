@@ -502,21 +502,36 @@ async function verifyLatestAdminLoadWins() {
 
 async function verifySharedSaveGate() {
   let resolveSave;
+  const requestSequence = [];
   const saveState = {
     authorizationLoaded: true,
     authorizationSaving: false,
     authorizationDirty: true,
     authorizationRevision: 'revision-1',
     appConfig: [{ id: 'app-tracking', roles: ['ADMIN', 'Cashier'] }],
-    permRows: [{ appId: 'app-po', permKey: 'createPO', ADMIN: true, Cashier: true }]
+    permRows: [{ appId: 'app-po', permKey: 'createPO', ADMIN: true, Cashier: true }],
+    sessionToken: 'old-token'
   };
   const button = { innerHTML: 'Save', disabled: false };
   const saveClient = vm.createContext({
     state: saveState,
     __button: button,
     API: {
-      postAction() { return new Promise(resolve => { resolveSave = resolve; }); },
-      sendLog() {}
+      postAction(payload) {
+        requestSequence.push({ action: payload.action, token: saveState.sessionToken });
+        if (payload.action === 'saveAuthorizationConfig') {
+          return new Promise(resolve => { resolveSave = resolve; });
+        }
+        return Promise.resolve({ status: 'success' });
+      },
+      sendLog() { requestSequence.push({ action: 'log', token: saveState.sessionToken }); }
+    },
+    App: {
+      async refreshSession() {
+        requestSequence.push({ action: 'refreshSession', token: saveState.sessionToken });
+        saveState.sessionToken = 'new-token';
+        return true;
+      }
     },
     UI: { showToast() {} },
     safeStorage: { setItem() {} },
@@ -540,6 +555,17 @@ async function verifySharedSaveGate() {
   assert.strictEqual(saveState.authorizationSaving, false, 'shared save must unlock the editor after completion');
   assert.strictEqual(saveState.authorizationDirty, false, 'successful shared save must clear dirty state');
   assert.strictEqual(saveState.authorizationRevision, 'revision-2', 'successful shared save must advance the authoritative revision');
+  await saveClient.API.postAction({ action: 'getAdminData' });
+  assert.deepStrictEqual(
+    requestSequence,
+    [
+      { action: 'saveAuthorizationConfig', token: 'old-token' },
+      { action: 'refreshSession', token: 'old-token' },
+      { action: 'log', token: 'new-token' },
+      { action: 'getAdminData', token: 'new-token' }
+    ],
+    'authorization save must refresh the JWT before logging or any follow-up Admin action'
+  );
 }
 
 verifyLatestAdminLoadWins().then(verifySharedSaveGate).then(() => {
