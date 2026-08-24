@@ -403,7 +403,7 @@
             STORAGE_USER_DATA: "akra_user_data",
             STORAGE_APP_CONFIG: "akra_app_config"
         };
-        const CURRENT_VERSION = "20260820.03";
+        const CURRENT_VERSION = "20260824.01";
         async function checkAppVersion() {
             try {
                 const res = await fetch('version.json?t=' + Date.now());
@@ -699,6 +699,7 @@
             sessionToken: null,
             sessionEpoch: 0,
             sessionRefreshPending: false,
+            sessionRefreshFailed: false,
             pendingNavigation: null,
             appConfig: [],
             roleConfig: [...DEFAULT_ROLES],
@@ -1487,6 +1488,7 @@
                 state.currentPerms = data.user.perms || {};
                 state.mustChangePassword = data.user.mustChangePassword === true;
                 state.sessionRefreshPending = false;
+                state.sessionRefreshFailed = false;
                 state.appConfig = data.appConfig && data.appConfig.length > 0
                     ? data.appConfig
                     : JSON.parse(JSON.stringify(DEFAULT_APP_CONFIG));
@@ -1525,7 +1527,18 @@
                 }
             },
 
+            handleSessionRefreshFailure: (message) => {
+                state.sessionRefreshPending = false;
+                state.sessionRefreshFailed = true;
+                App.closePendingNavigation();
+                UI.showToast(message, 'warning');
+            },
+
             queueNavigationIfRefreshing: (intent) => {
+                if (state.sessionRefreshFailed) {
+                    UI.showToast('ยังตรวจสอบสิทธิ์ล่าสุดไม่ได้ กรุณารีโหลดหน้า Main แล้วลองอีกครั้ง', 'warning');
+                    return true;
+                }
                 if (!state.sessionRefreshPending) return false;
 
                 const previous = state.pendingNavigation;
@@ -1701,9 +1714,7 @@
                             App.handleLogout();
                         } else {
                             // เชื่อมต่อเซิร์ฟเวอร์ไม่ได้ (network / timeout / cold start) — ใช้ข้อมูลที่บันทึกไว้ ไม่ล้าง Token
-                            state.sessionRefreshPending = false;
-                            UI.showToast('เชื่อมต่อเซิร์ฟเวอร์ไม่ได้ กำลังใช้ข้อมูลล่าสุดที่บันทึกไว้', 'warning');
-                            App.runPendingNavigation();
+                            App.handleSessionRefreshFailure('เชื่อมต่อเซิร์ฟเวอร์ไม่ได้ ยังใช้หน้า Main จากข้อมูลที่บันทึกไว้ได้ แต่กรุณารีโหลดก่อนเข้าแอป');
                         }
                     }
                 } else {
@@ -1842,9 +1853,7 @@
                                 UI.showToast('เซสชันหมดอายุหรือสิทธิ์ถูกเปลี่ยน กรุณาเข้าสู่ระบบใหม่', 'warning');
                                 App.handleLogout();
                             } else {
-                                state.sessionRefreshPending = false;
-                                UI.showToast('เปลี่ยนรหัสผ่านสำเร็จ แต่ไม่สามารถตรวจสอบสิทธิ์ล่าสุดได้ กำลังใช้ข้อมูลที่บันทึกไว้', 'warning');
-                                App.runPendingNavigation();
+                                App.handleSessionRefreshFailure('เปลี่ยนรหัสผ่านสำเร็จ แต่ยังตรวจสอบสิทธิ์ล่าสุดไม่ได้ กรุณารีโหลดหน้า Main ก่อนเข้าแอป');
                             }
                         }
                     }
@@ -1873,6 +1882,7 @@
                 state.mustChangePassword = false;
                 state.sessionToken = null;
                 state.sessionRefreshPending = false;
+                state.sessionRefreshFailed = false;
                 UI.switchSection('login-section');
             },
 
@@ -1926,7 +1936,7 @@
         const AKRA_SSO = {
             openApp: function(url, appId, pendingPopup, wasQueued) {
                 if(!state.sessionToken) return App.handleLogout();
-                if(appId !== 'app-tracking' && App.queueNavigationIfRefreshing({ type: 'app', appId: appId })) return;
+                if(App.queueNavigationIfRefreshing({ type: 'app', appId: appId })) return;
                 if(state.mustChangePassword) {
                     if (pendingPopup && !pendingPopup.closed) {
                         try { pendingPopup.close(); } catch (e) {}
