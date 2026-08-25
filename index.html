@@ -397,13 +397,13 @@
          * 1. CONFIGURATION & DATA
          * ========================================================== */
         const CONFIG = {
-            API_URL: "https://script.google.com/macros/s/AKfycbyQJLwb5HTexG6gxqTehGWlAxfSXVT--CpWnnp2JTcP4xCcMA1vUjSY_eWqPjUKwzq7/exec",
+            API_URL: "https://hgxrrskztbpejirrdpbq.supabase.co/functions/v1/auth-api",
             STORAGE_USER_DB: "akra_users_db",
             STORAGE_SESSION: "akra_session_token",
             STORAGE_USER_DATA: "akra_user_data",
             STORAGE_APP_CONFIG: "akra_app_config"
         };
-        const CURRENT_VERSION = "20260824.01";
+        const CURRENT_VERSION = "20260825.01";
         async function checkAppVersion() {
             try {
                 const res = await fetch('version.json?t=' + Date.now());
@@ -761,8 +761,8 @@
                 }
                 const data = await response.json();
                 if (!response.ok || data.status !== 'success') {
-                    const error = new Error(data.message || 'request_failed');
-                    error.code = data.message || 'request_failed';
+                    const error = new Error(data.reason || data.message || 'request_failed');
+                    error.code = data.reason || data.message || 'request_failed';
                     throw error;
                 }
                 return data;

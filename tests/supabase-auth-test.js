@@ -2,31 +2,29 @@ const assert = require('assert');
 const auth = require('../js/supabase-auth.js');
 
 async function runTests() {
-  console.log('=== TESTING MAIN PORTAL SUPABASE AUTH MODULE ===\n');
+  console.log('=== TESTING MAIN PORTAL SUPABASE AUTH MODULE (P0 CONTAINMENT) ===\n');
 
-  console.log('[1/3] Testing Login for Admin user (250001) with password123...');
+  console.log('[1/4] Testing Containment: Direct client login must fall back to secure backend...');
   const loginRes = await auth.login('250001', 'password123');
-  assert.strictEqual(loginRes.status, 'success', 'Login for 250001 must succeed');
-  assert(loginRes.token, 'Must return session token');
-  assert.strictEqual(loginRes.user.name, 'ADMIN USER', 'User name must match database');
-  assert(loginRes.user.roles.includes('ADMIN'), 'User must have ADMIN role');
-  console.log(`  -> Login success! User: ${loginRes.user.name}, Roles: ${loginRes.user.roles.join(', ')}`);
-  console.log(`  -> Generated JWT Token (preview): ${loginRes.token.substring(0, 40)}...`);
+  assert.strictEqual(loginRes.status, 'fallback_to_gas', 'Direct client login must return fallback_to_gas');
+  console.log('  -> Direct login blocked, falling back to secure GAS backend as required.');
 
-  console.log('\n[2/3] Testing Login with incorrect password...');
-  const failRes = await auth.login('250001', 'wrongpassword');
-  assert.strictEqual(failRes.status, 'error');
-  assert.strictEqual(failRes.message, 'รหัสผ่านไม่ถูกต้อง');
-  console.log('  -> Rejected incorrect password as expected.');
+  console.log('\n[2/4] Testing Containment: Direct client verifyToken must fall back to secure backend...');
+  const verifyRes = await auth.verifyToken('token');
+  assert.strictEqual(verifyRes.status, 'fallback_to_gas');
+  console.log('  -> Direct verifyToken blocked, falling back to secure GAS backend as required.');
 
-  console.log('\n[3/3] Testing getAdminData...');
+  console.log('\n[3/4] Testing Containment: Direct client getAdminData must fall back to secure backend...');
   const adminData = await auth.getAdminData();
-  assert.strictEqual(adminData.status, 'success');
-  assert(adminData.users['250001'], 'Must include 250001 in users map');
-  assert(adminData.appConfig.length >= 8, 'Must return app configs');
-  console.log(`  -> Fetched ${Object.keys(adminData.users).length} users, ${adminData.appConfig.length} apps, ${adminData.roleConfig.length} roles.`);
+  assert.strictEqual(adminData.status, 'fallback_to_gas');
+  console.log('  -> Direct getAdminData blocked, falling back to secure GAS backend as required.');
 
-  console.log('\n🌟 MAIN PORTAL SUPABASE AUTH MODULE TESTS PASSED 100%! 🌟');
+  console.log('\n[4/4] Testing Containment: Direct client changePassword must fall back to secure backend...');
+  const pwdRes = await auth.changePassword();
+  assert.strictEqual(pwdRes.status, 'fallback_to_gas');
+  console.log('  -> Direct changePassword blocked, falling back to secure GAS backend as required.');
+
+  console.log('\n🌟 MAIN PORTAL SUPABASE AUTH CONTAINMENT TESTS PASSED 100%! 🌟');
 }
 
 runTests().catch(err => {
