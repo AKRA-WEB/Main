@@ -403,7 +403,7 @@
             STORAGE_USER_DATA: "akra_user_data",
             STORAGE_APP_CONFIG: "akra_app_config"
         };
-        const CURRENT_VERSION = "20260825.01";
+        const CURRENT_VERSION = "20260826.01";
         async function checkAppVersion() {
             try {
                 const res = await fetch('version.json?t=' + Date.now());
@@ -1774,7 +1774,10 @@
                         }
                     }
                 } catch (error) {
-                    if (error.code === 'invalid_password' || error.message === 'รหัสผ่านไม่ถูกต้อง' || (error.message && error.message.includes('รหัสผ่านไม่ถูกต้อง'))) {
+                    if (error.code === 'invalid_credentials' || error.message === 'invalid_credentials') {
+                        UI.showToast("รหัสพนักงานหรือรหัสผ่านไม่ถูกต้อง (หากเข้าครั้งแรก ให้ใช้รหัสพนักงานเป็นรหัสผ่าน)", 'error');
+                        pwdEl.focus();
+                    } else if (error.code === 'invalid_password' || error.message === 'รหัสผ่านไม่ถูกต้อง' || (error.message && error.message.includes('รหัสผ่านไม่ถูกต้อง'))) {
                         UI.showToast("รหัสผ่านไม่ถูกต้อง", 'error');
                         pwdEl.focus();
                     } else if (error.code === 'user_not_found' || error.message === 'ไม่พบรหัสพนักงานนี้ในระบบ' || (error.message && error.message.includes('ไม่พบรหัสพนักงาน'))) {
