@@ -345,22 +345,22 @@
                     <i data-lucide="key-round" class="w-8 h-8 text-brand-orange"></i>
                 </div>
                 <h3 id="change-password-title" class="text-2xl font-bold text-brand-blue">เปลี่ยนรหัสผ่านใหม่</h3>
-                <p class="text-slate-500 text-xs mt-1">รหัสผ่านใหม่ของคุณต้องเป็นความลับเพื่อความปลอดภัย</p>
+                <p class="text-slate-500 text-xs mt-1">รหัสผ่านใหม่ต้องมีความยาวอย่างน้อย 6 ตัวอักษร</p>
             </div>
             <form id="change-pwd-form" class="space-y-4" novalidate>
                 <div>
-                    <label for="curr-pwd-input" class="block text-xs font-semibold text-slate-600 mb-1.5 ml-1">รหัสผ่านปัจจุบัน</label>
+                    <label for="curr-pwd-input" class="block text-xs font-semibold text-slate-600 mb-1.5 ml-1">รหัสผ่านปัจจุบัน (เข้าครั้งแรกใช้รหัสพนักงาน)</label>
                     <input type="password" id="curr-pwd-input" name="current-password" placeholder="กรอกรหัสผ่านปัจจุบัน" required autocomplete="current-password"
                         class="w-full px-4 py-2.5 rounded-xl bg-slate-50 border border-slate-200 focus:outline-none focus:border-brand-blue focus:ring-1 focus:ring-brand-blue/20 text-sm transition-colors shadow-inner">
                 </div>
                 <div>
-                    <label for="new-pwd-input" class="block text-xs font-semibold text-slate-600 mb-1.5 ml-1">รหัสผ่านใหม่</label>
-                    <input type="password" id="new-pwd-input" name="new-password" placeholder="กรอกรหัสผ่านใหม่" required autocomplete="new-password"
+                    <label for="new-pwd-input" class="block text-xs font-semibold text-slate-600 mb-1.5 ml-1">รหัสผ่านใหม่ (อย่างน้อย 6 ตัวอักษร)</label>
+                    <input type="password" id="new-pwd-input" name="new-password" placeholder="กรอกรหัสผ่านใหม่อย่างน้อย 6 ตัวอักษร" minlength="6" required autocomplete="new-password"
                         class="w-full px-4 py-2.5 rounded-xl bg-slate-50 border border-slate-200 focus:outline-none focus:border-brand-blue focus:ring-1 focus:ring-brand-blue/20 text-sm transition-colors shadow-inner">
                 </div>
                 <div>
                     <label for="confirm-pwd-input" class="block text-xs font-semibold text-slate-600 mb-1.5 ml-1">ยืนยันรหัสผ่านใหม่</label>
-                    <input type="password" id="confirm-pwd-input" name="confirm-password" placeholder="กรอกรหัสผ่านใหม่อีกครั้ง" required autocomplete="new-password"
+                    <input type="password" id="confirm-pwd-input" name="confirm-password" placeholder="กรอกรหัสผ่านใหม่อีกครั้ง" minlength="6" required autocomplete="new-password"
                         class="w-full px-4 py-2.5 rounded-xl bg-slate-50 border border-slate-200 focus:outline-none focus:border-brand-blue focus:ring-1 focus:ring-brand-blue/20 text-sm transition-colors shadow-inner">
                 </div>
                 <button type="submit" id="submit-change-pwd-btn"
@@ -403,7 +403,7 @@
             STORAGE_USER_DATA: "akra_user_data",
             STORAGE_APP_CONFIG: "akra_app_config"
         };
-        const CURRENT_VERSION = "20260826.02";
+        const CURRENT_VERSION = "20260826.03";
         async function checkAppVersion() {
             try {
                 const res = await fetch('version.json?t=' + Date.now());
@@ -1810,8 +1810,8 @@
                     UI.showToast("รหัสผ่านใหม่และยืนยันรหัสผ่านไม่ตรงกัน", "warning");
                     return;
                 }
-                if (newPwd.length < 4) {
-                    UI.showToast("รหัสผ่านใหม่ต้องมีความยาวอย่างน้อย 4 ตัวอักษร", "warning");
+                if (newPwd.length < 6) {
+                    UI.showToast("รหัสผ่านใหม่ต้องมีความยาวอย่างน้อย 6 ตัวอักษร", "warning");
                     return;
                 }
 
@@ -1862,8 +1862,11 @@
                     }
                 } catch (error) {
                     if (error.code === 'invalid_current_password') {
-                        UI.showToast("รหัสผ่านปัจจุบันไม่ถูกต้อง", "error");
+                        UI.showToast("รหัสผ่านปัจจุบันไม่ถูกต้อง (หากเข้าครั้งแรกให้ใช้รหัสพนักงาน)", "error");
                         document.getElementById('curr-pwd-input').focus();
+                    } else if (error.code === 'password_too_short' || error.message === 'password_too_short') {
+                        UI.showToast("รหัสผ่านใหม่ต้องมีความยาวอย่างน้อย 6 ตัวอักษร", "error");
+                        document.getElementById('new-pwd-input').focus();
                     } else {
                         UI.showToast("เปลี่ยนรหัสผ่านไม่สำเร็จ", "error");
                     }
