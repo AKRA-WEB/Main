@@ -363,10 +363,16 @@
                     <input type="password" id="confirm-pwd-input" name="confirm-password" placeholder="กรอกรหัสผ่านใหม่อีกครั้ง" minlength="6" required autocomplete="new-password"
                         class="w-full px-4 py-2.5 rounded-xl bg-slate-50 border border-slate-200 focus:outline-none focus:border-brand-blue focus:ring-1 focus:ring-brand-blue/20 text-sm transition-colors shadow-inner">
                 </div>
-                <button type="submit" id="submit-change-pwd-btn"
-                    class="w-full bg-brand-orange hover:bg-[#c94804] text-white font-semibold py-3 px-4 rounded-xl transition-all transform hover:scale-[1.01] active:scale-95 flex justify-center items-center shadow-lg shadow-brand-orange/20 mt-6">
-                    <span id="submit-change-pwd-text">บันทึกรหัสผ่านใหม่</span>
-                </button>
+                <div class="flex gap-3 mt-6">
+                    <button type="button" id="cancel-change-pwd-btn"
+                        class="w-1/3 bg-slate-100 hover:bg-slate-200 text-slate-600 font-semibold py-3 px-4 rounded-xl transition-all flex justify-center items-center text-sm">
+                        <span id="cancel-change-pwd-text">ยกเลิก</span>
+                    </button>
+                    <button type="submit" id="submit-change-pwd-btn"
+                        class="w-2/3 bg-brand-orange hover:bg-[#c94804] text-white font-semibold py-3 px-4 rounded-xl transition-all transform hover:scale-[1.01] active:scale-95 flex justify-center items-center shadow-lg shadow-brand-orange/20 text-sm">
+                        <span id="submit-change-pwd-text">บันทึกรหัสผ่านใหม่</span>
+                    </button>
+                </div>
             </form>
         </section>
     </div>
@@ -403,7 +409,7 @@
             STORAGE_USER_DATA: "akra_user_data",
             STORAGE_APP_CONFIG: "akra_app_config"
         };
-        const CURRENT_VERSION = "20260826.03";
+        const CURRENT_VERSION = "20260826.04";
         async function checkAppVersion() {
             try {
                 const res = await fetch('version.json?t=' + Date.now());
@@ -1609,6 +1615,10 @@
             openChangePasswordModal: () => {
                 const pwdModal = document.getElementById('change-password-modal');
                 document.getElementById('change-pwd-form').reset();
+                const cancelText = document.getElementById('cancel-change-pwd-text');
+                if (cancelText) {
+                    cancelText.innerText = state.mustChangePassword ? 'ออกจากระบบ' : 'ยกเลิก';
+                }
                 pwdModal.classList.remove('hidden');
                 lucide.createIcons({ root: pwdModal });
                 setTimeout(() => document.getElementById('curr-pwd-input').focus(), 0);
@@ -1648,13 +1658,15 @@
                 // การเปิด/ปิด Modal เปลี่ยนรหัสผ่าน
                 const pwdModal = document.getElementById('change-password-modal');
                 document.getElementById('change-pwd-btn').addEventListener('click', App.openChangePasswordModal);
-                document.getElementById('close-pwd-modal-btn').addEventListener('click', () => {
+                const handleClosePwdModal = () => {
                     if (state.mustChangePassword) {
-                        UI.showToast('กรุณาเปลี่ยนรหัสผ่านเริ่มต้นก่อนใช้งาน', 'warning');
-                        return;
+                        App.handleLogout();
+                    } else {
+                        pwdModal.classList.add('hidden');
                     }
-                    pwdModal.classList.add('hidden');
-                });
+                };
+                document.getElementById('close-pwd-modal-btn').addEventListener('click', handleClosePwdModal);
+                document.getElementById('cancel-change-pwd-btn').addEventListener('click', handleClosePwdModal);
                 document.getElementById('change-pwd-form').addEventListener('submit', App.handleChangePassword);
 
                 // การเปิด/ปิด Modal ลืมรหัสผ่าน
@@ -1669,7 +1681,10 @@
                 document.addEventListener('keydown', event => {
                     if (event.key !== 'Escape') return;
                     if (!forgotModal.classList.contains('hidden')) forgotModal.classList.add('hidden');
-                    if (!pwdModal.classList.contains('hidden') && !state.mustChangePassword) pwdModal.classList.add('hidden');
+                    if (!pwdModal.classList.contains('hidden')) {
+                        if (state.mustChangePassword) App.handleLogout();
+                        else pwdModal.classList.add('hidden');
+                    }
                 });
 
                 const savedToken = safeStorage.getItem(CONFIG.STORAGE_SESSION);
@@ -1691,30 +1706,29 @@
                     state.currentRoles = parsedUser.roles || [];
                     state.currentPerms = parsedUser.perms || {};
                     state.mustChangePassword = parsedUser.mustChangePassword === true;
-                    state.sessionRefreshPending = true;
+                    state.sessionRefreshPending = !state.mustChangePassword;
                     state.appConfig = parseCachedAppConfig(safeStorage.getItem(CONFIG.STORAGE_APP_CONFIG));
-                    const cachedMustChangePassword = state.mustChangePassword;
 
                     UI.switchSection('dashboard-section');
                     App.renderDashboard();
-                    if (state.mustChangePassword) App.openChangePasswordModal();
-
-                    try {
-                        const refreshApplied = await App.refreshSession();
-                        if (!refreshApplied) return;
-                        App.renderDashboard();
-                        if (state.mustChangePassword && pwdModal.classList.contains('hidden')) App.openChangePasswordModal();
-                        else if (!state.mustChangePassword && cachedMustChangePassword) pwdModal.classList.add('hidden');
-                        App.runPendingNavigation();
-                    } catch (e) {
-                        if (e.code === 'invalid_or_expired_token') {
-                            // Token หมดอายุจริงหรือสิทธิ์ถูกถอน — ต้องเข้าสู่ระบบใหม่
-                            pwdModal.classList.add('hidden');
-                            UI.showToast('เซสชันหมดอายุหรือสิทธิ์ถูกเปลี่ยน กรุณาเข้าสู่ระบบใหม่', 'warning');
-                            App.handleLogout();
-                        } else {
-                            // เชื่อมต่อเซิร์ฟเวอร์ไม่ได้ (network / timeout / cold start) — ใช้ข้อมูลที่บันทึกไว้ ไม่ล้าง Token
-                            App.handleSessionRefreshFailure('เชื่อมต่อเซิร์ฟเวอร์ไม่ได้ ยังใช้หน้า Main จากข้อมูลที่บันทึกไว้ได้ แต่กรุณารีโหลดก่อนเข้าแอป');
+                    if (state.mustChangePassword) {
+                        App.openChangePasswordModal();
+                    } else {
+                        try {
+                            const refreshApplied = await App.refreshSession();
+                            if (!refreshApplied) return;
+                            App.renderDashboard();
+                            App.runPendingNavigation();
+                        } catch (e) {
+                            if (e.code === 'invalid_or_expired_token') {
+                                // Token หมดอายุจริงหรือสิทธิ์ถูกถอน — ต้องเข้าสู่ระบบใหม่
+                                pwdModal.classList.add('hidden');
+                                UI.showToast('เซสชันหมดอายุหรือสิทธิ์ถูกเปลี่ยน กรุณาเข้าสู่ระบบใหม่', 'warning');
+                                App.handleLogout();
+                            } else {
+                                // เชื่อมต่อเซิร์ฟเวอร์ไม่ได้ (network / timeout / cold start) — ใช้ข้อมูลที่บันทึกไว้ ไม่ล้าง Token
+                                App.handleSessionRefreshFailure('เชื่อมต่อเซิร์ฟเวอร์ไม่ได้ ยังใช้หน้า Main จากข้อมูลที่บันทึกไว้ได้ แต่กรุณารีโหลดก่อนเข้าแอป');
+                            }
                         }
                     }
                 } else {
@@ -1827,39 +1841,14 @@
                         newPassword: newPwd
                     });
                     if (state.sessionEpoch !== changeSessionEpoch) return;
-                    if (data.token) {
-                        state.sessionToken = data.token;
-                        state.mustChangePassword = false;
-                        state.sessionRefreshPending = true;
-                        safeStorage.setItem(CONFIG.STORAGE_SESSION, state.sessionToken);
-                        safeStorage.setItem(CONFIG.STORAGE_USER_DATA, JSON.stringify({
-                            id: state.currentUserId,
-                            name: state.currentUser,
-                            roles: state.currentRoles,
-                            perms: state.currentPerms,
-                            mustChangePassword: false
-                        }));
+                    if (data && data.token) {
+                        state.sessionEpoch += 1;
+                        App.saveSession(data);
                     }
-                    UI.showToast("เปลี่ยนรหัสผ่านใหม่สำเร็จแล้วครับ");
+                    UI.showToast("เปลี่ยนรหัสผ่านใหม่สำเร็จแล้วครับ", "success");
                     document.getElementById('change-password-modal').classList.add('hidden');
-                    if (data.token) {
-                        try {
-                            const refreshApplied = await App.refreshSession();
-                            if (refreshApplied) {
-                                App.renderDashboard();
-                                if (state.mustChangePassword) App.openChangePasswordModal();
-                                App.runPendingNavigation();
-                            }
-                        } catch (refreshError) {
-                            if (state.sessionEpoch !== changeSessionEpoch) return;
-                            if (refreshError.code === 'invalid_or_expired_token') {
-                                UI.showToast('เซสชันหมดอายุหรือสิทธิ์ถูกเปลี่ยน กรุณาเข้าสู่ระบบใหม่', 'warning');
-                                App.handleLogout();
-                            } else {
-                                App.handleSessionRefreshFailure('เปลี่ยนรหัสผ่านสำเร็จ แต่ยังตรวจสอบสิทธิ์ล่าสุดไม่ได้ กรุณารีโหลดหน้า Main ก่อนเข้าแอป');
-                            }
-                        }
-                    }
+                    App.renderDashboard();
+                    App.runPendingNavigation();
                 } catch (error) {
                     if (error.code === 'invalid_current_password') {
                         UI.showToast("รหัสผ่านปัจจุบันไม่ถูกต้อง (หากเข้าครั้งแรกให้ใช้รหัสพนักงาน)", "error");
@@ -1867,8 +1856,13 @@
                     } else if (error.code === 'password_too_short' || error.message === 'password_too_short') {
                         UI.showToast("รหัสผ่านใหม่ต้องมีความยาวอย่างน้อย 6 ตัวอักษร", "error");
                         document.getElementById('new-pwd-input').focus();
+                    } else if (error.code === 'invalid_or_expired_token' || error.code === 'stale_password' || error.code === 'mandatory_password_change_required') {
+                        UI.showToast("เซสชันหมดอายุหรือรหัสผ่านถูกเปลี่ยนแปลงแล้ว กรุณาเข้าสู่ระบบใหม่", "error");
+                        document.getElementById('change-password-modal').classList.add('hidden');
+                        App.handleLogout();
                     } else {
-                        UI.showToast("เปลี่ยนรหัสผ่านไม่สำเร็จ", "error");
+                        const userMsg = error.message && error.message !== 'request_failed' && !error.message.includes('fetch') ? error.message : "เปลี่ยนรหัสผ่านไม่สำเร็จ กรุณาลองใหม่อีกครั้ง";
+                        UI.showToast(userMsg, "error");
                     }
                 } finally {
                     btn.disabled = false; btnText.innerText = 'บันทึกรหัสผ่านใหม่'; lucide.createIcons();
