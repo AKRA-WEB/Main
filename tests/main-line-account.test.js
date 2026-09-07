@@ -14,7 +14,7 @@ test('Version Parity: CURRENT_VERSION in index.html matches version.json', () =>
   assert(match, 'CURRENT_VERSION must be declared in index.html');
   const indexVersion = match[1];
   assert.strictEqual(indexVersion, versionData.version, `index.html version (${indexVersion}) must match version.json (${versionData.version})`);
-  assert.strictEqual(indexVersion, '20260907.02', 'Version must be bumped to 20260907.02');
+  assert.strictEqual(indexVersion, '20260907.03', 'Version must be bumped to 20260907.03');
 });
 
 test('Syntax check: All inline scripts parse with zero syntax errors via vm.Script', () => {
@@ -220,7 +220,9 @@ test('Functional: LineAccount lifecycle, UI rendering, intent validation and act
   assert(postedActions.some(a => a.action === 'unbindLineAccount'), 'unbindLineAccount action must have been posted');
 
   // 5. AC2 & AC5: Connect flow with mock LIFF SDK
-  state.currentUser = 'active_user';
+  state.currentUserId = 'active_user';
+  state.currentUser = 'Active User';
+  state.lifecycleMarker = 'marker-active';
   sandbox.window.liff = {
     init: async () => {},
     isLoggedIn: () => true,
@@ -237,10 +239,11 @@ test('Functional: LineAccount lifecycle, UI rendering, intent validation and act
 
   // 7. AC5 / AC6 & R1: Callback intent validation - mismatch user is discarded
   sessionStorageMock.setItem('akra_line_link_intent', JSON.stringify({
-    user: 'different_user',
+    userId: 'different_user',
+    marker: 'marker-active',
+    epoch: state.sessionEpoch,
     timestamp: Date.now()
   }));
-  state.currentUser = 'active_user';
   sandbox.window.location = new URL('https://akra-web.github.io/?code=oauth_code&state=123');
   toasts.length = 0;
   await LineAccount.checkCallbackIntent();
@@ -248,7 +251,9 @@ test('Functional: LineAccount lifecycle, UI rendering, intent validation and act
 
   // 8. R1 / M4: Expired intent (> 10 minutes) is rejected and discarded
   sessionStorageMock.setItem('akra_line_link_intent', JSON.stringify({
-    user: 'active_user',
+    userId: 'active_user',
+    marker: 'marker-active',
+    epoch: state.sessionEpoch,
     timestamp: Date.now() - (11 * 60 * 1000) // 11 mins ago
   }));
   toasts.length = 0;
@@ -258,7 +263,9 @@ test('Functional: LineAccount lifecycle, UI rendering, intent validation and act
 
   // 9. R1 / M4: Callback intent validation - matching user preserves URL parameters until liff.init
   sessionStorageMock.setItem('akra_line_link_intent', JSON.stringify({
-    user: 'active_user',
+    userId: 'active_user',
+    marker: 'marker-active',
+    epoch: state.sessionEpoch,
     timestamp: Date.now()
   }));
   sandbox.window.location = new URL('https://akra-web.github.io/?code=oauth_code&state=123');
@@ -275,4 +282,66 @@ test('Functional: LineAccount lifecycle, UI rendering, intent validation and act
   await LineAccount.checkCallbackIntent();
   assert(toasts.some(t => t.msg.includes('กำลังยืนยัน')), 'Matching user callback must proceed');
   assert(initUrlObserved.includes('code='), 'OAuth code parameter must be intact when liff.init is called');
+
+  // 10. S1 Regression: Account switch with same display name during SDK init must abort with 0 API calls
+  {
+    state.currentUserId = 'account-a';
+    state.currentUser = 'Shared Display Name';
+    state.sessionToken = 'session-a';
+    state.sessionEpoch = 1;
+    postedActions.length = 0;
+    let initResolve;
+    const initPromise = new Promise(r => { initResolve = r; });
+    let enteredResolve;
+    const enteredPromise = new Promise(r => { enteredResolve = r; });
+    sandbox.window.liff = {
+      init: () => {
+        enteredResolve();
+        return initPromise;
+      },
+      isLoggedIn: () => true,
+      getAccessToken: () => 'line-token-a'
+    };
+    const connectPromise = LineAccount.connect();
+    await enteredPromise;
+    // Simulate account switch while liff.init is pending
+    state.currentUserId = 'account-b';
+    state.currentUser = 'Shared Display Name';
+    state.sessionToken = 'session-b';
+    state.sessionEpoch = 2;
+    initResolve();
+    await connectPromise;
+    const bindCalls = postedActions.filter(a => a.action === 'bindLineAccount');
+    assert.strictEqual(bindCalls.length, 0, 'Account switch during SDK init must NOT post bindLineAccount');
+  }
+
+  // 11. S2 Regression: Delayed status read must not overwrite state after unbind
+  {
+    state.currentUserId = 'account-b';
+    state.currentUser = 'Shared Display Name';
+    state.sessionToken = 'session-b';
+    LineAccount.state.linked = true;
+    LineAccount.state.displayName = 'Old Bound Account';
+    let statusResolve;
+    const statusPromise = new Promise(r => { statusResolve = r; });
+    const originalPostAction = API.postAction;
+    API.postAction = async (payload) => {
+      if (payload.action === 'getLineAccountStatus') {
+        return statusPromise;
+      }
+      return originalPostAction(payload);
+    };
+    const refreshPromise = LineAccount.refreshStatus();
+    await LineAccount.unbind();
+    assert.strictEqual(LineAccount.state.linked, false, 'Unbind should immediately set linked to false');
+    // Now resolve the delayed status response with linked=true
+    statusResolve({
+      status: 'success',
+      linked: true,
+      lineDisplayName: 'Old Bound Account'
+    });
+    await refreshPromise;
+    assert.strictEqual(LineAccount.state.linked, false, 'Delayed status response must NOT restore linked state after unbind');
+    API.postAction = originalPostAction;
+  }
 });

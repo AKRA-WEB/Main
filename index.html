@@ -470,7 +470,7 @@
             STORAGE_USER_DATA: "akra_user_data",
             STORAGE_APP_CONFIG: "akra_app_config"
         };
-        const CURRENT_VERSION = "20260907.02";
+        const CURRENT_VERSION = "20260907.03";
         async function checkAppVersion() {
             try {
                 const res = await fetch('version.json?t=' + Date.now());
@@ -679,6 +679,15 @@
             return /^[A-Za-z0-9_-]{1,80}$/.test(text) ? text : fallback;
         }
 
+        function generateLifecycleMarker() {
+            try {
+                if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
+                    return crypto.randomUUID();
+                }
+            } catch (_e) {}
+            return 'lm_' + Date.now().toString(36) + '_' + Math.random().toString(36).slice(2, 10);
+        }
+
         function reconcileAuthorizationDependencies(appConfig, permRows, roleConfig) {
             if (!Array.isArray(appConfig) || !Array.isArray(permRows) || !Array.isArray(roleConfig)) return [];
             const appsById = new Map(appConfig.map(app => [app.id, app]));
@@ -765,6 +774,7 @@
             mustChangePassword: false,
             sessionToken: null,
             sessionEpoch: 0,
+            lifecycleMarker: null,
             sessionRefreshPending: false,
             sessionRefreshFailed: false,
             pendingNavigation: null,
@@ -1553,6 +1563,8 @@
                 displayName: null,
                 error: null
             },
+            _statusGen: 0,
+            _inFlightOp: null,
 
             loadSdk: () => {
                 if (window.liff && typeof window.liff.init === 'function') {
@@ -1576,15 +1588,26 @@
 
             refreshStatus: async () => {
                 if (!state.sessionToken) return;
+                const thisGen = ++LineAccount._statusGen;
+                const reqEpoch = state.sessionEpoch;
+                const reqUserId = state.currentUserId;
+
                 LineAccount.state.loading = true;
                 LineAccount.updateHeaderButton();
                 try {
                     const res = await API.postAction({ action: 'getLineAccountStatus' });
+                    // Discard response if newer status was requested, session changed, or user logged out
+                    if (thisGen !== LineAccount._statusGen || reqEpoch !== state.sessionEpoch || reqUserId !== state.currentUserId || !state.sessionToken) {
+                        return;
+                    }
                     LineAccount.state.loading = false;
                     LineAccount.state.linked = Boolean(res?.linked);
                     LineAccount.state.displayName = res?.lineDisplayName || null;
                     LineAccount.state.error = null;
                 } catch (err) {
+                    if (thisGen !== LineAccount._statusGen || reqEpoch !== state.sessionEpoch || reqUserId !== state.currentUserId || !state.sessionToken) {
+                        return;
+                    }
                     LineAccount.state.loading = false;
                     LineAccount.state.error = err.code || err.message || 'error_loading_line_status';
                 }
@@ -1673,8 +1696,13 @@
             },
 
             connect: async (options = {}) => {
-                if (LineAccount._inFlight) return;
-                LineAccount._inFlight = true;
+                if (LineAccount._inFlightOp) return;
+                LineAccount._inFlightOp = 'connect';
+                ++LineAccount._statusGen; // Invalidate any prior in-flight status reads
+                const opGen = LineAccount._statusGen;
+                const startingUserId = state.currentUserId;
+                const startingEpoch = state.sessionEpoch;
+
                 const connectBtn = document.getElementById('line-connect-btn');
                 if (connectBtn) {
                     connectBtn.disabled = true;
@@ -1682,7 +1710,6 @@
                     lucide.createIcons({ root: connectBtn });
                 }
                 try {
-                    const startingUser = String(state.currentUser || state.currentUserId || '').trim().toLowerCase();
                     await LineAccount.loadSdk();
                     const liffId = String(CONFIG.LINE_LIFF_ID || '').trim();
                     if (!liffId) throw new Error('liff_id_not_configured');
@@ -1701,22 +1728,22 @@
                         } catch (_e) {}
                     }
 
+                    // Strict session & identity verification after asynchronous SDK initialization
+                    if (!state.sessionToken || !state.currentUserId || state.currentUserId !== startingUserId || state.sessionEpoch !== startingEpoch) {
+                        return;
+                    }
+
                     if (!window.liff.isLoggedIn()) {
                         try {
                             sessionStorage.setItem('akra_line_link_intent', JSON.stringify({
-                                user: state.currentUser || state.currentUserId || '',
-                                tokenPreview: state.sessionToken ? state.sessionToken.slice(0, 16) : '',
+                                userId: state.currentUserId,
+                                epoch: state.sessionEpoch,
+                                marker: state.lifecycleMarker,
                                 timestamp: Date.now()
                             }));
                         } catch (e) {}
                         window.liff.login({ redirectUri: window.location.href });
                         return;
-                    }
-
-                    // Recheck user identity after asynchronous LIFF initialization
-                    const endingUser = String(state.currentUser || state.currentUserId || '').trim().toLowerCase();
-                    if (!startingUser || startingUser !== endingUser) {
-                        throw new Error('user_mismatch_during_auth');
                     }
 
                     const token = window.liff.getAccessToken();
@@ -1726,6 +1753,12 @@
                         action: 'bindLineAccount',
                         lineAccessToken: token
                     });
+
+                    // Check again before applying mutation state
+                    if (opGen !== LineAccount._statusGen || state.sessionEpoch !== startingEpoch || state.currentUserId !== startingUserId || !state.sessionToken) {
+                        return;
+                    }
+
                     if (res && res.status === 'success') {
                         LineAccount.state.linked = true;
                         LineAccount.state.displayName = res.lineDisplayName || null;
@@ -1735,6 +1768,9 @@
                         UI.showToast(`เชื่อมต่อกับ LINE (${res.lineDisplayName || 'สำเร็จ'}) เรียบร้อยแล้ว!`, 'success');
                     }
                 } catch (err) {
+                    if (opGen !== LineAccount._statusGen || state.sessionEpoch !== startingEpoch || state.currentUserId !== startingUserId || !state.sessionToken) {
+                        return;
+                    }
                     console.error('LINE connect error:', err);
                     let msg = err.code || err.message || 'connect_failed';
                     if (msg === 'line_account_already_linked') {
@@ -1744,7 +1780,9 @@
                     LineAccount.updateModalView();
                     UI.showToast(msg, 'warning');
                 } finally {
-                    LineAccount._inFlight = false;
+                    if (LineAccount._inFlightOp === 'connect') {
+                        LineAccount._inFlightOp = null;
+                    }
                     if (connectBtn) {
                         connectBtn.disabled = false;
                         connectBtn.innerHTML = '<i data-lucide="message-circle" class="w-5 h-5"></i> เชื่อมต่อด้วย LINE (1-Tap)';
@@ -1754,9 +1792,16 @@
             },
 
             unbind: async () => {
+                if (LineAccount._inFlightOp) return;
                 if (!confirm('คุณต้องการยกเลิกการเชื่อมต่อบัญชี LINE หรือไม่?\n(การแจ้งเตือนงานผ่าน LINE จะหยุดทำงาน)')) {
                     return;
                 }
+                LineAccount._inFlightOp = 'unbind';
+                ++LineAccount._statusGen; // Invalidate any prior in-flight status reads
+                const opGen = LineAccount._statusGen;
+                const startingUserId = state.currentUserId;
+                const startingEpoch = state.sessionEpoch;
+
                 const unbindBtn = document.getElementById('line-unbind-btn');
                 if (unbindBtn) {
                     unbindBtn.disabled = true;
@@ -1765,6 +1810,10 @@
                 }
                 try {
                     const res = await API.postAction({ action: 'unbindLineAccount' });
+                    // Check before applying unbind result
+                    if (opGen !== LineAccount._statusGen || state.sessionEpoch !== startingEpoch || state.currentUserId !== startingUserId || !state.sessionToken) {
+                        return;
+                    }
                     if (res && res.status === 'success') {
                         LineAccount.state.linked = false;
                         LineAccount.state.displayName = null;
@@ -1774,11 +1823,17 @@
                         UI.showToast('ยกเลิกการเชื่อมต่อ LINE เรียบร้อยแล้ว', 'success');
                     }
                 } catch (err) {
+                    if (opGen !== LineAccount._statusGen || state.sessionEpoch !== startingEpoch || state.currentUserId !== startingUserId || !state.sessionToken) {
+                        return;
+                    }
                     console.error('LINE unbind error:', err);
                     LineAccount.state.error = err.message || 'unbind_failed';
                     LineAccount.updateModalView();
                     UI.showToast(err.message || 'ไม่สามารถยกเลิกการเชื่อมต่อได้', 'warning');
                 } finally {
+                    if (LineAccount._inFlightOp === 'unbind') {
+                        LineAccount._inFlightOp = null;
+                    }
                     if (unbindBtn) {
                         unbindBtn.disabled = false;
                         unbindBtn.innerHTML = '<i data-lucide="link-2-off" class="w-4 h-4"></i> ยกเลิกการเชื่อมต่อ';
@@ -1798,27 +1853,37 @@
                     if (raw) intent = JSON.parse(raw);
                 } catch (e) {}
 
-                if (!intent || !intent.user) return;
+                if (!intent) return;
 
-                // Check 10-minute expiry
-                if (Date.now() - (intent.timestamp || 0) > 10 * 60 * 1000) {
+                // Validate finite issuedAt timestamp and 10-minute expiry (and reject future-dated intents > 60s)
+                const now = Date.now();
+                const ts = Number(intent.timestamp);
+                if (!Number.isFinite(ts) || ts <= 0 || (now - ts) > 10 * 60 * 1000 || (ts - now) > 60 * 1000) {
                     sessionStorage.removeItem('akra_line_link_intent');
-                    console.warn('LINE linking intent expired');
+                    console.warn('LINE linking intent expired or invalid timestamp');
                     return;
                 }
 
-                if (!state.sessionToken) return;
-                const current = String(state.currentUser || state.currentUserId || '').trim().toLowerCase();
-                if (String(intent.user).trim().toLowerCase() !== current) {
+                if (!state.sessionToken || !state.currentUserId) return;
+
+                // Validate canonical currentUserId, session lifecycleMarker, and sessionEpoch
+                const intentUserId = String(intent.userId || intent.user || '').trim().toLowerCase();
+                const currentUserId = String(state.currentUserId || '').trim().toLowerCase();
+                const markerMatch = !intent.marker || (state.lifecycleMarker && intent.marker === state.lifecycleMarker);
+                const epochMatch = intent.epoch === undefined || intent.epoch === state.sessionEpoch;
+
+                if (!intentUserId || intentUserId !== currentUserId || !markerMatch || !epochMatch) {
                     sessionStorage.removeItem('akra_line_link_intent');
-                    console.warn('LINE linking intent user mismatch, discarded:', intent.user, current);
+                    console.warn('LINE linking intent identity mismatch, discarded');
                     return;
                 }
+
+                // Consume intent once
+                sessionStorage.removeItem('akra_line_link_intent');
 
                 // Call connect without stripping URL parameters beforehand!
                 UI.showToast('กำลังยืนยันการเชื่อมต่อบัญชี LINE...', 'warning');
                 await LineAccount.connect({ fromCallback: true });
-                sessionStorage.removeItem('akra_line_link_intent');
             }
         };
         window.LineAccount = LineAccount;
@@ -2045,6 +2110,17 @@
                     }
                     state.sessionToken = savedToken;
                     state.sessionEpoch += 1;
+                    // Restore tab lifecycle marker or generate fresh if not present in tab
+                    try {
+                        let tabMarker = sessionStorage.getItem('akra_session_lifecycle_marker');
+                        if (!tabMarker) {
+                            tabMarker = generateLifecycleMarker();
+                            sessionStorage.setItem('akra_session_lifecycle_marker', tabMarker);
+                        }
+                        state.lifecycleMarker = tabMarker;
+                    } catch (_e) {
+                        state.lifecycleMarker = generateLifecycleMarker();
+                    }
                     state.currentUserId = parsedUser.id || null;
                     state.currentUser = parsedUser.name;
                     state.currentRoles = parsedUser.roles || [];
@@ -2121,6 +2197,11 @@
                         }
 
                         state.sessionEpoch += 1;
+                        state.lifecycleMarker = generateLifecycleMarker();
+                        try {
+                            sessionStorage.setItem('akra_session_lifecycle_marker', state.lifecycleMarker);
+                            sessionStorage.removeItem('akra_line_link_intent');
+                        } catch (_e) {}
                         App.saveSession(data);
                         safeStorage.removeItem(CONFIG.STORAGE_USER_DB);
 
@@ -2220,6 +2301,7 @@
 
             handleLogout: () => {
                 state.sessionEpoch += 1;
+                state.lifecycleMarker = null;
                 App.closePendingNavigation();
                 safeStorage.removeItem(CONFIG.STORAGE_SESSION);
                 safeStorage.removeItem(CONFIG.STORAGE_USER_DATA);
@@ -2227,6 +2309,7 @@
                 try {
                     sessionStorage.removeItem('akra_line_link_intent');
                     sessionStorage.removeItem('akra_line_link_user');
+                    sessionStorage.removeItem('akra_session_lifecycle_marker');
                 } catch (e) {}
                 state.currentUserId = null;
                 state.currentUser = null;
