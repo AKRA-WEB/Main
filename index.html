@@ -13,7 +13,7 @@
     <noscript><link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Thai:wght@300;400;500;600;700&display=swap" rel="stylesheet"></noscript>
     
     <!-- Tailwind CSS (precompiled; see tailwind.config.js / tailwind.src.css) -->
-    <link rel="stylesheet" href="tailwind.css">
+    <link rel="stylesheet" href="tailwind.css?v=20260907.04">
 
     <!-- Lucide Icons -->
     <script src="assets/lucide-0.468.0.min.js" defer></script>
@@ -1782,10 +1782,11 @@
                     if (LineAccount._inFlightOp === 'connect') {
                         LineAccount._inFlightOp = null;
                     }
-                    if (opGen !== LineAccount._statusGen || state.sessionEpoch !== startingEpoch || state.currentUserId !== startingUserId || !state.sessionToken) return;
-                    LineAccount.state.loading = false;
-                    LineAccount.updateHeaderButton();
-                    LineAccount.updateModalView();
+                    if (opGen === LineAccount._statusGen && state.sessionEpoch === startingEpoch && state.currentUserId === startingUserId && state.sessionToken) {
+                        LineAccount.state.loading = false;
+                        LineAccount.updateHeaderButton();
+                        LineAccount.updateModalView();
+                    }
                     if (connectBtn) {
                         connectBtn.disabled = false;
                         connectBtn.innerHTML = '<i data-lucide="message-circle" class="w-5 h-5"></i> เชื่อมต่อด้วย LINE (1-Tap)';
@@ -1837,10 +1838,11 @@
                     if (LineAccount._inFlightOp === 'unbind') {
                         LineAccount._inFlightOp = null;
                     }
-                    if (opGen !== LineAccount._statusGen || state.sessionEpoch !== startingEpoch || state.currentUserId !== startingUserId || !state.sessionToken) return;
-                    LineAccount.state.loading = false;
-                    LineAccount.updateHeaderButton();
-                    LineAccount.updateModalView();
+                    if (opGen === LineAccount._statusGen && state.sessionEpoch === startingEpoch && state.currentUserId === startingUserId && state.sessionToken) {
+                        LineAccount.state.loading = false;
+                        LineAccount.updateHeaderButton();
+                        LineAccount.updateModalView();
+                    }
                     if (unbindBtn) {
                         unbindBtn.disabled = false;
                         unbindBtn.innerHTML = '<i data-lucide="link-2-off" class="w-4 h-4"></i> ยกเลิกการเชื่อมต่อ';
