@@ -470,7 +470,7 @@
             STORAGE_USER_DATA: "akra_user_data",
             STORAGE_APP_CONFIG: "akra_app_config"
         };
-        const CURRENT_VERSION = "20260907.03";
+        const CURRENT_VERSION = "20260907.04";
         async function checkAppVersion() {
             try {
                 const res = await fetch('version.json?t=' + Date.now());
@@ -1587,7 +1587,7 @@
             },
 
             refreshStatus: async () => {
-                if (!state.sessionToken) return;
+                if (!state.sessionToken || LineAccount._inFlightOp) return;
                 const thisGen = ++LineAccount._statusGen;
                 const reqEpoch = state.sessionEpoch;
                 const reqUserId = state.currentUserId;
@@ -1737,7 +1737,6 @@
                         try {
                             sessionStorage.setItem('akra_line_link_intent', JSON.stringify({
                                 userId: state.currentUserId,
-                                epoch: state.sessionEpoch,
                                 marker: state.lifecycleMarker,
                                 timestamp: Date.now()
                             }));
@@ -1783,6 +1782,10 @@
                     if (LineAccount._inFlightOp === 'connect') {
                         LineAccount._inFlightOp = null;
                     }
+                    if (opGen !== LineAccount._statusGen || state.sessionEpoch !== startingEpoch || state.currentUserId !== startingUserId || !state.sessionToken) return;
+                    LineAccount.state.loading = false;
+                    LineAccount.updateHeaderButton();
+                    LineAccount.updateModalView();
                     if (connectBtn) {
                         connectBtn.disabled = false;
                         connectBtn.innerHTML = '<i data-lucide="message-circle" class="w-5 h-5"></i> เชื่อมต่อด้วย LINE (1-Tap)';
@@ -1834,6 +1837,10 @@
                     if (LineAccount._inFlightOp === 'unbind') {
                         LineAccount._inFlightOp = null;
                     }
+                    if (opGen !== LineAccount._statusGen || state.sessionEpoch !== startingEpoch || state.currentUserId !== startingUserId || !state.sessionToken) return;
+                    LineAccount.state.loading = false;
+                    LineAccount.updateHeaderButton();
+                    LineAccount.updateModalView();
                     if (unbindBtn) {
                         unbindBtn.disabled = false;
                         unbindBtn.innerHTML = '<i data-lucide="link-2-off" class="w-4 h-4"></i> ยกเลิกการเชื่อมต่อ';
@@ -1855,10 +1862,10 @@
 
                 if (!intent) return;
 
-                // Validate finite issuedAt timestamp and 10-minute expiry (and reject future-dated intents > 60s)
+                // Require a finite issued-at time within the last 10 minutes.
                 const now = Date.now();
-                const ts = Number(intent.timestamp);
-                if (!Number.isFinite(ts) || ts <= 0 || (now - ts) > 10 * 60 * 1000 || (ts - now) > 60 * 1000) {
+                const ts = intent.timestamp;
+                if (!Number.isFinite(ts) || ts <= 0 || (now - ts) > 10 * 60 * 1000 || ts > now) {
                     sessionStorage.removeItem('akra_line_link_intent');
                     console.warn('LINE linking intent expired or invalid timestamp');
                     return;
@@ -1866,13 +1873,12 @@
 
                 if (!state.sessionToken || !state.currentUserId) return;
 
-                // Validate canonical currentUserId, session lifecycleMarker, and sessionEpoch
-                const intentUserId = String(intent.userId || intent.user || '').trim().toLowerCase();
+                // The tab's login marker survives OAuth reload; the in-page epoch does not.
+                const intentUserId = typeof intent.userId === 'string' ? intent.userId.trim().toLowerCase() : '';
                 const currentUserId = String(state.currentUserId || '').trim().toLowerCase();
-                const markerMatch = !intent.marker || (state.lifecycleMarker && intent.marker === state.lifecycleMarker);
-                const epochMatch = intent.epoch === undefined || intent.epoch === state.sessionEpoch;
+                const markerMatch = typeof intent.marker === 'string' && intent.marker.trim().length > 0 && intent.marker === state.lifecycleMarker;
 
-                if (!intentUserId || intentUserId !== currentUserId || !markerMatch || !epochMatch) {
+                if (!intentUserId || intentUserId !== currentUserId || !markerMatch) {
                     sessionStorage.removeItem('akra_line_link_intent');
                     console.warn('LINE linking intent identity mismatch, discarded');
                     return;
