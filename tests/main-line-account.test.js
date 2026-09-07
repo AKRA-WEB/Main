@@ -14,7 +14,7 @@ test('Version Parity: CURRENT_VERSION in index.html matches version.json', () =>
   assert(match, 'CURRENT_VERSION must be declared in index.html');
   const indexVersion = match[1];
   assert.strictEqual(indexVersion, versionData.version, `index.html version (${indexVersion}) must match version.json (${versionData.version})`);
-  assert.strictEqual(indexVersion, '20260907.01', 'Version must be bumped to 20260907.01');
+  assert.strictEqual(indexVersion, '20260907.02', 'Version must be bumped to 20260907.02');
 });
 
 test('Syntax check: All inline scripts parse with zero syntax errors via vm.Script', () => {
@@ -220,6 +220,7 @@ test('Functional: LineAccount lifecycle, UI rendering, intent validation and act
   assert(postedActions.some(a => a.action === 'unbindLineAccount'), 'unbindLineAccount action must have been posted');
 
   // 5. AC2 & AC5: Connect flow with mock LIFF SDK
+  state.currentUser = 'active_user';
   sandbox.window.liff = {
     init: async () => {},
     isLoggedIn: () => true,
@@ -234,18 +235,44 @@ test('Functional: LineAccount lifecycle, UI rendering, intent validation and act
   await LineAccount.connect();
   assert(toasts.some(t => t.msg.includes('ผูกกับผู้ใช้งานอื่นอยู่แล้ว')), 'Conflict toast must be shown');
 
-  // 7. AC5 / AC6: Callback intent validation - mismatch user is discarded
-  sessionStorageMock.setItem('akra_line_link_user', 'different_user');
+  // 7. AC5 / AC6 & R1: Callback intent validation - mismatch user is discarded
+  sessionStorageMock.setItem('akra_line_link_intent', JSON.stringify({
+    user: 'different_user',
+    timestamp: Date.now()
+  }));
   state.currentUser = 'active_user';
   sandbox.window.location = new URL('https://akra-web.github.io/?code=oauth_code&state=123');
   toasts.length = 0;
   await LineAccount.checkCallbackIntent();
   assert(!toasts.some(t => t.msg.includes('กำลังยืนยัน')), 'Mismatched user callback must NOT proceed');
 
-  // Callback intent validation - matching user proceeds
-  sessionStorageMock.setItem('akra_line_link_user', 'active_user');
+  // 8. R1 / M4: Expired intent (> 10 minutes) is rejected and discarded
+  sessionStorageMock.setItem('akra_line_link_intent', JSON.stringify({
+    user: 'active_user',
+    timestamp: Date.now() - (11 * 60 * 1000) // 11 mins ago
+  }));
+  toasts.length = 0;
+  await LineAccount.checkCallbackIntent();
+  assert(!toasts.some(t => t.msg.includes('กำลังยืนยัน')), 'Expired callback intent must NOT proceed');
+  assert.strictEqual(sessionStorageMock.getItem('akra_line_link_intent'), null, 'Expired intent must be removed');
+
+  // 9. R1 / M4: Callback intent validation - matching user preserves URL parameters until liff.init
+  sessionStorageMock.setItem('akra_line_link_intent', JSON.stringify({
+    user: 'active_user',
+    timestamp: Date.now()
+  }));
   sandbox.window.location = new URL('https://akra-web.github.io/?code=oauth_code&state=123');
-  sandbox.window.liff.getAccessToken = () => 'test_access_token';
+  let initUrlObserved = null;
+  sandbox.window.liff = {
+    init: async () => {
+      // Must observe the search params still intact during liff.init!
+      initUrlObserved = sandbox.window.location.search;
+    },
+    isLoggedIn: () => true,
+    getAccessToken: () => 'test_access_token'
+  };
+  toasts.length = 0;
   await LineAccount.checkCallbackIntent();
   assert(toasts.some(t => t.msg.includes('กำลังยืนยัน')), 'Matching user callback must proceed');
+  assert(initUrlObserved.includes('code='), 'OAuth code parameter must be intact when liff.init is called');
 });

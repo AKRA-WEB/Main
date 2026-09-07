@@ -470,7 +470,7 @@
             STORAGE_USER_DATA: "akra_user_data",
             STORAGE_APP_CONFIG: "akra_app_config"
         };
-        const CURRENT_VERSION = "20260907.01";
+        const CURRENT_VERSION = "20260907.02";
         async function checkAppVersion() {
             try {
                 const res = await fetch('version.json?t=' + Date.now());
@@ -1672,7 +1672,9 @@
                 }
             },
 
-            connect: async () => {
+            connect: async (options = {}) => {
+                if (LineAccount._inFlight) return;
+                LineAccount._inFlight = true;
                 const connectBtn = document.getElementById('line-connect-btn');
                 if (connectBtn) {
                     connectBtn.disabled = true;
@@ -1680,17 +1682,41 @@
                     lucide.createIcons({ root: connectBtn });
                 }
                 try {
+                    const startingUser = String(state.currentUser || state.currentUserId || '').trim().toLowerCase();
                     await LineAccount.loadSdk();
                     const liffId = String(CONFIG.LINE_LIFF_ID || '').trim();
                     if (!liffId) throw new Error('liff_id_not_configured');
                     await window.liff.init({ liffId });
 
+                    // Clean callback parameters AFTER liff.init has parsed and consumed them
+                    if (options.fromCallback || window.location.search.includes('code=')) {
+                        try {
+                            const cleanUrl = new URL(window.location.href);
+                            cleanUrl.searchParams.delete('code');
+                            cleanUrl.searchParams.delete('state');
+                            cleanUrl.searchParams.delete('liff.state');
+                            cleanUrl.searchParams.delete('liffClientId');
+                            cleanUrl.searchParams.delete('liffRedirectUri');
+                            window.history.replaceState({}, document.title, cleanUrl.pathname + (cleanUrl.searchParams.toString() ? '?' + cleanUrl.searchParams.toString() : ''));
+                        } catch (_e) {}
+                    }
+
                     if (!window.liff.isLoggedIn()) {
                         try {
-                            sessionStorage.setItem('akra_line_link_user', state.currentUser || state.currentUserId || '');
+                            sessionStorage.setItem('akra_line_link_intent', JSON.stringify({
+                                user: state.currentUser || state.currentUserId || '',
+                                tokenPreview: state.sessionToken ? state.sessionToken.slice(0, 16) : '',
+                                timestamp: Date.now()
+                            }));
                         } catch (e) {}
                         window.liff.login({ redirectUri: window.location.href });
                         return;
+                    }
+
+                    // Recheck user identity after asynchronous LIFF initialization
+                    const endingUser = String(state.currentUser || state.currentUserId || '').trim().toLowerCase();
+                    if (!startingUser || startingUser !== endingUser) {
+                        throw new Error('user_mismatch_during_auth');
                     }
 
                     const token = window.liff.getAccessToken();
@@ -1718,6 +1744,7 @@
                     LineAccount.updateModalView();
                     UI.showToast(msg, 'warning');
                 } finally {
+                    LineAccount._inFlight = false;
                     if (connectBtn) {
                         connectBtn.disabled = false;
                         connectBtn.innerHTML = '<i data-lucide="message-circle" class="w-5 h-5"></i> เชื่อมต่อด้วย LINE (1-Tap)';
@@ -1765,30 +1792,33 @@
                 const hasLiffParam = url.searchParams.has('code') || url.searchParams.has('liff.state') || url.searchParams.has('state') || window.location.hash.includes('liff');
                 if (!hasLiffParam) return;
 
-                let intentUser = null;
+                let intent = null;
                 try {
-                    intentUser = sessionStorage.getItem('akra_line_link_user');
-                    sessionStorage.removeItem('akra_line_link_user');
+                    const raw = sessionStorage.getItem('akra_line_link_intent');
+                    if (raw) intent = JSON.parse(raw);
                 } catch (e) {}
 
-                try {
-                    url.searchParams.delete('code');
-                    url.searchParams.delete('state');
-                    url.searchParams.delete('liff.state');
-                    window.history.replaceState({}, document.title, url.pathname + (url.searchParams.toString() ? '?' + url.searchParams.toString() : ''));
-                } catch (e) {}
+                if (!intent || !intent.user) return;
 
-                if (!state.sessionToken) return;
-                const current = String(state.currentUser || state.currentUserId || '').trim().toLowerCase();
-                if (intentUser && current && intentUser.trim().toLowerCase() !== current) {
-                    console.warn('LINE linking intent user mismatch, discarded:', intentUser, current);
+                // Check 10-minute expiry
+                if (Date.now() - (intent.timestamp || 0) > 10 * 60 * 1000) {
+                    sessionStorage.removeItem('akra_line_link_intent');
+                    console.warn('LINE linking intent expired');
                     return;
                 }
 
-                if (intentUser) {
-                    UI.showToast('กำลังยืนยันการเชื่อมต่อบัญชี LINE...', 'warning');
-                    LineAccount.connect();
+                if (!state.sessionToken) return;
+                const current = String(state.currentUser || state.currentUserId || '').trim().toLowerCase();
+                if (String(intent.user).trim().toLowerCase() !== current) {
+                    sessionStorage.removeItem('akra_line_link_intent');
+                    console.warn('LINE linking intent user mismatch, discarded:', intent.user, current);
+                    return;
                 }
+
+                // Call connect without stripping URL parameters beforehand!
+                UI.showToast('กำลังยืนยันการเชื่อมต่อบัญชี LINE...', 'warning');
+                await LineAccount.connect({ fromCallback: true });
+                sessionStorage.removeItem('akra_line_link_intent');
             }
         };
         window.LineAccount = LineAccount;
@@ -2194,7 +2224,10 @@
                 safeStorage.removeItem(CONFIG.STORAGE_SESSION);
                 safeStorage.removeItem(CONFIG.STORAGE_USER_DATA);
                 safeStorage.removeItem(CONFIG.STORAGE_USER_DB);
-                try { sessionStorage.removeItem('akra_line_link_user'); } catch (e) {}
+                try {
+                    sessionStorage.removeItem('akra_line_link_intent');
+                    sessionStorage.removeItem('akra_line_link_user');
+                } catch (e) {}
                 state.currentUserId = null;
                 state.currentUser = null;
                 state.currentRoles = [];
