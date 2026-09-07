@@ -116,3 +116,16 @@ test('cancel unlink does not mutate; callback without intent does not bind',asyn
   r.ctx.window.location=new URL('https://example.test/Main/?code=synthetic');
   await r.subject.checkCallbackIntent();assert.deepEqual(r.calls,[]);
 });
+
+test('obsolete operation releases its disabled control for the next login',async()=>{
+  const r=rig(), init=deferred(), entered=deferred();
+  const button={disabled:false,innerHTML:''};
+  r.elements.set('line-connect-btn',button); r.ctx.lucide={createIcons(){}};
+  r.ctx.window.liff.init=()=>{entered.resolve();return init.promise;};
+  const pending=r.subject.connect(); await entered.promise;
+  assert.equal(button.disabled,true);
+  r.ctx.state.sessionEpoch++;r.ctx.state.currentUserId='account-b';
+  init.resolve();await pending;
+  assert.equal(button.disabled,false,'New login must not inherit a disabled LINE control');
+  assert.deepEqual(r.calls,[]);
+});
