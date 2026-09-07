@@ -128,6 +128,11 @@
                     <i data-lucide="user" class="w-5 h-5"></i>
                 </div>
                 <div class="w-px h-8 bg-slate-300 mx-1 hidden sm:block"></div>
+                <button type="button" id="line-account-btn" class="p-2 text-slate-400 hover:text-[#06c755] hover:bg-[#06c755]/10 rounded-lg transition-all relative flex items-center gap-1.5" title="การเชื่อมต่อ LINE" aria-label="การเชื่อมต่อ LINE">
+                    <i data-lucide="message-circle" class="w-5 h-5" id="line-account-icon"></i>
+                    <span id="line-status-dot" class="w-2 h-2 rounded-full bg-slate-300 absolute top-1.5 right-1.5 hidden"></span>
+                    <span id="line-status-badge" class="hidden text-xs font-semibold px-2 py-0.5 rounded-md bg-[#06c755]/15 text-[#06c755]"></span>
+                </button>
                 <a href="executive-dashboard.html" id="exec-btn" class="hidden p-2 text-slate-400 hover:text-brand-blue hover:bg-brand-blue/10 rounded-lg transition-all" title="Executive Cockpit Dashboard" aria-label="Executive Cockpit Dashboard"><i data-lucide="bar-chart-3" class="w-5 h-5"></i></a>
                 <button type="button" id="admin-btn" class="hidden p-2 text-slate-400 hover:text-brand-blue hover:bg-brand-blue/10 rounded-lg transition-all" title="จัดการผู้ใช้งาน" aria-label="จัดการผู้ใช้งาน">
                     <i data-lucide="settings" class="w-5 h-5"></i>
@@ -377,6 +382,61 @@
         </section>
     </div>
 
+    <!-- 4. Modal จัดการการเชื่อมต่อ LINE (LINE Account Modal) -->
+    <div id="line-account-modal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center hidden p-4">
+        <section class="bg-white rounded-2xl shadow-2xl border border-slate-100 max-w-sm w-full p-6 relative fade-in" role="dialog" aria-labelledby="line-modal-title" aria-modal="true">
+            <button type="button" id="close-line-modal-btn" class="absolute top-4 right-4 text-slate-400 hover:text-slate-600 transition-colors" aria-label="ปิดหน้าต่างเชื่อมต่อ LINE">
+                <i data-lucide="x" class="w-5 h-5"></i>
+            </button>
+            <div class="text-center mb-5">
+                <div class="bg-[#06c755]/10 p-3.5 rounded-full inline-block mb-3">
+                    <i data-lucide="message-circle" class="w-8 h-8 text-[#06c755]"></i>
+                </div>
+                <h3 id="line-modal-title" class="text-xl font-bold text-brand-blue">การเชื่อมต่อบัญชี LINE</h3>
+                <p class="text-slate-500 text-xs mt-1">รับการแจ้งเตือนงานและเข้าใช้งานระบบผ่าน LINE</p>
+            </div>
+
+            <div id="line-modal-loading" class="py-6 text-center text-slate-400 text-sm hidden">
+                <i data-lucide="loader" class="w-6 h-6 animate-spin mx-auto mb-2 text-[#06c755]"></i>
+                กำลังโหลดสถานะ...
+            </div>
+
+            <div id="line-modal-error" class="bg-rose-50 border border-rose-200 text-rose-700 text-xs p-3 rounded-xl mb-4 hidden">
+                <div class="flex items-center gap-2">
+                    <i data-lucide="alert-circle" class="w-4 h-4 shrink-0"></i>
+                    <span id="line-modal-error-msg">เกิดข้อผิดพลาด</span>
+                </div>
+            </div>
+
+            <!-- State: Linked -->
+            <div id="line-state-linked" class="space-y-4 hidden">
+                <div class="bg-emerald-50/70 border border-emerald-200/80 rounded-xl p-4 text-center">
+                    <div class="flex items-center justify-center gap-2 text-[#06c755] font-bold text-sm mb-1">
+                        <i data-lucide="check-circle-2" class="w-4 h-4"></i> เชื่อมต่อกับ LINE แล้ว
+                    </div>
+                    <p class="text-slate-700 font-semibold text-sm" id="line-linked-name">-</p>
+                    <p class="text-slate-400 text-xs mt-0.5">การแจ้งเตือนจะถูกส่งไปยังบัญชีนี้</p>
+                </div>
+                <button type="button" id="line-unbind-btn"
+                    class="w-full bg-rose-50 hover:bg-rose-100 text-rose-600 font-semibold py-2.5 px-4 rounded-xl transition-all border border-rose-200 flex justify-center items-center gap-2 text-sm">
+                    <i data-lucide="link-2-off" class="w-4 h-4"></i> ยกเลิกการเชื่อมต่อ
+                </button>
+            </div>
+
+            <!-- State: Unlinked -->
+            <div id="line-state-unlinked" class="space-y-4 hidden">
+                <div class="bg-slate-50 border border-slate-200/80 rounded-xl p-4 text-center">
+                    <p class="text-slate-600 text-sm">ยังไม่ได้เชื่อมต่อบัญชี LINE</p>
+                    <p class="text-slate-400 text-xs mt-1">แตะปุ่มด้านล่างเพื่อเชื่อมต่อบัญชี LINE ของคุณ</p>
+                </div>
+                <button type="button" id="line-connect-btn"
+                    class="w-full bg-[#06c755] hover:bg-[#05b34c] text-white font-semibold py-3 px-4 rounded-xl transition-all transform hover:scale-[1.01] active:scale-95 flex justify-center items-center gap-2 shadow-lg shadow-[#06c755]/20 text-sm">
+                    <i data-lucide="message-circle" class="w-5 h-5"></i> เชื่อมต่อด้วย LINE (1-Tap)
+                </button>
+            </div>
+        </section>
+    </div>
+
     <!-- 5. Modal ลืมรหัสผ่าน (Forgot Password Modal) -->
     <div id="forgot-password-modal" class="fixed inset-0 z-50 flex items-center justify-center bg-brand-blue/60 backdrop-blur-sm hidden fade-in p-4" role="dialog" aria-modal="true" aria-labelledby="forgot-password-title">
         <section class="bg-white rounded-3xl p-6 sm:p-8 max-w-sm w-full shadow-2xl border-t-8 border-t-brand-orange text-center relative overflow-hidden">
@@ -404,12 +464,13 @@
          * ========================================================== */
         const CONFIG = {
             API_URL: "https://hgxrrskztbpejirrdpbq.supabase.co/functions/v1/auth-api",
+            LINE_LIFF_ID: window.MAIN_LIFF_ID || "2011473745-WseJDmk6",
             STORAGE_USER_DB: "akra_users_db",
             STORAGE_SESSION: "akra_session_token",
             STORAGE_USER_DATA: "akra_user_data",
             STORAGE_APP_CONFIG: "akra_app_config"
         };
-        const CURRENT_VERSION = "20260826.04";
+        const CURRENT_VERSION = "20260907.01";
         async function checkAppVersion() {
             try {
                 const res = await fetch('version.json?t=' + Date.now());
@@ -1485,6 +1546,253 @@
             ),
         };
 
+        const LineAccount = {
+            state: {
+                loading: false,
+                linked: false,
+                displayName: null,
+                error: null
+            },
+
+            loadSdk: () => {
+                if (window.liff && typeof window.liff.init === 'function') {
+                    return Promise.resolve();
+                }
+                return new Promise((resolve, reject) => {
+                    const existing = document.querySelector('script[src*="liff/edge/2/sdk.js"]');
+                    if (existing) {
+                        existing.addEventListener('load', () => resolve());
+                        existing.addEventListener('error', () => reject(new Error('liff_sdk_load_failed')));
+                        return;
+                    }
+                    const script = document.createElement('script');
+                    script.charset = 'utf-8';
+                    script.src = 'https://static.line-scdn.net/liff/edge/2/sdk.js';
+                    script.onload = () => resolve();
+                    script.onerror = () => reject(new Error('liff_sdk_load_failed'));
+                    document.head.appendChild(script);
+                });
+            },
+
+            refreshStatus: async () => {
+                if (!state.sessionToken) return;
+                LineAccount.state.loading = true;
+                LineAccount.updateHeaderButton();
+                try {
+                    const res = await API.postAction({ action: 'getLineAccountStatus' });
+                    LineAccount.state.loading = false;
+                    LineAccount.state.linked = Boolean(res?.linked);
+                    LineAccount.state.displayName = res?.lineDisplayName || null;
+                    LineAccount.state.error = null;
+                } catch (err) {
+                    LineAccount.state.loading = false;
+                    LineAccount.state.error = err.code || err.message || 'error_loading_line_status';
+                }
+                LineAccount.updateHeaderButton();
+                LineAccount.updateModalView();
+            },
+
+            updateHeaderButton: () => {
+                const btn = document.getElementById('line-account-btn');
+                const dot = document.getElementById('line-status-dot');
+                const badge = document.getElementById('line-status-badge');
+                if (!btn) return;
+
+                if (LineAccount.state.loading) {
+                    btn.className = 'p-2 text-slate-400 hover:bg-slate-100 rounded-lg transition-all relative flex items-center gap-1.5';
+                    btn.title = 'LINE: กำลังโหลด...';
+                    if (dot) dot.classList.add('hidden');
+                    if (badge) badge.classList.add('hidden');
+                    return;
+                }
+
+                if (LineAccount.state.error) {
+                    btn.className = 'p-2 text-amber-500 hover:bg-amber-50 rounded-lg transition-all relative flex items-center gap-1.5';
+                    btn.title = 'LINE: เกิดข้อผิดพลาดในการโหลดสถานะ (แตะเพื่อดูรายละเอียด)';
+                    if (dot) {
+                        dot.className = 'w-2 h-2 rounded-full bg-amber-400 absolute top-1.5 right-1.5 block';
+                    }
+                    if (badge) badge.classList.add('hidden');
+                    return;
+                }
+
+                if (LineAccount.state.linked) {
+                    btn.className = 'p-2 text-[#06c755] hover:bg-[#06c755]/10 rounded-lg transition-all relative flex items-center gap-1.5';
+                    const name = LineAccount.state.displayName || 'เชื่อมต่อแล้ว';
+                    btn.title = `เชื่อมต่อกับ LINE: ${name}`;
+                    if (dot) {
+                        dot.className = 'w-2 h-2 rounded-full bg-[#06c755] absolute top-1.5 right-1.5 block';
+                    }
+                    if (badge && LineAccount.state.displayName) {
+                        badge.textContent = LineAccount.state.displayName;
+                        badge.classList.remove('hidden');
+                    } else if (badge) {
+                        badge.classList.add('hidden');
+                    }
+                } else {
+                    btn.className = 'p-2 text-slate-400 hover:text-[#06c755] hover:bg-[#06c755]/10 rounded-lg transition-all relative flex items-center gap-1.5';
+                    btn.title = 'ยังไม่ได้เชื่อมต่อกับ LINE (แตะเพื่อเชื่อมต่อ)';
+                    if (dot) dot.classList.add('hidden');
+                    if (badge) badge.classList.add('hidden');
+                }
+            },
+
+            openModal: () => {
+                const modal = document.getElementById('line-account-modal');
+                if (!modal) return;
+                modal.classList.remove('hidden');
+                LineAccount.updateModalView();
+                lucide.createIcons({ root: modal });
+            },
+
+            closeModal: () => {
+                const modal = document.getElementById('line-account-modal');
+                if (modal) modal.classList.add('hidden');
+            },
+
+            updateModalView: () => {
+                const loadingEl = document.getElementById('line-modal-loading');
+                const errorEl = document.getElementById('line-modal-error');
+                const errorMsg = document.getElementById('line-modal-error-msg');
+                const linkedEl = document.getElementById('line-state-linked');
+                const unlinkedEl = document.getElementById('line-state-unlinked');
+                const linkedName = document.getElementById('line-linked-name');
+
+                if (loadingEl) loadingEl.classList.toggle('hidden', !LineAccount.state.loading);
+                if (errorEl) {
+                    errorEl.classList.toggle('hidden', !LineAccount.state.error);
+                    if (errorMsg && LineAccount.state.error) {
+                        errorMsg.textContent = LineAccount.state.error;
+                    }
+                }
+                if (linkedEl) linkedEl.classList.toggle('hidden', LineAccount.state.loading || !LineAccount.state.linked);
+                if (unlinkedEl) unlinkedEl.classList.toggle('hidden', LineAccount.state.loading || LineAccount.state.linked);
+                if (linkedName) {
+                    linkedName.textContent = LineAccount.state.displayName || 'บัญชีที่เชื่อมต่อ';
+                }
+            },
+
+            connect: async () => {
+                const connectBtn = document.getElementById('line-connect-btn');
+                if (connectBtn) {
+                    connectBtn.disabled = true;
+                    connectBtn.innerHTML = '<i data-lucide="loader" class="w-4 h-4 animate-spin"></i> <span>กำลังเชื่อมต่อ...</span>';
+                    lucide.createIcons({ root: connectBtn });
+                }
+                try {
+                    await LineAccount.loadSdk();
+                    const liffId = String(CONFIG.LINE_LIFF_ID || '').trim();
+                    if (!liffId) throw new Error('liff_id_not_configured');
+                    await window.liff.init({ liffId });
+
+                    if (!window.liff.isLoggedIn()) {
+                        try {
+                            sessionStorage.setItem('akra_line_link_user', state.currentUser || state.currentUserId || '');
+                        } catch (e) {}
+                        window.liff.login({ redirectUri: window.location.href });
+                        return;
+                    }
+
+                    const token = window.liff.getAccessToken();
+                    if (!token) throw new Error('missing_line_token');
+
+                    const res = await API.postAction({
+                        action: 'bindLineAccount',
+                        lineAccessToken: token
+                    });
+                    if (res && res.status === 'success') {
+                        LineAccount.state.linked = true;
+                        LineAccount.state.displayName = res.lineDisplayName || null;
+                        LineAccount.state.error = null;
+                        LineAccount.updateHeaderButton();
+                        LineAccount.updateModalView();
+                        UI.showToast(`เชื่อมต่อกับ LINE (${res.lineDisplayName || 'สำเร็จ'}) เรียบร้อยแล้ว!`, 'success');
+                    }
+                } catch (err) {
+                    console.error('LINE connect error:', err);
+                    let msg = err.code || err.message || 'connect_failed';
+                    if (msg === 'line_account_already_linked') {
+                        msg = 'บัญชี LINE นี้ถูกผูกกับผู้ใช้งานอื่นอยู่แล้ว';
+                    }
+                    LineAccount.state.error = msg;
+                    LineAccount.updateModalView();
+                    UI.showToast(msg, 'warning');
+                } finally {
+                    if (connectBtn) {
+                        connectBtn.disabled = false;
+                        connectBtn.innerHTML = '<i data-lucide="message-circle" class="w-5 h-5"></i> เชื่อมต่อด้วย LINE (1-Tap)';
+                        lucide.createIcons({ root: connectBtn });
+                    }
+                }
+            },
+
+            unbind: async () => {
+                if (!confirm('คุณต้องการยกเลิกการเชื่อมต่อบัญชี LINE หรือไม่?\n(การแจ้งเตือนงานผ่าน LINE จะหยุดทำงาน)')) {
+                    return;
+                }
+                const unbindBtn = document.getElementById('line-unbind-btn');
+                if (unbindBtn) {
+                    unbindBtn.disabled = true;
+                    unbindBtn.innerHTML = '<i data-lucide="loader" class="w-4 h-4 animate-spin"></i> <span>กำลังยกเลิก...</span>';
+                    lucide.createIcons({ root: unbindBtn });
+                }
+                try {
+                    const res = await API.postAction({ action: 'unbindLineAccount' });
+                    if (res && res.status === 'success') {
+                        LineAccount.state.linked = false;
+                        LineAccount.state.displayName = null;
+                        LineAccount.state.error = null;
+                        LineAccount.updateHeaderButton();
+                        LineAccount.updateModalView();
+                        UI.showToast('ยกเลิกการเชื่อมต่อ LINE เรียบร้อยแล้ว', 'success');
+                    }
+                } catch (err) {
+                    console.error('LINE unbind error:', err);
+                    LineAccount.state.error = err.message || 'unbind_failed';
+                    LineAccount.updateModalView();
+                    UI.showToast(err.message || 'ไม่สามารถยกเลิกการเชื่อมต่อได้', 'warning');
+                } finally {
+                    if (unbindBtn) {
+                        unbindBtn.disabled = false;
+                        unbindBtn.innerHTML = '<i data-lucide="link-2-off" class="w-4 h-4"></i> ยกเลิกการเชื่อมต่อ';
+                        lucide.createIcons({ root: unbindBtn });
+                    }
+                }
+            },
+
+            checkCallbackIntent: async () => {
+                const url = new URL(window.location.href);
+                const hasLiffParam = url.searchParams.has('code') || url.searchParams.has('liff.state') || url.searchParams.has('state') || window.location.hash.includes('liff');
+                if (!hasLiffParam) return;
+
+                let intentUser = null;
+                try {
+                    intentUser = sessionStorage.getItem('akra_line_link_user');
+                    sessionStorage.removeItem('akra_line_link_user');
+                } catch (e) {}
+
+                try {
+                    url.searchParams.delete('code');
+                    url.searchParams.delete('state');
+                    url.searchParams.delete('liff.state');
+                    window.history.replaceState({}, document.title, url.pathname + (url.searchParams.toString() ? '?' + url.searchParams.toString() : ''));
+                } catch (e) {}
+
+                if (!state.sessionToken) return;
+                const current = String(state.currentUser || state.currentUserId || '').trim().toLowerCase();
+                if (intentUser && current && intentUser.trim().toLowerCase() !== current) {
+                    console.warn('LINE linking intent user mismatch, discarded:', intentUser, current);
+                    return;
+                }
+
+                if (intentUser) {
+                    UI.showToast('กำลังยืนยันการเชื่อมต่อบัญชี LINE...', 'warning');
+                    LineAccount.connect();
+                }
+            }
+        };
+        window.LineAccount = LineAccount;
+
         const App = {
             saveSession: (data) => {
                 state.sessionToken = data.token;
@@ -1625,7 +1933,7 @@
             },
 
             init: async () => {
-                AppVersionGuard.start({ current: CURRENT_VERSION, readActions: ['log', 'getAdminData', 'login', 'refreshSession'] });
+                AppVersionGuard.start({ current: CURRENT_VERSION, readActions: ['log', 'getAdminData', 'login', 'refreshSession', 'getLineAccountStatus'] });
                 setTimeout(checkAppVersion, 0);
 
                 lucide.createIcons();
@@ -1633,6 +1941,10 @@
                 
                 document.getElementById('login-form').addEventListener('submit', App.handleLogin);
                 document.getElementById('logout-btn').addEventListener('click', App.handleLogout);
+                document.getElementById('line-account-btn').addEventListener('click', LineAccount.openModal);
+                document.getElementById('close-line-modal-btn').addEventListener('click', LineAccount.closeModal);
+                document.getElementById('line-connect-btn').addEventListener('click', LineAccount.connect);
+                document.getElementById('line-unbind-btn').addEventListener('click', LineAccount.unbind);
                 document.getElementById('admin-btn').addEventListener('click', () => {
                     if (App.queueNavigationIfRefreshing({ type: 'admin' })) return;
                     UI.switchSection('admin-section');
@@ -1681,6 +1993,8 @@
                 document.addEventListener('keydown', event => {
                     if (event.key !== 'Escape') return;
                     if (!forgotModal.classList.contains('hidden')) forgotModal.classList.add('hidden');
+                    const lineModal = document.getElementById('line-account-modal');
+                    if (lineModal && !lineModal.classList.contains('hidden')) lineModal.classList.add('hidden');
                     if (!pwdModal.classList.contains('hidden')) {
                         if (state.mustChangePassword) App.handleLogout();
                         else pwdModal.classList.add('hidden');
@@ -1719,6 +2033,8 @@
                             if (!refreshApplied) return;
                             App.renderDashboard();
                             App.runPendingNavigation();
+                            LineAccount.refreshStatus();
+                            LineAccount.checkCallbackIntent();
                         } catch (e) {
                             if (e.code === 'invalid_or_expired_token') {
                                 // Token หมดอายุจริงหรือสิทธิ์ถูกถอน — ต้องเข้าสู่ระบบใหม่
@@ -1728,6 +2044,7 @@
                             } else {
                                 // เชื่อมต่อเซิร์ฟเวอร์ไม่ได้ (network / timeout / cold start) — ใช้ข้อมูลที่บันทึกไว้ ไม่ล้าง Token
                                 App.handleSessionRefreshFailure('เชื่อมต่อเซิร์ฟเวอร์ไม่ได้ ยังใช้หน้า Main จากข้อมูลที่บันทึกไว้ได้ แต่กรุณารีโหลดก่อนเข้าแอป');
+                                LineAccount.refreshStatus();
                             }
                         }
                     }
@@ -1782,6 +2099,8 @@
                         UI.showToast(`ยินดีต้อนรับ ${state.currentUser}`);
                         UI.switchSection('dashboard-section');
                         App.renderDashboard();
+                        LineAccount.refreshStatus();
+                        LineAccount.checkCallbackIntent();
                         if (state.mustChangePassword) {
                             UI.showToast('กรุณาเปลี่ยนรหัสผ่านเริ่มต้นก่อนใช้งาน', 'warning');
                             App.openChangePasswordModal();
@@ -1875,6 +2194,7 @@
                 safeStorage.removeItem(CONFIG.STORAGE_SESSION);
                 safeStorage.removeItem(CONFIG.STORAGE_USER_DATA);
                 safeStorage.removeItem(CONFIG.STORAGE_USER_DB);
+                try { sessionStorage.removeItem('akra_line_link_user'); } catch (e) {}
                 state.currentUserId = null;
                 state.currentUser = null;
                 state.currentRoles = [];
@@ -1883,6 +2203,9 @@
                 state.sessionToken = null;
                 state.sessionRefreshPending = false;
                 state.sessionRefreshFailed = false;
+                LineAccount.state = { loading: false, linked: false, displayName: null, error: null };
+                LineAccount.updateHeaderButton();
+                LineAccount.closeModal();
                 UI.switchSection('login-section');
             },
 
