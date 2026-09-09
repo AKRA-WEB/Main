@@ -470,7 +470,7 @@
             STORAGE_USER_DATA: "akra_user_data",
             STORAGE_APP_CONFIG: "akra_app_config"
         };
-        const CURRENT_VERSION = "20260907.04";
+        const CURRENT_VERSION = "20260909.01";
         async function checkAppVersion() {
             try {
                 const res = await fetch('version.json?t=' + Date.now());
@@ -1490,8 +1490,7 @@
                     'adminDashboard': 'Admin Dashboard + Settings',
                     'ADD_RET': 'เพิ่มรายการ Return', 'QC_RET': 'QC สินค้าคืน', 'BATCH_RET': 'Batch Return',
                     'TRACK_CUST': 'ติดตาม Customer', 'ADD_CLM': 'เปิด Claim', 'WH_CLM': 'WH Claim',
-                    'MANAGE_CLM': 'จัดการ Claim', 'AUDIT_CREATE': 'สร้าง Audit', 'AUDIT_TASK': 'Audit Task',
-                    'AUDIT_REVIEW': 'Audit Review'
+                    'MANAGE_CLM': 'จัดการ Claim'
                 };
 
                 tbody.innerHTML = '';
