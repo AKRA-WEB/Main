@@ -74,6 +74,7 @@
         .main-nav-user__dot { width: 6px; height: 6px; flex: 0 0 auto; border-radius: 999px; background: #35c48b; box-shadow: 0 0 0 4px rgba(53,196,139,.12); }
         .main-dashboard-action { position: relative; display: flex; align-items: center; justify-content: center; gap: 7px; min-height: 36px; padding: 0 10px; border: 1px solid rgba(148,163,184,.16); border-radius: 9px; color: #cbd5e1; background: rgba(51,65,85,.42); font-size: 11px; font-weight: 600; transition: background .2s ease, border-color .2s ease, color .2s ease; }
         .main-dashboard-action:hover { border-color: rgba(165,180,252,.42); color: #fff; background: rgba(79,70,229,.22); }
+        .main-dashboard-action.hidden { display: none; }
         .main-dashboard-action--danger:hover { border-color: rgba(251,146,60,.42); color: #fed7aa; background: rgba(194,65,12,.2); }
         .main-dashboard-content { width: min(1160px, calc(100% - 44px)); margin: 0 auto; padding: 56px 0 0; }
         .main-dashboard-intro { display: flex; align-items: flex-start; justify-content: space-between; gap: 24px; margin-bottom: 32px; }
@@ -117,30 +118,43 @@
         .main-app-empty h3 { color: #64748b; font-size: 20px; font-weight: 700; }
         .main-dashboard-footer { padding: 28px 0 0; color: #94a3b8; font-size: 10px; text-align: center; }
 
-        @media (max-width: 760px) {
-            .main-dashboard-topbar { min-height: 64px; padding: 0 12px; }
-            .main-brand-copy small, .main-nav-user__text, .main-dashboard-action__label { display: none; }
-            .main-brand-copy strong { font-size: 11px; }
-            .main-dashboard-actions { gap: 4px; padding: 5px; }
-            .main-nav-user { padding: 0 5px; }
-            .main-dashboard-action { width: 34px; min-height: 34px; padding: 0; }
-            .main-dashboard-content { width: calc(100% - 24px); padding: 30px 0 0; }
-            .main-dashboard-intro { display: grid; gap: 18px; margin-bottom: 23px; }
-            .main-dashboard-intro h1 { font-size: 34px; }
-            .main-access-card { min-width: 0; }
-            .main-launcher-head { align-items: flex-start; padding: 16px; }
-            .main-launcher-head h2 { font-size: 18px; }
-            #app-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 9px; padding: 10px; }
-            .main-app-card { min-height: 172px; padding: 14px; }
-            .main-app-logo { width: 64px; height: 64px; border-radius: 16px; }
-            .main-app-logo svg { width: 39px; height: 39px; }
-            .main-app-card__title { font-size: 14px; }
-            .main-app-card__type { font-size: 9px; }
-            .main-dashboard-footer { padding-top: 23px; }
+        @media (max-width: 1023px) {
+            .main-dashboard-topbar { min-height: 64px; padding: 0 12px; gap: 8px; flex-wrap: wrap; }
+            .main-brand-copy small, .main-nav-user, .main-dashboard-action__label,
+            #line-account-btn #line-status-badge { display: none; }
+            .main-brand-copy strong { font-size: 12px; }
+            .main-dashboard-actions { gap: 4px; padding: 0; border: 0; background: transparent; flex-wrap: wrap; }
+            .main-dashboard-action, #line-account-btn { width: 44px; min-width: 44px; min-height: 44px; padding: 0; flex: 0 0 auto; justify-content: center; }
+            #app-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
         }
-        @media (max-width: 420px) {
-            #app-grid { grid-template-columns: 1fr; }
-            .main-app-card { min-height: 166px; }
+        @media (max-width: 760px) {
+            .main-brand-copy { display: none; }
+            .main-dashboard-content { width: calc(100% - 24px); padding: 16px 0 0; }
+            .main-dashboard-intro { display: grid; gap: 8px; margin-bottom: 12px; }
+            .main-dashboard-intro > div > div, .main-dashboard-intro p,
+            .main-access-card small, .main-launcher-head p, .main-launcher-head > div > div { display: none; }
+            .main-dashboard-intro h1 { margin: 0; font-size: 22px; line-height: 1.3; letter-spacing: -.03em; }
+            .main-access-card { min-width: 0; display: flex; align-items: center; flex-wrap: wrap; gap: 6px 12px; padding: 0; border: 0; border-radius: 0; background: none; box-shadow: none; }
+            .main-access-card strong { margin: 0; font-size: 12px; line-height: 1.5; letter-spacing: 0; }
+            .main-access-card span { margin: 0; font-size: 10px; }
+            .main-launcher-head { gap: 8px; padding: 10px 12px; }
+            .main-launcher-head h2 { margin: 0; font-size: 16px; letter-spacing: -.02em; }
+            #app-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; padding: 10px; }
+            .main-app-card { min-height: 108px; justify-content: center; gap: 6px; padding: 10px; }
+            .main-app-card__top { min-height: 40px; }
+            .main-app-logo { width: 40px; height: 40px; border-radius: 12px; box-shadow: none; }
+            .main-app-logo svg { width: 27px; height: 27px; }
+            .main-app-card__arrow { width: 14px; height: 14px; top: 0; }
+            .main-app-card__title { font-size: 14px; line-height: 1.4; letter-spacing: -.02em; overflow-wrap: anywhere; }
+            .main-app-card__type, .main-app-card__foot { display: none; }
+            .main-dashboard-footer { padding-top: 16px; }
+        }
+        @media (max-width: 359px) {
+            #app-grid { grid-template-columns: minmax(0, 1fr); }
+            .main-app-card { min-height: 64px; flex-direction: row; justify-content: flex-start; gap: 12px; text-align: left; }
+            .main-app-card__top { flex: 0 0 40px; }
+            .main-app-card__copy { min-width: 0; justify-items: start; }
+            .main-app-card__arrow { display: none; }
         }
     </style>
 </head>
@@ -545,7 +559,7 @@
             STORAGE_USER_DATA: "akra_user_data",
             STORAGE_APP_CONFIG: "akra_app_config"
         };
-        const CURRENT_VERSION = "20260914.01";
+        const CURRENT_VERSION = "20260914.02";
         async function checkAppVersion() {
             try {
                 const res = await fetch('version.json?t=' + Date.now());
