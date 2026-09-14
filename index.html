@@ -8,9 +8,9 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 
-    <!-- ฟอนต์ Noto Sans Thai -->
-    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Thai:wght@300;400;500;600;700&display=swap" rel="stylesheet" media="print" onload="this.media='all'">
-    <noscript><link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Thai:wght@300;400;500;600;700&display=swap" rel="stylesheet"></noscript>
+    <!-- ฟอนต์ Inter + Noto Sans Thai -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Noto+Sans+Thai:wght@300;400;500;600;700&display=swap" rel="stylesheet" media="print" onload="this.media='all'">
+    <noscript><link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Noto+Sans+Thai:wght@300;400;500;600;700&display=swap" rel="stylesheet"></noscript>
     
     <!-- Tailwind CSS (precompiled; see tailwind.config.js / tailwind.src.css) -->
     <link rel="stylesheet" href="tailwind.css?v=20260907.04">
@@ -55,6 +55,93 @@
         
         .app-preview-card { transition: all 0.3s ease; filter: grayscale(100%) opacity(40%); }
         .app-preview-card.unlocked { filter: grayscale(0%) opacity(100%); transform: translateY(-2px); border-color: #171C8F; }
+
+        :root { --main-font: 'Inter', 'Noto Sans Thai', system-ui, sans-serif; }
+        body { font-family: var(--main-font); }
+        body.main-dashboard-active { display: block; padding: 0; background: #fff; }
+        body.main-dashboard-active #dashboard-section { width: 100%; max-width: none; min-height: 100vh; padding: 0 0 36px; }
+        .main-dashboard-topbar { min-height: 72px; display: flex; align-items: center; justify-content: space-between; gap: 24px; padding: 0 max(22px, calc((100% - 1440px) / 2 + 22px)); color: #fff; background: #0b1220; box-shadow: 0 10px 26px rgba(3, 7, 18, .14); }
+        .main-brand-lockup { display: flex; align-items: center; gap: 11px; min-width: 0; }
+        .main-brand-mark { display: grid; place-items: center; width: 38px; height: 38px; flex: 0 0 auto; border: 1px solid rgba(255,255,255,.26); border-radius: 11px; color: #fff; background: linear-gradient(145deg, rgba(52,72,216,.9), rgba(52,72,216,.4)); box-shadow: 0 10px 20px rgba(3,7,18,.22), inset 0 1px 0 rgba(255,255,255,.24); font-size: 13px; font-weight: 800; letter-spacing: -.06em; }
+        .main-brand-copy { display: grid; gap: 2px; min-width: 0; }
+        .main-brand-copy small { color: #9aa5bd; font-size: 9px; font-weight: 700; letter-spacing: .14em; text-transform: uppercase; }
+        .main-brand-copy strong { overflow: hidden; color: #fff; font-size: 14px; letter-spacing: -.03em; text-overflow: ellipsis; white-space: nowrap; }
+        .main-dashboard-actions { display: flex; align-items: center; gap: 6px; min-width: 0; padding: 7px 8px; border: 1px solid rgba(148,163,184,.16); border-radius: 12px; background: rgba(30,41,59,.72); }
+        .main-nav-user { display: flex; align-items: center; gap: 7px; padding: 0 8px; color: #cbd5e1; font-size: 10px; white-space: nowrap; }
+        .main-nav-user__text { color: #e2e8f0; font-weight: 600; }
+        .main-nav-user__text strong { color: #fff; }
+        .main-nav-role-badge { display: inline-block; margin-left: 4px; padding: 2px 6px; color: #c7d2fe; border: 1px solid rgba(165,180,252,.25); border-radius: 6px; background: rgba(79,70,229,.2); font-size: 9px; font-weight: 800; }
+        .main-nav-user__dot { width: 6px; height: 6px; flex: 0 0 auto; border-radius: 999px; background: #35c48b; box-shadow: 0 0 0 4px rgba(53,196,139,.12); }
+        .main-dashboard-action { position: relative; display: flex; align-items: center; justify-content: center; gap: 7px; min-height: 36px; padding: 0 10px; border: 1px solid rgba(148,163,184,.16); border-radius: 9px; color: #cbd5e1; background: rgba(51,65,85,.42); font-size: 11px; font-weight: 600; transition: background .2s ease, border-color .2s ease, color .2s ease; }
+        .main-dashboard-action:hover { border-color: rgba(165,180,252,.42); color: #fff; background: rgba(79,70,229,.22); }
+        .main-dashboard-action--danger:hover { border-color: rgba(251,146,60,.42); color: #fed7aa; background: rgba(194,65,12,.2); }
+        .main-dashboard-content { width: min(1160px, calc(100% - 44px)); margin: 0 auto; padding: 56px 0 0; }
+        .main-dashboard-intro { display: flex; align-items: flex-start; justify-content: space-between; gap: 24px; margin-bottom: 32px; }
+        .main-dashboard-intro h1 { margin-top: 5px; color: #111827; font-size: clamp(34px, 5vw, 48px); font-weight: 800; letter-spacing: -.08em; line-height: 1.04; }
+        .main-dashboard-intro h1 span { color: #3448d8; }
+        .main-dashboard-intro p { margin-top: 12px; color: #64748b; font-size: 14px; }
+        .main-access-card { min-width: 210px; padding: 16px 17px; border: 1px solid #d8e1ff; border-radius: 16px; background: linear-gradient(145deg, #f4f6ff, #fff 72%); box-shadow: 0 10px 26px rgba(15,23,42,.06); }
+        .main-access-card small { color: #64748b; font-size: 10px; font-weight: 700; letter-spacing: .11em; text-transform: uppercase; }
+        .main-access-card strong { display: block; margin-top: 7px; color: #3448d8; font-size: 20px; letter-spacing: -.05em; line-height: 1; }
+        .main-access-card span { display: block; margin-top: 7px; color: #11845b; font-size: 10px; font-weight: 700; }
+        .main-launcher { border: 1px solid #e2e8f0; border-radius: 16px; background: #fff; box-shadow: 0 10px 26px rgba(15,23,42,.06); }
+        .main-launcher-head { display: flex; align-items: center; justify-content: space-between; gap: 20px; padding: 20px 21px; border-bottom: 1px solid #e2e8f0; }
+        .main-launcher-head h2 { margin-top: 5px; color: #111827; font-size: 21px; font-weight: 750; letter-spacing: -.055em; }
+        .main-launcher-head p { margin-top: 4px; color: #64748b; font-size: 11px; }
+        .main-section-count { padding: 6px 9px; color: #3448d8; border: 1px solid #d8e1ff; border-radius: 8px; background: #f0f3ff; font-size: 10px; font-weight: 800; white-space: nowrap; }
+        #app-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; padding: 16px; }
+        .main-app-card { position: relative; min-height: 188px; display: flex; flex-direction: column; justify-content: space-between; gap: 15px; padding: 18px; overflow: hidden; text-align: center; border: 1px solid #e2e8f0; border-radius: 12px; background: #fff; transition: transform .2s ease, border-color .2s ease, box-shadow .2s ease; }
+        .main-app-card::before { position: absolute; top: 0; right: 0; width: 74px; height: 74px; content: ''; background: radial-gradient(circle, rgba(52,72,216,.11), transparent 68%); pointer-events: none; }
+        .main-app-card:hover { border-color: #b9c6ff; box-shadow: 0 15px 30px rgba(15,23,42,.1); transform: translateY(-3px); }
+        .main-app-card:focus-visible { outline: 3px solid rgba(52,72,216,.3); outline-offset: 3px; }
+        .main-app-card__top { position: relative; min-height: 76px; display: flex; align-items: center; justify-content: center; }
+        .main-app-logo { display: grid; place-items: center; width: 70px; height: 70px; color: #3448d8; border: 1px solid #d8e1ff; border-radius: 18px; background: #f0f3ff; box-shadow: 0 12px 24px rgba(52,72,216,.11), inset 0 1px 0 rgba(255,255,255,.8); }
+        .main-app-logo svg { width: 43px; height: 43px; }
+        .main-app-logo[data-app-id="app-w5"] { color: #2f5be0; border-color: #cbd7ff; background: #edf2ff; }
+        .main-app-logo[data-app-id="app-trd"] { color: #7357bb; border-color: #ded5ff; background: #f4f0ff; }
+        .main-app-logo[data-app-id="app-gr"] { color: #11845b; border-color: #c9eedf; background: #eaf8f2; }
+        .main-app-logo[data-app-id="app-pr"] { color: #c46a00; border-color: #f5e2a4; background: #fff7dc; }
+        .main-app-logo[data-app-id="app-pick"] { color: #c54848; border-color: #f0c3c3; background: #fff0f0; }
+        .main-app-logo[data-app-id="app-tracking"] { color: #2563a9; border-color: #c8def5; background: #edf7ff; }
+        .main-app-logo[data-app-id="app-damage"] { color: #a64b73; border-color: #f1c8d9; background: #fff1f6; }
+        .main-app-logo[data-app-id="app-kpi"] { color: #0f766e; border-color: #bde7e1; background: #ebfbf8; }
+        .main-app-logo[data-app-id="app-manual"] { color: #475569; border-color: #d7dee8; background: #f1f5f9; }
+        .main-app-card__arrow { position: absolute; top: 4px; right: 0; width: 18px; height: 18px; color: #94a3b8; transition: transform .2s ease, color .2s ease; }
+        .main-app-card:hover .main-app-card__arrow { color: #3448d8; transform: translateX(3px); }
+        .main-app-card__copy { display: grid; justify-items: center; gap: 4px; }
+        .main-app-card__title { max-width: 100%; color: #111827; font-size: 16px; font-weight: 750; letter-spacing: -.035em; line-height: 1.3; }
+        .main-app-card__type { color: #64748b; font-size: 10px; }
+        .main-app-card__foot { display: flex; align-items: center; justify-content: center; flex-wrap: wrap; gap: 8px; color: #94a3b8; font-size: 10px; }
+        .main-access-pill { padding: 4px 7px; color: #11845b; border: 1px solid #c9eedf; border-radius: 6px; background: #eaf8f2; font-size: 9px; font-weight: 800; }
+        .main-app-empty { grid-column: 1 / -1; padding: 48px; color: #94a3b8; text-align: center; }
+        .main-app-empty h3 { color: #64748b; font-size: 20px; font-weight: 700; }
+        .main-dashboard-footer { padding: 28px 0 0; color: #94a3b8; font-size: 10px; text-align: center; }
+
+        @media (max-width: 760px) {
+            .main-dashboard-topbar { min-height: 64px; padding: 0 12px; }
+            .main-brand-copy small, .main-nav-user__text, .main-dashboard-action__label { display: none; }
+            .main-brand-copy strong { font-size: 11px; }
+            .main-dashboard-actions { gap: 4px; padding: 5px; }
+            .main-nav-user { padding: 0 5px; }
+            .main-dashboard-action { width: 34px; min-height: 34px; padding: 0; }
+            .main-dashboard-content { width: calc(100% - 24px); padding: 30px 0 0; }
+            .main-dashboard-intro { display: grid; gap: 18px; margin-bottom: 23px; }
+            .main-dashboard-intro h1 { font-size: 34px; }
+            .main-access-card { min-width: 0; }
+            .main-launcher-head { align-items: flex-start; padding: 16px; }
+            .main-launcher-head h2 { font-size: 18px; }
+            #app-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 9px; padding: 10px; }
+            .main-app-card { min-height: 172px; padding: 14px; }
+            .main-app-logo { width: 64px; height: 64px; border-radius: 16px; }
+            .main-app-logo svg { width: 39px; height: 39px; }
+            .main-app-card__title { font-size: 14px; }
+            .main-app-card__type { font-size: 9px; }
+            .main-dashboard-footer { padding-top: 23px; }
+        }
+        @media (max-width: 420px) {
+            #app-grid { grid-template-columns: 1fr; }
+            .main-app-card { min-height: 166px; }
+        }
     </style>
 </head>
 <body class="bg-gradient-to-b from-[#232abc] to-brand-blue min-h-screen text-slate-800 flex items-center justify-center p-4">
@@ -111,46 +198,34 @@
 
     <!-- 2. ส่วนหน้าหลัก (Dashboard Section) -->
     <main id="dashboard-section" class="w-full max-w-6xl hidden fade-in py-8">
-        <header class="flex flex-col sm:flex-row justify-between items-center mb-8 bg-white p-6 rounded-2xl shadow-xl border border-white/50">
-            <div class="text-center sm:text-left mb-4 sm:mb-0">
-                <h2 class="text-2xl font-bold flex items-center justify-center sm:justify-start gap-2 text-brand-blue">
-                    <div class="bg-brand-orange p-1.5 rounded-lg"><i data-lucide="layout-dashboard" class="text-white w-5 h-5"></i></div>
-                    ระบบปฏิบัติการ AKRA-TRD
-                </h2>
-                <p class="text-slate-500 text-sm mt-1 ml-10">เลือกระบบที่คุณต้องการใช้งานจากสิทธิ์ที่ได้รับ</p>
+        <div class="main-dashboard-topbar">
+            <div class="main-brand-lockup">
+                <div class="main-brand-mark" aria-hidden="true">AK</div>
+                <div class="main-brand-copy"><small>Central portal</small><strong>AKRA-TRD WEB</strong></div>
             </div>
-            <nav class="flex items-center gap-4 bg-slate-50 py-2 px-4 rounded-xl border border-slate-200 shadow-inner">
-                <div class="text-right hidden sm:block">
-                    <p class="text-xs text-slate-500">ผู้ใช้งานระบบ</p>
-                    <p id="user-name-display" class="font-bold text-brand-blue text-lg tracking-wide">User</p>
-                </div>
-                <div class="h-10 w-10 bg-brand-orange rounded-full flex items-center justify-center text-xl font-bold text-white shadow-md">
-                    <i data-lucide="user" class="w-5 h-5"></i>
-                </div>
-                <div class="w-px h-8 bg-slate-300 mx-1 hidden sm:block"></div>
-                <button type="button" id="line-account-btn" class="p-2 text-slate-400 hover:text-[#06c755] hover:bg-[#06c755]/10 rounded-lg transition-all relative flex items-center gap-1.5" title="การเชื่อมต่อ LINE" aria-label="การเชื่อมต่อ LINE">
-                    <i data-lucide="message-circle" class="w-5 h-5" id="line-account-icon"></i>
-                    <span id="line-status-dot" class="w-2 h-2 rounded-full bg-slate-300 absolute top-1.5 right-1.5 hidden"></span>
-                    <span id="line-status-badge" class="hidden text-xs font-semibold px-2 py-0.5 rounded-md bg-[#06c755]/15 text-[#06c755]"></span>
-                </button>
-                <a href="executive-dashboard.html" id="exec-btn" class="hidden p-2 text-slate-400 hover:text-brand-blue hover:bg-brand-blue/10 rounded-lg transition-all" title="Executive Cockpit Dashboard" aria-label="Executive Cockpit Dashboard"><i data-lucide="bar-chart-3" class="w-5 h-5"></i></a>
-                <button type="button" id="admin-btn" class="hidden p-2 text-slate-400 hover:text-brand-blue hover:bg-brand-blue/10 rounded-lg transition-all" title="จัดการผู้ใช้งาน" aria-label="จัดการผู้ใช้งาน">
-                    <i data-lucide="settings" class="w-5 h-5"></i>
-                </button>
-                <button type="button" id="change-pwd-btn" class="p-2 text-slate-400 hover:text-brand-blue hover:bg-brand-blue/10 rounded-lg transition-all" title="เปลี่ยนรหัสผ่าน" aria-label="เปลี่ยนรหัสผ่าน">
-                    <i data-lucide="key-round" class="w-5 h-5"></i>
-                </button>
-                <button type="button" id="logout-btn" class="p-2 text-slate-400 hover:text-brand-orange hover:bg-brand-orange/10 rounded-lg transition-all" title="ออกจากระบบ" aria-label="ออกจากระบบ">
-                    <i data-lucide="log-out" class="w-5 h-5"></i>
-                </button>
+            <nav class="main-dashboard-actions" aria-label="เมนูผู้ใช้งานระบบ">
+                <div class="main-nav-user"><i class="main-nav-user__dot" aria-hidden="true"></i><span id="user-name-display" class="main-nav-user__text"><strong>ADMIN</strong> · SESSION ACTIVE</span></div>
+                <button type="button" id="line-account-btn" class="main-dashboard-action" title="การเชื่อมต่อ LINE" aria-label="การเชื่อมต่อ LINE"><i data-lucide="message-circle" class="w-4 h-4" id="line-account-icon"></i><span id="line-status-dot" class="w-2 h-2 rounded-full bg-slate-300 absolute top-1.5 right-1.5 hidden"></span><span id="line-status-badge" class="hidden text-xs font-semibold px-2 py-0.5 rounded-md bg-[#06c755]/15 text-[#06c755]"></span><span class="main-dashboard-action__label">LINE</span></button>
+                <a href="executive-dashboard.html" id="exec-btn" class="main-dashboard-action hidden" title="Executive Cockpit Dashboard" aria-label="Executive Cockpit Dashboard"><i data-lucide="bar-chart-3" class="w-4 h-4"></i><span class="main-dashboard-action__label">Executive</span></a>
+                <button type="button" id="admin-btn" class="main-dashboard-action hidden" title="จัดการผู้ใช้งาน" aria-label="จัดการผู้ใช้งาน"><i data-lucide="settings" class="w-4 h-4"></i><span class="main-dashboard-action__label">จัดการ</span></button>
+                <button type="button" id="change-pwd-btn" class="main-dashboard-action" title="เปลี่ยนรหัสผ่าน" aria-label="เปลี่ยนรหัสผ่าน"><i data-lucide="key-round" class="w-4 h-4"></i><span class="main-dashboard-action__label">เปลี่ยนรหัส</span></button>
+                <button type="button" id="logout-btn" class="main-dashboard-action main-dashboard-action--danger" title="ออกจากระบบ" aria-label="ออกจากระบบ"><i data-lucide="log-out" class="w-4 h-4"></i><span class="main-dashboard-action__label">ออกจากระบบ</span></button>
             </nav>
-        </header>
+        </div>
 
-        <section id="app-grid" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6 relative min-h-[200px]"></section>
-        
-        <footer class="mt-12 text-center text-white/70 text-sm font-medium">
-            &copy; 2026 AKRA WEB SYSTEM
-        </footer>
+        <div class="main-dashboard-content">
+            <header class="main-dashboard-intro">
+                <div><div class="text-[10px] font-bold tracking-[0.14em] text-brand-blue uppercase">AKRA-TRD / CENTRAL PORTAL</div><h1>ระบบปฏิบัติการ <span>AKRA-TRD</span></h1><p>เลือกระบบที่คุณต้องการใช้งานจากสิทธิ์ที่ได้รับ</p></div>
+                <aside class="main-access-card"><small>Current access</small><strong id="app-access-count">09 แอปพร้อมใช้</strong><span>● ADMIN · SESSION ACTIVE</span></aside>
+            </header>
+
+            <section class="main-launcher">
+                <div class="main-launcher-head"><div><div class="text-[10px] font-bold tracking-[0.14em] text-brand-blue uppercase">APP LAUNCHER</div><h2>แอปพลิเคชันของคุณ</h2><p>เลือกการทำงานที่ต้องการจากพื้นที่ทำงานของ AKRA-TRD</p></div><span class="main-section-count"><span id="app-grid-count">09</span> ระบบ</span></div>
+                <section id="app-grid" aria-label="แอปพลิเคชันที่เปิดใช้งานได้"></section>
+            </section>
+
+            <footer class="main-dashboard-footer">© 2026 AKRA WEB SYSTEM · Central SSO portal</footer>
+        </div>
     </main>
 
     <!-- 3. ส่วนจัดการผู้ใช้งาน (Admin Section) -->
@@ -470,7 +545,7 @@
             STORAGE_USER_DATA: "akra_user_data",
             STORAGE_APP_CONFIG: "akra_app_config"
         };
-        const CURRENT_VERSION = "20260909.01";
+        const CURRENT_VERSION = "20260914.01";
         async function checkAppVersion() {
             try {
                 const res = await fetch('version.json?t=' + Date.now());
@@ -642,16 +717,52 @@
         })();
 
         const DEFAULT_APP_CONFIG = [
-            { id: "app-w5", name: "เบิกย้ายสินค้า W5", icon: "package-minus", url: "https://akra-web.github.io/AKRA/", roles: ["ADMIN", "AKRA", "WAREHOUSE", "Cashier"] },
-            { id: "app-trd", name: "เบิกย้าย AKRA > TRD", icon: "arrow-right-left", url: "https://akra-web.github.io/TRDAKRA/", roles: ["ADMIN", "AKRA", "TRD", "WAREHOUSE", "Cashier"] },
-            { id: "app-gr", name: "ตรวจรับเข้าสินค้า", icon: "clipboard-list", url: "https://akra-web.github.io/GR/", roles: ["ADMIN", "AKRA", "WAREHOUSE", "Cashier"] },
-            { id: "app-pr", name: "ขอสั่งซื้อสินค้า", icon: "file-plus-2", url: "https://akra-web.github.io/PR/", roles: ["ADMIN", "AKRA", "WAREHOUSE", "Cashier"] },
-            { id: "app-pick", name: "บิลเบิกสินค้า", icon: "package-check", url: "https://akra-web.github.io/Picking/", roles: ["ADMIN", "SUPERVISOR", "AKRA", "WAREHOUSE"] },
-            { id: "app-tracking", name: "ติดตามสถานะจัดส่ง", icon: "truck", url: "https://akra-web.github.io/TrackingPO/", roles: ["ADMIN", "AKRA", "TRD", "WAREHOUSE", "Cashier"] },
-            { id: "app-damage", name: "ส่งคืนและเคลมสินค้า", icon: "package-x", url: "https://akra-web.github.io/Returnitem/", roles: ["ADMIN", "AKRA", "TRD", "WAREHOUSE", "Cashier"] },
+            { id: "app-w5", name: "เบิกย้ายสินค้า (AKRA)", icon: "package-minus", url: "https://akra-web.github.io/AKRA/", roles: ["ADMIN", "AKRA", "WAREHOUSE", "Cashier"] },
+            { id: "app-trd", name: "เบิกย้ายสินค้าสต๊อก (AKRA>TRD)", icon: "arrow-right-left", url: "https://akra-web.github.io/TRDAKRA/", roles: ["ADMIN", "AKRA", "TRD", "WAREHOUSE", "Cashier"] },
+            { id: "app-gr", name: "ตรวจรับเข้าสินค้า (GR)", icon: "clipboard-list", url: "https://akra-web.github.io/GR/", roles: ["ADMIN", "AKRA", "WAREHOUSE", "Cashier"] },
+            { id: "app-pr", name: "ขอสั่งชื้อสินค้า (PR)", icon: "file-plus-2", url: "https://akra-web.github.io/PR/", roles: ["ADMIN", "AKRA", "WAREHOUSE", "Cashier"] },
+            { id: "app-pick", name: "บิลเบิกสินค้า (Picking)", icon: "package-check", url: "https://akra-web.github.io/Picking/", roles: ["ADMIN", "SUPERVISOR", "AKRA", "WAREHOUSE"] },
+            { id: "app-tracking", name: "จัดการคำสั่งชื้อ (PO)", icon: "truck", url: "https://akra-web.github.io/TrackingPO/", roles: ["ADMIN", "AKRA", "TRD", "WAREHOUSE", "Cashier"] },
+            { id: "app-damage", name: "รับคืนสินค้าและเคลม", icon: "package-x", url: "https://akra-web.github.io/Returnitem/", roles: ["ADMIN", "AKRA", "TRD", "WAREHOUSE", "Cashier"] },
             { id: "app-kpi", name: "KPI Tracker", icon: "bar-chart-2", url: "https://akra-web.github.io/KPITRACKER/", roles: ["ADMIN", "AKRA", "TRD", "WAREHOUSE", "Cashier"] },
             { id: "app-manual", name: "คู่มือ", icon: "book-open", url: "https://akra-web.github.io/SOP/", roles: ["ADMIN", "AKRA", "TRD", "WAREHOUSE", "Cashier"] }
         ];
+
+        const MAIN_APP_LABELS = {
+            "app-w5": "เบิกย้ายสินค้า (AKRA)",
+            "app-trd": "เบิกย้ายสินค้าสต๊อก (AKRA>TRD)",
+            "app-gr": "ตรวจรับเข้าสินค้า (GR)",
+            "app-pr": "ขอสั่งชื้อสินค้า (PR)",
+            "app-pick": "บิลเบิกสินค้า (Picking)",
+            "app-tracking": "จัดการคำสั่งชื้อ (PO)",
+            "app-damage": "รับคืนสินค้าและเคลม",
+            "app-kpi": "KPI Tracker",
+            "app-manual": "คู่มือ"
+        };
+
+        const MAIN_APP_TYPES = {
+            "app-w5": "Inventory workstation",
+            "app-trd": "Warehouse transfer",
+            "app-gr": "Receiving control",
+            "app-pr": "Purchase request",
+            "app-pick": "Issue requisition",
+            "app-tracking": "Purchase order control",
+            "app-damage": "Returns and claims",
+            "app-kpi": "Operations intelligence",
+            "app-manual": "Frontline handbook"
+        };
+
+        const MAIN_APP_LOGOS = {
+            "app-w5": '<svg viewBox="0 0 80 80" fill="none" stroke="currentColor" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="13" y="17" width="54" height="46" rx="10"></rect><path d="M25 30h20M25 41h13M25 52h20M50 35l8 7-8 7M58 42H39"></path></svg>',
+            "app-trd": '<svg viewBox="0 0 80 80" fill="none" stroke="currentColor" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 29h31l-8-8M49 29l-8 8M62 51H31l8-8M31 51l8 8"></path><circle cx="21" cy="29" r="3"></circle><circle cx="59" cy="51" r="3"></circle></svg>',
+            "app-gr": '<svg viewBox="0 0 80 80" fill="none" stroke="currentColor" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="21" y="13" width="38" height="54" rx="7"></rect><path d="M30 25h20M30 36h13M30 47l6 6 13-14"></path></svg>',
+            "app-pr": '<svg viewBox="0 0 80 80" fill="none" stroke="currentColor" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M23 12h25l10 10v46H23z"></path><path d="M48 12v12h10M31 36h18M31 47h13M48 58h-17M52 54v14M45 61h14"></path></svg>',
+            "app-pick": '<svg viewBox="0 0 80 80" fill="none" stroke="currentColor" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M17 27l23-12 23 12v27L40 66 17 54z"></path><path d="M17 27l23 13 23-13M40 40v26M29 21l23 13M40 49v10M35 54h10"></path></svg>',
+            "app-tracking": '<svg viewBox="0 0 80 80" fill="none" stroke="currentColor" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M13 25h36v26H13zM49 34h10l8 9v8H49z"></path><circle cx="26" cy="56" r="6"></circle><circle cx="57" cy="56" r="6"></circle><path d="M49 43h16"></path></svg>',
+            "app-damage": '<svg viewBox="0 0 80 80" fill="none" stroke="currentColor" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M19 28l21-12 21 12v25L40 65 19 53z"></path><path d="M19 28l21 13 21-13M40 41v24M29 22l22 13M26 21H15v11M15 21l9-8"></path></svg>',
+            "app-kpi": '<svg viewBox="0 0 80 80" fill="none" stroke="currentColor" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M16 63V45M32 63V33M48 63V23M64 63V14M14 31l15-11 16 7 19-16"></path><circle cx="14" cy="31" r="3"></circle><circle cx="29" cy="20" r="3"></circle><circle cx="45" cy="27" r="3"></circle><circle cx="64" cy="13" r="3"></circle></svg>',
+            "app-manual": '<svg viewBox="0 0 80 80" fill="none" stroke="currentColor" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 18c10-4 19-2 26 4v43c-7-6-16-8-26-4zM66 18c-10-4-19-2-26 4v43c7-6 16-8 26-4zM40 22v43"></path></svg>'
+        };
 
         const PERMISSION_APP_DEPENDENCIES = {
             "app-po": "app-tracking",
@@ -677,6 +788,21 @@
         function safeIdentifier(value, fallback = '') {
             const text = String(value ?? '').trim();
             return /^[A-Za-z0-9_-]{1,80}$/.test(text) ? text : fallback;
+        }
+
+        function getAppDisplayName(app) {
+            const appId = safeIdentifier(app && app.id);
+            return MAIN_APP_LABELS[appId] || String((app && app.name) || appId);
+        }
+
+        function getAppDisplayType(app) {
+            const appId = safeIdentifier(app && app.id);
+            return MAIN_APP_TYPES[appId] || 'AKRA-TRD workspace';
+        }
+
+        function renderMainAppLogo(app) {
+            const appId = safeIdentifier(app && app.id);
+            return MAIN_APP_LOGOS[appId] || `<i data-lucide="${safeIdentifier(app && app.icon, 'box')}" aria-hidden="true"></i>`;
         }
 
         function generateLifecycleMarker() {
@@ -708,7 +834,7 @@
 
         function authorizationControlLabel(type, app, permission, role) {
             const appId = safeIdentifier(app && app.id);
-            const appName = String((app && app.name) || appId);
+            const appName = String((app && app.displayName) || (app && app.name) || appId);
             const roleVal = safeIdentifier(role && role.val);
             const roleLabel = String((role && role.label) || roleVal);
             if (type === 'permission') {
@@ -808,6 +934,7 @@
                 ['boot-section', 'login-section', 'dashboard-section', 'admin-section'].forEach(sec => {
                     document.getElementById(sec).classList.toggle('hidden', sec !== sectionId);
                 });
+                document.body.classList.toggle('main-dashboard-active', sectionId === 'dashboard-section');
                 if(sectionId === 'admin-section') {
                     AdminInteractive.fetchAdminData();
                 }
@@ -1137,7 +1264,7 @@
                             <div class="w-8 h-8 rounded-lg bg-slate-100 text-slate-500 flex items-center justify-center mb-1 transition-colors">
                                 <i data-lucide="${safeIdentifier(app.icon, 'box')}" class="w-4 h-4"></i>
                             </div>
-                            <span class="text-[9px] font-bold leading-tight line-clamp-2">${escapeHtml(app.name)}</span>
+                            <span class="text-[9px] font-bold leading-tight line-clamp-2">${escapeHtml(getAppDisplayName(app))}</span>
                         </div>
                     `);
                 });
@@ -1274,7 +1401,7 @@
                             return `<label class="flex items-center justify-between gap-3 text-xs text-slate-600 py-1">
                                 <span>${escapeHtml(row.permKey)}</span>
                                 <input type="checkbox" ${checked ? 'checked' : ''} ${isAdmin || !canEnter ? 'disabled' : ''}
-                                    aria-label="${escapeHtml(authorizationControlLabel('permission', { id: row.appId, name: app.name }, { key: row.permKey, label: row.permKey }, focusedRole))}"
+                                    aria-label="${escapeHtml(authorizationControlLabel('permission', { id: row.appId, name: getAppDisplayName(app) }, { key: row.permKey, label: row.permKey }, focusedRole))}"
                                     onchange="AdminInteractive.togglePermRole('${permissionAppId}','${permKey}','${roleVal}',this.checked)"
                                     class="w-4 h-4 accent-brand-blue disabled:opacity-40">
                             </label>`;
@@ -1286,12 +1413,12 @@
                     card.innerHTML = `<div class="flex items-center justify-between gap-3 mb-3">
                         <div class="flex items-center gap-2 min-w-0">
                             <i data-lucide="${safeIdentifier(app.icon, 'box')}" class="w-4 h-4 text-brand-orange shrink-0"></i>
-                            <span class="font-semibold text-slate-800 truncate">${escapeHtml(app.name)}</span>
+                            <span class="font-semibold text-slate-800 truncate">${escapeHtml(getAppDisplayName(app))}</span>
                         </div>
                         <label class="flex items-center gap-2 text-xs font-semibold text-brand-blue shrink-0 ${isAdmin ? 'opacity-50' : 'cursor-pointer'}">
                             เข้าแอป
                             <input type="checkbox" ${canEnter ? 'checked' : ''} ${isAdmin ? 'disabled' : ''}
-                                aria-label="${escapeHtml(authorizationControlLabel('app', app, null, focusedRole))}"
+                                aria-label="${escapeHtml(authorizationControlLabel('app', { ...app, displayName: getAppDisplayName(app) }, null, focusedRole))}"
                                 onchange="AdminInteractive.setAppRole('${appId}','${roleVal}',this.checked)"
                                 class="w-4 h-4 accent-brand-blue">
                         </label>
@@ -1420,7 +1547,7 @@
                             <td class="p-4 text-center border-l border-slate-100 align-middle">
                                 <label class="inline-flex items-center ${cursorClass}">
                                     <input type="checkbox" class="sr-only peer authorization-switch" ${checkedAttr} ${disabledAttr}
-                                           aria-label="${escapeHtml(authorizationControlLabel('app', app, null, r))}"
+                                           aria-label="${escapeHtml(authorizationControlLabel('app', { ...app, displayName: getAppDisplayName(app) }, null, r))}"
                                            onchange="AdminInteractive.toggleMatrixRole('${appId}', '${roleVal}')">
                                     <div class="authorization-switch-track w-11 h-6 bg-slate-200 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-brand-blue relative"></div>
                                 </label>
@@ -1434,7 +1561,7 @@
                                 <div class="w-8 h-8 rounded-lg bg-slate-100 text-slate-500 flex items-center justify-center shrink-0">
                                     <i data-lucide="${safeIdentifier(app.icon, 'box')}" class="w-4 h-4"></i>
                                 </div>
-                                <span>${escapeHtml(app.name)}</span>
+                                <span>${escapeHtml(getAppDisplayName(app))}</span>
                             </div>
                         </td>
                         ${roleCells}
@@ -1477,11 +1604,18 @@
                 }
 
                 const APP_LABELS = {
-                    'app-gr': '📋 GR — ตรวจรับสินค้า',
-                    'app-po': '📄 PO — สั่งซื้อ',
-                    'app-akra': '📦 AKRA W5',
-                    'app-kpi': '📊 KPI Tracker',
-                    'app-ret': '↩️ Return & Claim'
+                    'app-w5': MAIN_APP_LABELS['app-w5'],
+                    'app-akra': MAIN_APP_LABELS['app-w5'],
+                    'app-trd': MAIN_APP_LABELS['app-trd'],
+                    'app-gr': MAIN_APP_LABELS['app-gr'],
+                    'app-pr': MAIN_APP_LABELS['app-pr'],
+                    'app-pick': MAIN_APP_LABELS['app-pick'],
+                    'app-tracking': MAIN_APP_LABELS['app-tracking'],
+                    'app-po': MAIN_APP_LABELS['app-tracking'],
+                    'app-damage': MAIN_APP_LABELS['app-damage'],
+                    'app-ret': MAIN_APP_LABELS['app-damage'],
+                    'app-kpi': MAIN_APP_LABELS['app-kpi'],
+                    'app-manual': MAIN_APP_LABELS['app-manual']
                 };
                 const PERM_LABELS = {
                     'receiveGR': 'รับสินค้า (Pending Review)', 'approveGR': 'อนุมัติ GR Completed',
@@ -2338,7 +2472,7 @@
                 userDisplay.append(document.createTextNode(String(state.currentUser || '')));
                 state.currentRoles.forEach(role => {
                     const badge = document.createElement('span');
-                    badge.className = 'inline-block bg-brand-blue/10 text-brand-blue text-[10px] font-bold px-2 py-0.5 rounded ml-1 border border-brand-blue/20';
+                    badge.className = 'main-nav-role-badge';
                     badge.textContent = role;
                     userDisplay.appendChild(badge);
                 });
@@ -2350,9 +2484,13 @@
                 const grid = document.getElementById('app-grid');
                 grid.innerHTML = ''; 
                 const allowedApps = state.appConfig.filter(app => app.roles.some(role => state.currentRoles.includes(role)));
+                const accessCount = document.getElementById('app-access-count');
+                const gridCount = document.getElementById('app-grid-count');
+                if (accessCount) accessCount.textContent = `${String(allowedApps.length).padStart(2, '0')} แอปพร้อมใช้`;
+                if (gridCount) gridCount.textContent = String(allowedApps.length).padStart(2, '0');
 
                 if (allowedApps.length === 0) {
-                    grid.innerHTML = `<div class="col-span-full bg-white border border-slate-200 rounded-3xl p-12 text-center shadow-lg"><i data-lucide="lock" class="w-16 h-16 text-slate-200 mx-auto mb-4"></i><h3 class="text-xl font-bold text-slate-400">ไม่มีสิทธิ์ใช้งาน</h3></div>`;
+                    grid.innerHTML = `<div class="main-app-empty"><i data-lucide="lock" class="w-16 h-16 text-slate-200 mx-auto mb-4"></i><h3>ไม่มีสิทธิ์ใช้งาน</h3></div>`;
                 } else {
                     allowedApps.forEach(app => {
                         const appUrl = safeAppUrl(app.url);
@@ -2361,17 +2499,37 @@
 
                         const button = document.createElement('button');
                         button.type = 'button';
-                        button.className = 'bg-white p-6 rounded-2xl border-2 border-transparent hover:border-brand-orange transition-all transform hover:-translate-y-1 text-left group flex flex-col h-full shadow-lg hover:shadow-brand-orange/20';
+                        button.className = 'main-app-card group';
+                        button.setAttribute('aria-label', `เปิด ${getAppDisplayName(app)}`);
                         button.addEventListener('click', () => AKRA_SSO.openApp(appUrl, appId));
 
                         const iconBox = document.createElement('div');
-                        iconBox.className = 'bg-slate-50 w-12 h-12 rounded-xl flex items-center justify-center mb-4 group-hover:bg-brand-orange transition-colors border border-slate-100';
-                        iconBox.innerHTML = `<i data-lucide="${safeIdentifier(app.icon, 'box')}" class="text-brand-blue group-hover:text-white w-6 h-6 transition-colors"></i>`;
+                        iconBox.className = 'main-app-logo';
+                        iconBox.dataset.appId = appId;
+                        iconBox.setAttribute('aria-hidden', 'true');
+                        iconBox.innerHTML = renderMainAppLogo(app);
+
+                        const top = document.createElement('div');
+                        top.className = 'main-app-card__top';
+                        top.innerHTML = '<svg class="main-app-card__arrow" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 15 15 5M8 5h7v7"></path></svg>';
+                        top.appendChild(iconBox);
+
+                        const copy = document.createElement('div');
+                        copy.className = 'main-app-card__copy';
 
                         const title = document.createElement('h3');
-                        title.className = 'text-lg font-bold mb-1 text-brand-blue group-hover:text-brand-orange transition-colors';
-                        title.textContent = app.name;
-                        button.append(iconBox, title);
+                        title.className = 'main-app-card__title';
+                        title.textContent = getAppDisplayName(app);
+                        const type = document.createElement('p');
+                        type.className = 'main-app-card__type';
+                        type.textContent = getAppDisplayType(app);
+                        copy.append(title, type);
+
+                        const foot = document.createElement('div');
+                        foot.className = 'main-app-card__foot';
+                        foot.innerHTML = '<span>เปิดจากสิทธิ์ปัจจุบัน</span><span class="main-access-pill">พร้อมใช้</span>';
+
+                        button.append(top, copy, foot);
                         grid.appendChild(button);
                     });
                 }
