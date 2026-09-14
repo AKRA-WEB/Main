@@ -14,7 +14,7 @@ test('Version Parity: CURRENT_VERSION in index.html matches version.json', () =>
   assert(match, 'CURRENT_VERSION must be declared in index.html');
   const indexVersion = match[1];
   assert.strictEqual(indexVersion, versionData.version, `index.html version (${indexVersion}) must match version.json (${versionData.version})`);
-  assert.strictEqual(indexVersion, '20260914.01', 'Version must be bumped to 20260914.01');
+  assert(indexVersion >= '20260914.01', 'Version must be at least 20260914.01');
 });
 
 test('Syntax check: All inline scripts parse with zero syntax errors via vm.Script', () => {

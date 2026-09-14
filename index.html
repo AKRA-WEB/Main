@@ -58,102 +58,130 @@
 
         :root { --main-font: 'Inter', 'Noto Sans Thai', system-ui, sans-serif; }
         body { font-family: var(--main-font); }
-        body.main-dashboard-active { display: block; padding: 0; background: #fff; }
-        body.main-dashboard-active #dashboard-section { width: 100%; max-width: none; min-height: 100vh; padding: 0 0 36px; }
-        .main-dashboard-topbar { min-height: 72px; display: flex; align-items: center; justify-content: space-between; gap: 24px; padding: 0 max(22px, calc((100% - 1440px) / 2 + 22px)); color: #fff; background: #0b1220; box-shadow: 0 10px 26px rgba(3, 7, 18, .14); }
-        .main-brand-lockup { display: flex; align-items: center; gap: 11px; min-width: 0; }
-        .main-brand-mark { display: grid; place-items: center; width: 38px; height: 38px; flex: 0 0 auto; border: 1px solid rgba(255,255,255,.26); border-radius: 11px; color: #fff; background: linear-gradient(145deg, rgba(52,72,216,.9), rgba(52,72,216,.4)); box-shadow: 0 10px 20px rgba(3,7,18,.22), inset 0 1px 0 rgba(255,255,255,.24); font-size: 13px; font-weight: 800; letter-spacing: -.06em; }
-        .main-brand-copy { display: grid; gap: 2px; min-width: 0; }
-        .main-brand-copy small { color: #9aa5bd; font-size: 9px; font-weight: 700; letter-spacing: .14em; text-transform: uppercase; }
-        .main-brand-copy strong { overflow: hidden; color: #fff; font-size: 14px; letter-spacing: -.03em; text-overflow: ellipsis; white-space: nowrap; }
-        .main-dashboard-actions { display: flex; align-items: center; gap: 6px; min-width: 0; padding: 7px 8px; border: 1px solid rgba(148,163,184,.16); border-radius: 12px; background: rgba(30,41,59,.72); }
-        .main-nav-user { display: flex; align-items: center; gap: 7px; padding: 0 8px; color: #cbd5e1; font-size: 10px; white-space: nowrap; }
-        .main-nav-user__text { color: #e2e8f0; font-weight: 600; }
-        .main-nav-user__text strong { color: #fff; }
-        .main-nav-role-badge { display: inline-block; margin-left: 4px; padding: 2px 6px; color: #c7d2fe; border: 1px solid rgba(165,180,252,.25); border-radius: 6px; background: rgba(79,70,229,.2); font-size: 9px; font-weight: 800; }
-        .main-nav-user__dot { width: 6px; height: 6px; flex: 0 0 auto; border-radius: 999px; background: #35c48b; box-shadow: 0 0 0 4px rgba(53,196,139,.12); }
-        .main-dashboard-action { position: relative; display: flex; align-items: center; justify-content: center; gap: 7px; min-height: 36px; padding: 0 10px; border: 1px solid rgba(148,163,184,.16); border-radius: 9px; color: #cbd5e1; background: rgba(51,65,85,.42); font-size: 11px; font-weight: 600; transition: background .2s ease, border-color .2s ease, color .2s ease; }
-        .main-dashboard-action:hover { border-color: rgba(165,180,252,.42); color: #fff; background: rgba(79,70,229,.22); }
+        body.main-dashboard-active { display: block; padding: 0; background: #F8FAFC; }
+        body.main-dashboard-active #dashboard-section { width: 100%; max-width: none; min-height: 100vh; padding: 0 0 48px; position: relative; }
+
+        /* Ambient Glow */
+        .main-portal-ambient { position: absolute; top: 0; left: 0; right: 0; height: 380px; background: radial-gradient(circle at 50% -10%, rgba(23, 28, 143, 0.09), rgba(227, 82, 5, 0.03) 50%, transparent 80%); pointer-events: none; z-index: 0; }
+
+        /* Frosted Topbar */
+        .main-dashboard-topbar { position: relative; z-index: 20; min-height: 70px; display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 0 max(28px, calc((100% - 1440px) / 2 + 28px)); color: #fff; background: rgba(15, 23, 42, 0.96); backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px); border-bottom: 1px solid rgba(255, 255, 255, 0.08); box-shadow: 0 4px 20px rgba(0, 0, 0, 0.06); }
+        .main-brand-lockup { display: flex; align-items: center; gap: 12px; min-width: 0; }
+        .main-brand-mark { display: grid; place-items: center; width: 38px; height: 38px; flex: 0 0 auto; border: 1px solid rgba(255, 255, 255, 0.2); border-radius: 10px; color: #fff; background: linear-gradient(135deg, #171C8F, #2A36CC); box-shadow: 0 4px 12px rgba(23, 28, 143, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.3); font-size: 14px; font-weight: 800; letter-spacing: -.04em; }
+        .main-brand-copy { display: flex; flex-direction: column; min-width: 0; }
+        .main-brand-copy small { color: #94A3B8; font-size: 9px; font-weight: 700; letter-spacing: .12em; text-transform: uppercase; line-height: 1; }
+        .main-brand-copy strong { overflow: hidden; color: #F8FAFC; font-size: 15px; font-weight: 700; letter-spacing: -.03em; text-overflow: ellipsis; white-space: nowrap; line-height: 1.3; }
+        .main-dashboard-actions { display: flex; align-items: center; gap: 6px; min-width: 0; }
+        .main-nav-user { display: flex; align-items: center; gap: 7px; padding: 5px 12px; color: #E2E8F0; background: rgba(255, 255, 255, 0.06); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 20px; font-size: 11px; font-weight: 600; white-space: nowrap; }
+        .main-nav-user__dot { width: 7px; height: 7px; flex: 0 0 auto; border-radius: 999px; background: #10B981; box-shadow: 0 0 8px rgba(16, 185, 129, 0.6); }
+        .main-nav-user__text { color: #CBD5E1; font-weight: 600; font-size: 11px; }
+        .main-nav-role-badge { display: inline-block; margin-left: 4px; padding: 1px 6px; color: #93C5FD; border: 1px solid rgba(147, 197, 253, 0.3); border-radius: 4px; background: rgba(37, 99, 235, 0.2); font-size: 10px; font-weight: 700; }
+        .main-dashboard-action { position: relative; display: flex; align-items: center; justify-content: center; gap: 6px; height: 34px; padding: 0 12px; border: 1px solid rgba(255, 255, 255, 0.12); border-radius: 8px; color: #CBD5E1; background: rgba(255, 255, 255, 0.06); font-size: 12px; font-weight: 600; transition: all 0.2s ease; }
+        .main-dashboard-action:hover { border-color: rgba(255, 255, 255, 0.25); color: #fff; background: rgba(255, 255, 255, 0.12); }
         .main-dashboard-action.hidden { display: none; }
-        .main-dashboard-action--danger:hover { border-color: rgba(251,146,60,.42); color: #fed7aa; background: rgba(194,65,12,.2); }
-        .main-dashboard-content { width: min(1160px, calc(100% - 44px)); margin: 0 auto; padding: 56px 0 0; }
-        .main-dashboard-intro { display: flex; align-items: flex-start; justify-content: space-between; gap: 24px; margin-bottom: 32px; }
-        .main-dashboard-intro h1 { margin-top: 5px; color: #111827; font-size: clamp(34px, 5vw, 48px); font-weight: 800; letter-spacing: -.08em; line-height: 1.04; }
-        .main-dashboard-intro h1 span { color: #3448d8; }
-        .main-dashboard-intro p { margin-top: 12px; color: #64748b; font-size: 14px; }
-        .main-access-card { min-width: 210px; padding: 16px 17px; border: 1px solid #d8e1ff; border-radius: 16px; background: linear-gradient(145deg, #f4f6ff, #fff 72%); box-shadow: 0 10px 26px rgba(15,23,42,.06); }
-        .main-access-card small { color: #64748b; font-size: 10px; font-weight: 700; letter-spacing: .11em; text-transform: uppercase; }
-        .main-access-card strong { display: block; margin-top: 7px; color: #3448d8; font-size: 20px; letter-spacing: -.05em; line-height: 1; }
-        .main-access-card span { display: block; margin-top: 7px; color: #11845b; font-size: 10px; font-weight: 700; }
-        .main-launcher { border: 1px solid #e2e8f0; border-radius: 16px; background: #fff; box-shadow: 0 10px 26px rgba(15,23,42,.06); }
-        .main-launcher-head { display: flex; align-items: center; justify-content: space-between; gap: 20px; padding: 20px 21px; border-bottom: 1px solid #e2e8f0; }
-        .main-launcher-head h2 { margin-top: 5px; color: #111827; font-size: 21px; font-weight: 750; letter-spacing: -.055em; }
-        .main-launcher-head p { margin-top: 4px; color: #64748b; font-size: 11px; }
-        .main-section-count { padding: 6px 9px; color: #3448d8; border: 1px solid #d8e1ff; border-radius: 8px; background: #f0f3ff; font-size: 10px; font-weight: 800; white-space: nowrap; }
-        #app-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; padding: 16px; }
-        .main-app-card { position: relative; min-height: 188px; display: flex; flex-direction: column; justify-content: space-between; gap: 15px; padding: 18px; overflow: hidden; text-align: center; border: 1px solid #e2e8f0; border-radius: 12px; background: #fff; transition: transform .2s ease, border-color .2s ease, box-shadow .2s ease; }
-        .main-app-card::before { position: absolute; top: 0; right: 0; width: 74px; height: 74px; content: ''; background: radial-gradient(circle, rgba(52,72,216,.11), transparent 68%); pointer-events: none; }
-        .main-app-card:hover { border-color: #b9c6ff; box-shadow: 0 15px 30px rgba(15,23,42,.1); transform: translateY(-3px); }
-        .main-app-card:focus-visible { outline: 3px solid rgba(52,72,216,.3); outline-offset: 3px; }
-        .main-app-card__top { position: relative; min-height: 76px; display: flex; align-items: center; justify-content: center; }
-        .main-app-logo { display: grid; place-items: center; width: 70px; height: 70px; color: #3448d8; border: 1px solid #d8e1ff; border-radius: 18px; background: #f0f3ff; box-shadow: 0 12px 24px rgba(52,72,216,.11), inset 0 1px 0 rgba(255,255,255,.8); }
-        .main-app-logo svg { width: 43px; height: 43px; }
-        .main-app-logo[data-app-id="app-w5"] { color: #2f5be0; border-color: #cbd7ff; background: #edf2ff; }
-        .main-app-logo[data-app-id="app-trd"] { color: #7357bb; border-color: #ded5ff; background: #f4f0ff; }
-        .main-app-logo[data-app-id="app-gr"] { color: #11845b; border-color: #c9eedf; background: #eaf8f2; }
-        .main-app-logo[data-app-id="app-pr"] { color: #c46a00; border-color: #f5e2a4; background: #fff7dc; }
-        .main-app-logo[data-app-id="app-pick"] { color: #c54848; border-color: #f0c3c3; background: #fff0f0; }
-        .main-app-logo[data-app-id="app-tracking"] { color: #2563a9; border-color: #c8def5; background: #edf7ff; }
-        .main-app-logo[data-app-id="app-damage"] { color: #a64b73; border-color: #f1c8d9; background: #fff1f6; }
-        .main-app-logo[data-app-id="app-kpi"] { color: #0f766e; border-color: #bde7e1; background: #ebfbf8; }
-        .main-app-logo[data-app-id="app-manual"] { color: #475569; border-color: #d7dee8; background: #f1f5f9; }
-        .main-app-card__arrow { position: absolute; top: 4px; right: 0; width: 18px; height: 18px; color: #94a3b8; transition: transform .2s ease, color .2s ease; }
-        .main-app-card:hover .main-app-card__arrow { color: #3448d8; transform: translateX(3px); }
-        .main-app-card__copy { display: grid; justify-items: center; gap: 4px; }
-        .main-app-card__title { max-width: 100%; color: #111827; font-size: 16px; font-weight: 750; letter-spacing: -.035em; line-height: 1.3; }
-        .main-app-card__type { color: #64748b; font-size: 10px; }
-        .main-app-card__foot { display: flex; align-items: center; justify-content: center; flex-wrap: wrap; gap: 8px; color: #94a3b8; font-size: 10px; }
-        .main-access-pill { padding: 4px 7px; color: #11845b; border: 1px solid #c9eedf; border-radius: 6px; background: #eaf8f2; font-size: 9px; font-weight: 800; }
-        .main-app-empty { grid-column: 1 / -1; padding: 48px; color: #94a3b8; text-align: center; }
-        .main-app-empty h3 { color: #64748b; font-size: 20px; font-weight: 700; }
-        .main-dashboard-footer { padding: 28px 0 0; color: #94a3b8; font-size: 10px; text-align: center; }
+        .main-dashboard-action--danger { border-color: rgba(239, 68, 68, 0.2); background: rgba(239, 68, 68, 0.08); color: #FCA5A5; }
+        .main-dashboard-action--danger:hover { border-color: rgba(239, 68, 68, 0.4); color: #fff; background: #EF4444; }
+
+        /* Content Container */
+        .main-dashboard-content { position: relative; z-index: 10; width: min(1200px, calc(100% - 48px)); margin: 0 auto; padding: 40px 0 0; }
+
+        /* Modern Intro / Hero */
+        .main-dashboard-intro { margin-bottom: 24px; text-align: left; }
+        .main-dashboard-intro .eyebrow { display: inline-flex; align-items: center; gap: 6px; font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.12em; color: #171C8F; background: rgba(23, 28, 143, 0.06); padding: 4px 10px; border-radius: 20px; border: 1px solid rgba(23, 28, 143, 0.12); margin-bottom: 8px; }
+        .main-dashboard-intro h1 { margin: 0; color: #0F172A; font-size: clamp(24px, 3.5vw, 32px); font-weight: 800; letter-spacing: -.03em; line-height: 1.2; }
+        .main-dashboard-intro h1 span { color: #171C8F; }
+        .main-dashboard-intro p { margin: 6px 0 0; color: #64748B; font-size: 13px; }
+
+        /* Controls: Search & Categories */
+        .main-portal-controls { display: flex; align-items: center; gap: 12px; margin-bottom: 24px; background: #FFFFFF; border: 1px solid #E2E8F0; border-radius: 14px; padding: 10px 14px; box-shadow: 0 4px 12px rgba(15, 23, 42, 0.03); flex-wrap: wrap; }
+        .main-search-box { position: relative; flex: 1; min-width: 220px; }
+        .main-search-input { width: 100%; height: 38px; background: #F8FAFC; border: 1px solid #E2E8F0; border-radius: 9px; padding: 0 14px 0 36px; font-family: var(--main-font); font-size: 12px; color: #0F172A; outline: none; transition: all 0.2s ease; }
+        .main-search-input:focus { border-color: #171C8F; background: #fff; box-shadow: 0 0 0 3px rgba(23, 28, 143, 0.1); }
+        .main-search-icon { position: absolute; left: 11px; top: 50%; transform: translateY(-50%); width: 15px; height: 15px; color: #94A3B8; pointer-events: none; }
+        .main-category-tabs { display: flex; align-items: center; gap: 6px; overflow-x: auto; max-width: 100%; padding-bottom: 2px; -webkit-overflow-scrolling: touch; }
+        .main-category-tabs::-webkit-scrollbar { display: none; }
+        .main-cat-tab { background: #F1F5F9; border: 1px solid transparent; color: #475569; padding: 6px 12px; border-radius: 8px; font-family: var(--main-font); font-size: 11px; font-weight: 600; cursor: pointer; white-space: nowrap; transition: all 0.2s ease; }
+        .main-cat-tab:hover { background: #E2E8F0; color: #0F172A; }
+        .main-cat-tab.active { background: #171C8F; color: #fff; }
+
+        /* Launcher & Cards */
+        .main-launcher { border: none; background: transparent; box-shadow: none; }
+        .main-launcher-head { display: flex; align-items: center; justify-content: space-between; gap: 16px; margin-bottom: 12px; padding: 0; border-bottom: none; }
+        .main-launcher-head h2 { margin: 0; color: #0F172A; font-size: 14px; font-weight: 800; letter-spacing: -.02em; }
+        .main-section-count { padding: 3px 8px; color: #475569; border: none; border-radius: 6px; background: #F1F5F9; font-size: 11px; font-weight: 700; white-space: nowrap; }
+        #app-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px; padding: 0; }
+        .main-app-card { position: relative; min-height: 145px; display: flex; flex-direction: column; justify-content: space-between; padding: 18px; overflow: hidden; text-align: left; border: 1px solid #E2E8F0; border-radius: 14px; background: #FFFFFF; box-shadow: 0 4px 14px rgba(15, 23, 42, 0.03); transition: all 0.22s cubic-bezier(0.16, 1, 0.3, 1); cursor: pointer; text-decoration: none; color: inherit; }
+        .main-app-card::before { position: absolute; top: 0; left: 0; right: 0; height: 3px; content: ''; background: transparent; transition: all 0.22s ease; }
+        .main-app-card:hover { border-color: #C7D2FE; box-shadow: 0 14px 28px -4px rgba(15, 23, 42, 0.08), 0 0 0 1px rgba(23, 28, 143, 0.1); transform: translateY(-3px); }
+        .main-app-card:hover::before { background: var(--app-color, #171C8F); }
+        .main-app-card:active { transform: translateY(-1px); }
+        .main-app-card:focus-visible { outline: 3px solid rgba(23, 28, 143, .25); outline-offset: 2px; }
+        .main-app-card__top { position: relative; min-height: 46px; display: flex; align-items: flex-start; justify-content: space-between; gap: 10px; margin-bottom: 12px; }
+        .main-app-logo { display: grid; place-items: center; width: 46px; height: 46px; border-radius: 12px; flex-shrink: 0; box-shadow: 0 3px 8px rgba(0, 0, 0, 0.03); transition: transform 0.2s ease; }
+        .main-app-card:hover .main-app-logo { transform: scale(1.05); }
+        .main-app-logo svg { width: 24px; height: 24px; }
+        .main-app-logo[data-app-id="app-w5"] { color: #2563eb; border: 1px solid #bfdbfe; background: #eff6ff; }
+        .main-app-logo[data-app-id="app-trd"] { color: #7c3aed; border: 1px solid #ddd6fe; background: #f5f3ff; }
+        .main-app-logo[data-app-id="app-gr"] { color: #059669; border: 1px solid #a7f3d0; background: #ecfdf5; }
+        .main-app-logo[data-app-id="app-pr"] { color: #d97706; border: 1px solid #fde68a; background: #fffbeb; }
+        .main-app-logo[data-app-id="app-pick"] { color: #e11d48; border: 1px solid #fecdd3; background: #fff1f2; }
+        .main-app-logo[data-app-id="app-tracking"] { color: #0284c7; border: 1px solid #bae6fd; background: #f0f9ff; }
+        .main-app-logo[data-app-id="app-damage"] { color: #c026d3; border: 1px solid #f5d0fe; background: #fdf4ff; }
+        .main-app-logo[data-app-id="app-kpi"] { color: #0d9488; border: 1px solid #99f6e4; background: #f0fdfa; }
+        .main-app-logo[data-app-id="app-manual"] { color: #475569; border: 1px solid #cbd5e1; background: #f8fafc; }
+        .main-app-card__arrow { width: 20px; height: 20px; color: #CBD5E1; transition: transform 0.2s ease, color 0.2s ease; flex-shrink: 0; }
+        .main-app-card:hover .main-app-card__arrow { color: var(--app-color, #171C8F); transform: translate(2px, -2px); }
+        .main-app-card__copy { display: flex; flex-direction: column; gap: 4px; text-align: left; }
+        .main-app-card__title { max-width: 100%; color: #0F172A; font-size: 15px; font-weight: 750; letter-spacing: -.02em; line-height: 1.25; margin-bottom: 2px; }
+        .main-app-card__type { color: #64748B; font-size: 12px; line-height: 1.4; }
+        .main-app-empty { grid-column: 1 / -1; padding: 40px 20px; color: #94a3b8; text-align: center; }
+        .main-app-empty h3 { color: #64748b; font-size: 16px; font-weight: 700; margin-top: 8px; }
+        .main-dashboard-footer { padding: 36px 0 0; color: #94A3B8; font-size: 11px; text-align: center; }
 
         @media (max-width: 1023px) {
-            .main-dashboard-topbar { min-height: 64px; padding: 0 12px; gap: 8px; flex-wrap: wrap; }
-            .main-brand-copy small, .main-nav-user, .main-dashboard-action__label,
+            .main-dashboard-topbar { min-height: 64px; padding: 0 14px; gap: 8px; flex-wrap: wrap; }
+            .main-brand-copy small, .main-dashboard-action__label,
             #line-account-btn #line-status-badge { display: none; }
-            .main-brand-copy strong { font-size: 12px; }
+            .main-brand-copy strong { font-size: 13px; }
             .main-dashboard-actions { gap: 4px; padding: 0; border: 0; background: transparent; flex-wrap: wrap; }
-            .main-dashboard-action, #line-account-btn { width: 44px; min-width: 44px; min-height: 44px; padding: 0; flex: 0 0 auto; justify-content: center; }
+            .main-dashboard-action, #line-account-btn { width: 40px; min-width: 40px; min-height: 40px; padding: 0; flex: 0 0 auto; justify-content: center; }
             #app-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
         }
-        @media (max-width: 760px) {
+        @media (max-width: 768px) {
             .main-brand-copy { display: none; }
-            .main-dashboard-content { width: calc(100% - 24px); padding: 16px 0 0; }
-            .main-dashboard-intro { display: grid; gap: 8px; margin-bottom: 12px; }
-            .main-dashboard-intro > div > div, .main-dashboard-intro p,
-            .main-access-card small, .main-launcher-head p, .main-launcher-head > div > div { display: none; }
-            .main-dashboard-intro h1 { margin: 0; font-size: 22px; line-height: 1.3; letter-spacing: -.03em; }
-            .main-access-card { min-width: 0; display: flex; align-items: center; flex-wrap: wrap; gap: 6px 12px; padding: 0; border: 0; border-radius: 0; background: none; box-shadow: none; }
-            .main-access-card strong { margin: 0; font-size: 12px; line-height: 1.5; letter-spacing: 0; }
-            .main-access-card span { margin: 0; font-size: 10px; }
-            .main-launcher-head { gap: 8px; padding: 10px 12px; }
-            .main-launcher-head h2 { margin: 0; font-size: 16px; letter-spacing: -.02em; }
-            #app-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; padding: 10px; }
-            .main-app-card { min-height: 108px; justify-content: center; gap: 6px; padding: 10px; }
-            .main-app-card__top { min-height: 40px; }
-            .main-app-logo { width: 40px; height: 40px; border-radius: 12px; box-shadow: none; }
-            .main-app-logo svg { width: 27px; height: 27px; }
-            .main-app-card__arrow { width: 14px; height: 14px; top: 0; }
-            .main-app-card__title { font-size: 14px; line-height: 1.4; letter-spacing: -.02em; overflow-wrap: anywhere; }
-            .main-app-card__type, .main-app-card__foot { display: none; }
-            .main-dashboard-footer { padding-top: 16px; }
+            .main-dashboard-topbar { height: 60px; min-height: 60px; padding: 0 14px; gap: 8px; }
+            .main-brand-mark { width: 32px; height: 32px; font-size: 12px; }
+            .main-nav-user { padding: 4px 8px; font-size: 10px; }
+            .main-nav-user__text { display: none; }
+            .main-dashboard-action, #line-account-btn { width: 34px; min-width: 34px; height: 34px; min-height: 34px; padding: 0; justify-content: center; }
+            .main-dashboard-action__label { display: none; }
+
+            .main-dashboard-content { width: calc(100% - 24px); padding: 18px 0 0; }
+            .main-dashboard-intro { margin-bottom: 16px; }
+            .main-dashboard-intro h1 { margin: 0; font-size: 21px; line-height: 1.25; letter-spacing: -.03em; }
+            .main-dashboard-intro p { font-size: 12px; margin-top: 4px; }
+
+            .main-portal-controls { padding: 10px; gap: 8px; margin-bottom: 16px; border-radius: 12px; }
+            .main-search-box { width: 100%; min-width: 100%; }
+            .main-category-tabs { width: 100%; }
+
+            .main-launcher-head { margin-bottom: 10px; }
+            .main-launcher-head h2 { font-size: 13px; }
+
+            #app-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+            .main-app-card { min-height: 120px; padding: 12px; border-radius: 12px; }
+            .main-app-card__top { min-height: 38px; margin-bottom: 8px; }
+            .main-app-logo { width: 38px; height: 38px; border-radius: 10px; }
+            .main-app-logo svg { width: 20px; height: 20px; }
+            .main-app-card__arrow { width: 16px; height: 16px; }
+            .main-app-card__title { font-size: 13px; line-height: 1.3; margin-bottom: 2px; }
+            .main-app-card__type { font-size: 10px; line-height: 1.35; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+            .main-dashboard-footer { padding-top: 24px; }
         }
         @media (max-width: 359px) {
             #app-grid { grid-template-columns: minmax(0, 1fr); }
-            .main-app-card { min-height: 64px; flex-direction: row; justify-content: flex-start; gap: 12px; text-align: left; }
-            .main-app-card__top { flex: 0 0 40px; }
-            .main-app-card__copy { min-width: 0; justify-items: start; }
+            .main-app-card { min-height: 60px; flex-direction: row; justify-content: flex-start; gap: 12px; text-align: left; }
+            .main-app-card__top { flex: 0 0 38px; margin-bottom: 0; }
             .main-app-card__arrow { display: none; }
         }
     </style>
@@ -212,6 +240,7 @@
 
     <!-- 2. ส่วนหน้าหลัก (Dashboard Section) -->
     <main id="dashboard-section" class="w-full max-w-6xl hidden fade-in py-8">
+        <div class="main-portal-ambient" aria-hidden="true"></div>
         <div class="main-dashboard-topbar">
             <div class="main-brand-lockup">
                 <div class="main-brand-mark" aria-hidden="true">AK</div>
@@ -229,12 +258,32 @@
 
         <div class="main-dashboard-content">
             <header class="main-dashboard-intro">
-                <div><div class="text-[10px] font-bold tracking-[0.14em] text-brand-blue uppercase">AKRA-TRD / CENTRAL PORTAL</div><h1>ระบบปฏิบัติการ <span>AKRA-TRD</span></h1><p>เลือกระบบที่คุณต้องการใช้งานจากสิทธิ์ที่ได้รับ</p></div>
-                <aside class="main-access-card"><small>Current access</small><strong id="app-access-count">09 แอปพร้อมใช้</strong><span>● ADMIN · SESSION ACTIVE</span></aside>
+                <div class="eyebrow">
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><path d="m12 6 4 6h-8z"/></svg>
+                    AKRA-TRD / CENTRAL PORTAL
+                </div>
+                <h1>ระบบปฏิบัติการ <span>AKRA-TRD</span></h1>
+                <p>เลือกระบบที่คุณต้องการใช้งานจากรายการด้านล่าง</p>
             </header>
 
+            <section class="main-portal-controls" id="main-portal-controls">
+                <div class="main-search-box">
+                    <svg class="main-search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" x2="16.65" y1="21" y2="16.65"/></svg>
+                    <input type="text" id="app-search-input" class="main-search-input" placeholder="ค้นหาแอปพลิเคชัน (เช่น w5, po, gr, kpi)..." aria-label="ค้นหาแอปพลิเคชัน">
+                </div>
+                <div class="main-category-tabs" id="main-category-tabs" role="tablist" aria-label="หมวดหมู่แอปพลิเคชัน">
+                    <button type="button" class="main-cat-tab active" data-category="all" role="tab" aria-selected="true">ทั้งหมด</button>
+                    <button type="button" class="main-cat-tab" data-category="warehouse" role="tab" aria-selected="false">คลังสินค้า & ขนส่ง</button>
+                    <button type="button" class="main-cat-tab" data-category="procurement" role="tab" aria-selected="false">จัดซื้อ & ตรวจรับ</button>
+                    <button type="button" class="main-cat-tab" data-category="analytics" role="tab" aria-selected="false">รายงาน & มาตรฐาน</button>
+                </div>
+            </section>
+
             <section class="main-launcher">
-                <div class="main-launcher-head"><div><div class="text-[10px] font-bold tracking-[0.14em] text-brand-blue uppercase">APP LAUNCHER</div><h2>แอปพลิเคชันของคุณ</h2><p>เลือกการทำงานที่ต้องการจากพื้นที่ทำงานของ AKRA-TRD</p></div><span class="main-section-count"><span id="app-grid-count">09</span> ระบบ</span></div>
+                <div class="main-launcher-head">
+                    <h2>แอปพลิเคชันของคุณ</h2>
+                    <span class="main-section-count"><span id="app-grid-count">09</span> ระบบ</span>
+                </div>
                 <section id="app-grid" aria-label="แอปพลิเคชันที่เปิดใช้งานได้"></section>
             </section>
 
@@ -559,7 +608,7 @@
             STORAGE_USER_DATA: "akra_user_data",
             STORAGE_APP_CONFIG: "akra_app_config"
         };
-        const CURRENT_VERSION = "20260914.02";
+        const CURRENT_VERSION = "20260914.03";
         async function checkAppVersion() {
             try {
                 const res = await fetch('version.json?t=' + Date.now());
@@ -765,6 +814,29 @@
             "app-kpi": "Operations intelligence",
             "app-manual": "Frontline handbook"
         };
+        const MAIN_APP_CATEGORIES = {
+            "app-w5": "warehouse",
+            "app-trd": "warehouse",
+            "app-pick": "warehouse",
+            "app-gr": "procurement",
+            "app-pr": "procurement",
+            "app-tracking": "procurement",
+            "app-damage": "procurement",
+            "app-kpi": "analytics",
+            "app-manual": "analytics"
+        };
+
+        const MAIN_APP_COLORS = {
+            "app-w5": "#2563eb",
+            "app-trd": "#7c3aed",
+            "app-gr": "#059669",
+            "app-pr": "#d97706",
+            "app-pick": "#e11d48",
+            "app-tracking": "#0284c7",
+            "app-damage": "#c026d3",
+            "app-kpi": "#0d9488",
+            "app-manual": "#475569"
+        };
 
         const MAIN_APP_LOGOS = {
             "app-w5": '<svg viewBox="0 0 80 80" fill="none" stroke="currentColor" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="13" y="17" width="54" height="46" rx="10"></rect><path d="M25 30h20M25 41h13M25 52h20M50 35l8 7-8 7M58 42H39"></path></svg>',
@@ -812,6 +884,11 @@
         function getAppDisplayType(app) {
             const appId = safeIdentifier(app && app.id);
             return MAIN_APP_TYPES[appId] || 'AKRA-TRD workspace';
+        }
+
+        function getAppCategory(app) {
+            const appId = safeIdentifier(app && app.id);
+            return MAIN_APP_CATEGORIES[appId] || 'warehouse';
         }
 
         function renderMainAppLogo(app) {
@@ -924,7 +1001,9 @@
             authorizationLoaded: false,
             authorizationSaving: false,
             authorizationDirty: false,
-            authorizationRevision: null
+            authorizationRevision: null,
+            appSearchQuery: '',
+            appActiveCategory: 'all'
         };
 
         const UI = {
@@ -2191,6 +2270,28 @@
                 
                 document.getElementById('login-form').addEventListener('submit', App.handleLogin);
                 document.getElementById('logout-btn').addEventListener('click', App.handleLogout);
+                const searchInput = document.getElementById('app-search-input');
+                if (searchInput) {
+                    searchInput.addEventListener('input', (e) => {
+                        state.appSearchQuery = e.target.value;
+                        App.renderDashboard();
+                    });
+                }
+                const catTabs = document.getElementById('main-category-tabs');
+                if (catTabs) {
+                    catTabs.addEventListener('click', (e) => {
+                        const tab = e.target.closest('.main-cat-tab');
+                        if (!tab) return;
+                        catTabs.querySelectorAll('.main-cat-tab').forEach(t => {
+                            const isSelected = t === tab;
+                            t.classList.toggle('active', isSelected);
+                            t.setAttribute('aria-selected', isSelected ? 'true' : 'false');
+                        });
+                        state.appActiveCategory = tab.dataset.category || 'all';
+                        App.renderDashboard();
+                    });
+                }
+
                 document.getElementById('line-account-btn').addEventListener('click', LineAccount.openModal);
                 document.getElementById('close-line-modal-btn').addEventListener('click', LineAccount.closeModal);
                 document.getElementById('line-connect-btn').addEventListener('click', LineAccount.connect);
@@ -2477,6 +2578,19 @@
                 LineAccount.state = { loading: false, linked: false, displayName: null, error: null };
                 LineAccount.updateHeaderButton();
                 LineAccount.closeModal();
+                state.appSearchQuery = '';
+                state.appActiveCategory = 'all';
+                const searchInputEl = document.getElementById('app-search-input');
+                if (searchInputEl) searchInputEl.value = '';
+                const catTabsEl = document.getElementById('main-category-tabs');
+                if (catTabsEl) {
+                    catTabsEl.querySelectorAll('.main-cat-tab').forEach(t => {
+                        const isAll = t.dataset.category === 'all';
+                        t.classList.toggle('active', isAll);
+                        t.setAttribute('aria-selected', isAll ? 'true' : 'false');
+                    });
+                }
+
                 UI.switchSection('login-section');
             },
 
@@ -2498,15 +2612,30 @@
                 const grid = document.getElementById('app-grid');
                 grid.innerHTML = ''; 
                 const allowedApps = state.appConfig.filter(app => app.roles.some(role => state.currentRoles.includes(role)));
-                const accessCount = document.getElementById('app-access-count');
+                
+                const q = (state.appSearchQuery || '').toLowerCase().trim();
+                const activeCat = state.appActiveCategory || 'all';
+
+                const filteredApps = allowedApps.filter(app => {
+                    const appId = safeIdentifier(app.id);
+                    const cat = MAIN_APP_CATEGORIES[appId] || 'warehouse';
+                    if (activeCat !== 'all' && cat !== activeCat) return false;
+                    if (!q) return true;
+                    const name = (getAppDisplayName(app) || '').toLowerCase();
+                    const type = (getAppDisplayType(app) || '').toLowerCase();
+                    const id = appId.toLowerCase();
+                    return name.includes(q) || type.includes(q) || id.includes(q);
+                });
+
                 const gridCount = document.getElementById('app-grid-count');
-                if (accessCount) accessCount.textContent = `${String(allowedApps.length).padStart(2, '0')} แอปพร้อมใช้`;
-                if (gridCount) gridCount.textContent = String(allowedApps.length).padStart(2, '0');
+                if (gridCount) gridCount.textContent = String(filteredApps.length).padStart(2, '0');
 
                 if (allowedApps.length === 0) {
-                    grid.innerHTML = `<div class="main-app-empty"><i data-lucide="lock" class="w-16 h-16 text-slate-200 mx-auto mb-4"></i><h3>ไม่มีสิทธิ์ใช้งาน</h3></div>`;
+                    grid.innerHTML = '<div class="main-app-empty"><i data-lucide="lock" class="w-16 h-16 text-slate-300 mx-auto mb-4"></i><h3>ไม่มีสิทธิ์ใช้งาน</h3><p class="text-xs text-slate-400 mt-1">บัญชีของคุณยังไม่ได้รับสิทธิ์เข้าถึงระบบงานใดๆ</p></div>';
+                } else if (filteredApps.length === 0) {
+                    grid.innerHTML = '<div class="main-app-empty"><i data-lucide="search-x" class="w-16 h-16 text-slate-300 mx-auto mb-4"></i><h3>ไม่พบแอปพลิเคชันที่ตรงกับการค้นหา</h3><p class="text-xs text-slate-400 mt-1">ลองเปลี่ยนคำค้นหา หรือเลือกหมวดหมู่อื่น</p></div>';
                 } else {
-                    allowedApps.forEach(app => {
+                    filteredApps.forEach(app => {
                         const appUrl = safeAppUrl(app.url);
                         const appId = safeIdentifier(app.id);
                         if (!appUrl || !appId) return;
@@ -2515,6 +2644,8 @@
                         button.type = 'button';
                         button.className = 'main-app-card group';
                         button.setAttribute('aria-label', `เปิด ${getAppDisplayName(app)}`);
+                        const brandColor = MAIN_APP_COLORS[appId] || '#171C8F';
+                        button.style.setProperty('--app-color', brandColor);
                         button.addEventListener('click', () => AKRA_SSO.openApp(appUrl, appId));
 
                         const iconBox = document.createElement('div');
@@ -2525,8 +2656,11 @@
 
                         const top = document.createElement('div');
                         top.className = 'main-app-card__top';
-                        top.innerHTML = '<svg class="main-app-card__arrow" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 15 15 5M8 5h7v7"></path></svg>';
                         top.appendChild(iconBox);
+
+                        const arrow = document.createElement('div');
+                        arrow.innerHTML = '<svg class="main-app-card__arrow" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 15 15 5M8 5h7v7"></path></svg>';
+                        if (arrow.firstChild) top.appendChild(arrow.firstChild);
 
                         const copy = document.createElement('div');
                         copy.className = 'main-app-card__copy';
@@ -2539,11 +2673,7 @@
                         type.textContent = getAppDisplayType(app);
                         copy.append(title, type);
 
-                        const foot = document.createElement('div');
-                        foot.className = 'main-app-card__foot';
-                        foot.innerHTML = '<span>เปิดจากสิทธิ์ปัจจุบัน</span><span class="main-access-pill">พร้อมใช้</span>';
-
-                        button.append(top, copy, foot);
+                        button.append(top, copy);
                         grid.appendChild(button);
                     });
                 }
