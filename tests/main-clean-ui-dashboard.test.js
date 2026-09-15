@@ -13,7 +13,7 @@ test('1. Version Parity & Syntax Verification', () => {
     const match = html.match(/const CURRENT_VERSION = ["']([^"']+)["'];/);
     assert(match, 'CURRENT_VERSION must exist in index.html');
     assert.strictEqual(match[1], versionData.version, 'index.html version must match version.json');
-    assert.strictEqual(match[1], '20260914.03', 'Version must be 20260914.03');
+    assert.strictEqual(match[1], '20260915.01', 'Version must be 20260915.01');
 
     // Parse all inline scripts
     const scriptRegex = /<script(?![^>]*\bsrc=)[^>]*>([\s\S]*?)<\/script>/gi;
@@ -132,7 +132,6 @@ test('4. Dashboard Controls & Grid Functional Execution', () => {
         'exec-btn': new MockElement('a'),
         'app-grid': new MockElement('section'),
         'app-grid-count': new MockElement('span'),
-        'app-search-input': new MockElement('input'),
         'main-category-tabs': new MockElement('div'),
         'login-form': new MockElement('form'),
         'logout-btn': new MockElement('button'),
@@ -221,16 +220,10 @@ test('4. Dashboard Controls & Grid Functional Execution', () => {
     assert.strictEqual(elementsMap['app-grid-count'].textContent, '04', 'Procurement category should have 4 apps');
     assert.strictEqual(elementsMap['app-grid'].children.length, 4);
 
-    // Filter by search query: "kpi"
-    state.appActiveCategory = 'all';
-    state.appSearchQuery = 'kpi';
+    // Filter by category with zero matching apps
+    state.appActiveCategory = 'nonexistent';
     App.renderDashboard();
-    assert.strictEqual(elementsMap['app-grid-count'].textContent, '01', 'Search for "kpi" should match 1 app');
-    assert.strictEqual(elementsMap['app-grid'].children.length, 1);
-
-    // Filter by search query with zero match
-    state.appSearchQuery = 'xyz123nonexistent';
-    App.renderDashboard();
-    assert.strictEqual(elementsMap['app-grid-count'].textContent, '00', 'Non-existent search should show 00');
-    assert(elementsMap['app-grid'].innerHTML.includes('ไม่พบแอปพลิเคชันที่ตรงกับการค้นหา'), 'Empty search message must appear');
+    assert.strictEqual(elementsMap['app-grid-count'].textContent, '00', 'Nonexistent category should show 00');
+    assert(elementsMap['app-grid'].innerHTML.includes('ไม่พบแอปพลิเคชันในหมวดหมู่นี้'), 'Empty category message must appear');
 });
+

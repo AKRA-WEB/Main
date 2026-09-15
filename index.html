@@ -94,10 +94,6 @@
 
         /* Controls: Search & Categories */
         .main-portal-controls { display: flex; align-items: center; gap: 12px; margin-bottom: 24px; background: #FFFFFF; border: 1px solid #E2E8F0; border-radius: 14px; padding: 10px 14px; box-shadow: 0 4px 12px rgba(15, 23, 42, 0.03); flex-wrap: wrap; }
-        .main-search-box { position: relative; flex: 1; min-width: 220px; }
-        .main-search-input { width: 100%; height: 38px; background: #F8FAFC; border: 1px solid #E2E8F0; border-radius: 9px; padding: 0 14px 0 36px; font-family: var(--main-font); font-size: 12px; color: #0F172A; outline: none; transition: all 0.2s ease; }
-        .main-search-input:focus { border-color: #171C8F; background: #fff; box-shadow: 0 0 0 3px rgba(23, 28, 143, 0.1); }
-        .main-search-icon { position: absolute; left: 11px; top: 50%; transform: translateY(-50%); width: 15px; height: 15px; color: #94A3B8; pointer-events: none; }
         .main-category-tabs { display: flex; align-items: center; gap: 6px; overflow-x: auto; max-width: 100%; padding-bottom: 2px; -webkit-overflow-scrolling: touch; }
         .main-category-tabs::-webkit-scrollbar { display: none; }
         .main-cat-tab { background: #F1F5F9; border: 1px solid transparent; color: #475569; padding: 6px 12px; border-radius: 8px; font-family: var(--main-font); font-size: 11px; font-weight: 600; cursor: pointer; white-space: nowrap; transition: all 0.2s ease; }
@@ -138,6 +134,9 @@
         .main-app-empty h3 { color: #64748b; font-size: 16px; font-weight: 700; margin-top: 8px; }
         .main-dashboard-footer { padding: 36px 0 0; color: #94A3B8; font-size: 11px; text-align: center; }
 
+        .hidden-desktop { display: none !important; }
+        .account-actions-menu { display: flex; align-items: center; gap: 6px; min-width: 0; }
+        
         @media (max-width: 1023px) {
             .main-dashboard-topbar { min-height: 64px; padding: 0 14px; gap: 8px; flex-wrap: wrap; }
             .main-brand-copy small, .main-dashboard-action__label,
@@ -145,6 +144,7 @@
             .main-brand-copy strong { font-size: 13px; }
             .main-dashboard-actions { gap: 4px; padding: 0; border: 0; background: transparent; flex-wrap: wrap; }
             .main-dashboard-action, #line-account-btn { width: 40px; min-width: 40px; min-height: 40px; padding: 0; flex: 0 0 auto; justify-content: center; }
+            .account-actions-menu { gap: 4px; }
             #app-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
         }
         @media (max-width: 768px) {
@@ -153,8 +153,29 @@
             .main-brand-mark { width: 32px; height: 32px; font-size: 12px; }
             .main-nav-user { padding: 4px 8px; font-size: 10px; }
             .main-nav-user__text { display: none; }
-            .main-dashboard-action, #line-account-btn { width: 34px; min-width: 34px; height: 34px; min-height: 34px; padding: 0; justify-content: center; }
-            .main-dashboard-action__label { display: none; }
+            
+            .hidden-desktop { display: flex !important; }
+            .main-dashboard-actions { position: relative; }
+            .main-dashboard-action, #line-account-btn { width: auto; min-width: 44px; height: 44px; min-height: 44px; padding: 0 12px; justify-content: flex-start; }
+            .main-dashboard-action__label { display: inline-block !important; }
+            
+            .account-actions-menu {
+                display: none;
+                flex-direction: column;
+                position: absolute;
+                top: calc(100% + 8px);
+                right: 0;
+                background: #0f172a;
+                border: 1px solid rgba(255,255,255,0.1);
+                border-radius: 12px;
+                padding: 8px;
+                box-shadow: 0 10px 25px rgba(0,0,0,0.3);
+                z-index: 100;
+                min-width: 180px;
+            }
+            .account-actions-menu.is-open { display: flex; }
+            .account-actions-menu .main-dashboard-action { width: 100%; justify-content: flex-start; }
+            .account-actions-menu .main-dashboard-action__label { display: inline-block !important; }
 
             .main-dashboard-content { width: calc(100% - 24px); padding: 18px 0 0; }
             .main-dashboard-intro { margin-bottom: 16px; }
@@ -162,20 +183,20 @@
             .main-dashboard-intro p { font-size: 12px; margin-top: 4px; }
 
             .main-portal-controls { padding: 10px; gap: 8px; margin-bottom: 16px; border-radius: 12px; }
-            .main-search-box { width: 100%; min-width: 100%; }
-            .main-category-tabs { width: 100%; }
+            .main-category-tabs { width: 100%; display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; overflow: visible; padding-bottom: 0; }
+            .main-cat-tab { min-height: 44px; white-space: normal; line-height: 1.2; padding: 8px; display: flex; align-items: center; justify-content: center; }
 
             .main-launcher-head { margin-bottom: 10px; }
             .main-launcher-head h2 { font-size: 13px; }
 
             #app-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
-            .main-app-card { min-height: 120px; padding: 12px; border-radius: 12px; }
+            .main-app-card { min-height: 120px; height: auto; padding: 12px; border-radius: 12px; }
             .main-app-card__top { min-height: 38px; margin-bottom: 8px; }
             .main-app-logo { width: 38px; height: 38px; border-radius: 10px; }
             .main-app-logo svg { width: 20px; height: 20px; }
             .main-app-card__arrow { width: 16px; height: 16px; }
-            .main-app-card__title { font-size: 13px; line-height: 1.3; margin-bottom: 2px; }
-            .main-app-card__type { font-size: 10px; line-height: 1.35; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+            .main-app-card__title { font-size: 14px; line-height: 1.45; margin-bottom: 2px; }
+            .main-app-card__type { font-size: 12px; line-height: 1.45; display: block; overflow: visible; -webkit-line-clamp: unset; }
             .main-dashboard-footer { padding-top: 24px; }
         }
         @media (max-width: 359px) {
@@ -248,11 +269,18 @@
             </div>
             <nav class="main-dashboard-actions" aria-label="เมนูผู้ใช้งานระบบ">
                 <div class="main-nav-user"><i class="main-nav-user__dot" aria-hidden="true"></i><span id="user-name-display" class="main-nav-user__text"><strong>ADMIN</strong> · SESSION ACTIVE</span></div>
-                <button type="button" id="line-account-btn" class="main-dashboard-action" title="การเชื่อมต่อ LINE" aria-label="การเชื่อมต่อ LINE"><i data-lucide="message-circle" class="w-4 h-4" id="line-account-icon"></i><span id="line-status-dot" class="w-2 h-2 rounded-full bg-slate-300 absolute top-1.5 right-1.5 hidden"></span><span id="line-status-badge" class="hidden text-xs font-semibold px-2 py-0.5 rounded-md bg-[#06c755]/15 text-[#06c755]"></span><span class="main-dashboard-action__label">LINE</span></button>
-                <a href="executive-dashboard.html" id="exec-btn" class="main-dashboard-action hidden" title="Executive Cockpit Dashboard" aria-label="Executive Cockpit Dashboard"><i data-lucide="bar-chart-3" class="w-4 h-4"></i><span class="main-dashboard-action__label">Executive</span></a>
-                <button type="button" id="admin-btn" class="main-dashboard-action hidden" title="จัดการผู้ใช้งาน" aria-label="จัดการผู้ใช้งาน"><i data-lucide="settings" class="w-4 h-4"></i><span class="main-dashboard-action__label">จัดการ</span></button>
-                <button type="button" id="change-pwd-btn" class="main-dashboard-action" title="เปลี่ยนรหัสผ่าน" aria-label="เปลี่ยนรหัสผ่าน"><i data-lucide="key-round" class="w-4 h-4"></i><span class="main-dashboard-action__label">เปลี่ยนรหัส</span></button>
-                <button type="button" id="logout-btn" class="main-dashboard-action main-dashboard-action--danger" title="ออกจากระบบ" aria-label="ออกจากระบบ"><i data-lucide="log-out" class="w-4 h-4"></i><span class="main-dashboard-action__label">ออกจากระบบ</span></button>
+                
+                <button type="button" id="mobile-account-toggle" class="main-dashboard-action hidden-desktop" aria-expanded="false" aria-controls="account-actions-menu">
+                    <i data-lucide="user" class="w-4 h-4"></i><span class="main-dashboard-action__label">บัญชี</span>
+                </button>
+                
+                <div id="account-actions-menu" class="account-actions-menu">
+                    <button type="button" id="line-account-btn" class="main-dashboard-action" title="การเชื่อมต่อ LINE" aria-label="การเชื่อมต่อ LINE"><i data-lucide="message-circle" class="w-4 h-4" id="line-account-icon"></i><span id="line-status-dot" class="w-2 h-2 rounded-full bg-slate-300 absolute top-1.5 right-1.5 hidden"></span><span id="line-status-badge" class="hidden text-xs font-semibold px-2 py-0.5 rounded-md bg-[#06c755]/15 text-[#06c755]"></span><span class="main-dashboard-action__label">LINE</span></button>
+                    <a href="executive-dashboard.html" id="exec-btn" class="main-dashboard-action hidden" title="Executive Cockpit Dashboard" aria-label="Executive Cockpit Dashboard"><i data-lucide="bar-chart-3" class="w-4 h-4"></i><span class="main-dashboard-action__label">Executive</span></a>
+                    <button type="button" id="admin-btn" class="main-dashboard-action hidden" title="จัดการผู้ใช้งาน" aria-label="จัดการผู้ใช้งาน"><i data-lucide="settings" class="w-4 h-4"></i><span class="main-dashboard-action__label">จัดการ</span></button>
+                    <button type="button" id="change-pwd-btn" class="main-dashboard-action" title="เปลี่ยนรหัสผ่าน" aria-label="เปลี่ยนรหัสผ่าน"><i data-lucide="key-round" class="w-4 h-4"></i><span class="main-dashboard-action__label">เปลี่ยนรหัส</span></button>
+                    <button type="button" id="logout-btn" class="main-dashboard-action main-dashboard-action--danger" title="ออกจากระบบ" aria-label="ออกจากระบบ"><i data-lucide="log-out" class="w-4 h-4"></i><span class="main-dashboard-action__label">ออกจากระบบ</span></button>
+                </div>
             </nav>
         </div>
 
@@ -267,10 +295,6 @@
             </header>
 
             <section class="main-portal-controls" id="main-portal-controls">
-                <div class="main-search-box">
-                    <svg class="main-search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" x2="16.65" y1="21" y2="16.65"/></svg>
-                    <input type="text" id="app-search-input" class="main-search-input" placeholder="ค้นหาแอปพลิเคชัน (เช่น w5, po, gr, kpi)..." aria-label="ค้นหาแอปพลิเคชัน">
-                </div>
                 <div class="main-category-tabs" id="main-category-tabs" role="tablist" aria-label="หมวดหมู่แอปพลิเคชัน">
                     <button type="button" class="main-cat-tab active" data-category="all" role="tab" aria-selected="true">ทั้งหมด</button>
                     <button type="button" class="main-cat-tab" data-category="warehouse" role="tab" aria-selected="false">คลังสินค้า & ขนส่ง</button>
@@ -608,7 +632,7 @@
             STORAGE_USER_DATA: "akra_user_data",
             STORAGE_APP_CONFIG: "akra_app_config"
         };
-        const CURRENT_VERSION = "20260914.03";
+        const CURRENT_VERSION = "20260915.01";
         async function checkAppVersion() {
             try {
                 const res = await fetch('version.json?t=' + Date.now());
@@ -1002,7 +1026,6 @@
             authorizationSaving: false,
             authorizationDirty: false,
             authorizationRevision: null,
-            appSearchQuery: '',
             appActiveCategory: 'all'
         };
 
@@ -2270,13 +2293,6 @@
                 
                 document.getElementById('login-form').addEventListener('submit', App.handleLogin);
                 document.getElementById('logout-btn').addEventListener('click', App.handleLogout);
-                const searchInput = document.getElementById('app-search-input');
-                if (searchInput) {
-                    searchInput.addEventListener('input', (e) => {
-                        state.appSearchQuery = e.target.value;
-                        App.renderDashboard();
-                    });
-                }
                 const catTabs = document.getElementById('main-category-tabs');
                 if (catTabs) {
                     catTabs.addEventListener('click', (e) => {
@@ -2578,10 +2594,7 @@
                 LineAccount.state = { loading: false, linked: false, displayName: null, error: null };
                 LineAccount.updateHeaderButton();
                 LineAccount.closeModal();
-                state.appSearchQuery = '';
                 state.appActiveCategory = 'all';
-                const searchInputEl = document.getElementById('app-search-input');
-                if (searchInputEl) searchInputEl.value = '';
                 const catTabsEl = document.getElementById('main-category-tabs');
                 if (catTabsEl) {
                     catTabsEl.querySelectorAll('.main-cat-tab').forEach(t => {
@@ -2613,18 +2626,13 @@
                 grid.innerHTML = ''; 
                 const allowedApps = state.appConfig.filter(app => app.roles.some(role => state.currentRoles.includes(role)));
                 
-                const q = (state.appSearchQuery || '').toLowerCase().trim();
                 const activeCat = state.appActiveCategory || 'all';
 
                 const filteredApps = allowedApps.filter(app => {
                     const appId = safeIdentifier(app.id);
                     const cat = MAIN_APP_CATEGORIES[appId] || 'warehouse';
                     if (activeCat !== 'all' && cat !== activeCat) return false;
-                    if (!q) return true;
-                    const name = (getAppDisplayName(app) || '').toLowerCase();
-                    const type = (getAppDisplayType(app) || '').toLowerCase();
-                    const id = appId.toLowerCase();
-                    return name.includes(q) || type.includes(q) || id.includes(q);
+                    return true;
                 });
 
                 const gridCount = document.getElementById('app-grid-count');
@@ -2633,7 +2641,7 @@
                 if (allowedApps.length === 0) {
                     grid.innerHTML = '<div class="main-app-empty"><i data-lucide="lock" class="w-16 h-16 text-slate-300 mx-auto mb-4"></i><h3>ไม่มีสิทธิ์ใช้งาน</h3><p class="text-xs text-slate-400 mt-1">บัญชีของคุณยังไม่ได้รับสิทธิ์เข้าถึงระบบงานใดๆ</p></div>';
                 } else if (filteredApps.length === 0) {
-                    grid.innerHTML = '<div class="main-app-empty"><i data-lucide="search-x" class="w-16 h-16 text-slate-300 mx-auto mb-4"></i><h3>ไม่พบแอปพลิเคชันที่ตรงกับการค้นหา</h3><p class="text-xs text-slate-400 mt-1">ลองเปลี่ยนคำค้นหา หรือเลือกหมวดหมู่อื่น</p></div>';
+                    grid.innerHTML = '<div class="main-app-empty"><i data-lucide="folder-open" class="w-16 h-16 text-slate-300 mx-auto mb-4"></i><h3>ไม่พบแอปพลิเคชันในหมวดหมู่นี้</h3><p class="text-xs text-slate-400 mt-1">ลองเลือกหมวดหมู่อื่น</p></div>';
                 } else {
                     filteredApps.forEach(app => {
                         const appUrl = safeAppUrl(app.url);
@@ -2716,6 +2724,50 @@
         };
 
         document.addEventListener('DOMContentLoaded', App.init);
+        
+        // Mobile Account Disclosure Toggle
+        (function() {
+            const toggleBtn = document.getElementById('mobile-account-toggle');
+            const menu = document.getElementById('account-actions-menu');
+            if(toggleBtn && menu) {
+                toggleBtn.addEventListener('click', function(e) {
+                    e.stopPropagation();
+                    const isOpen = menu.classList.contains('is-open');
+                    menu.classList.toggle('is-open', !isOpen);
+                    toggleBtn.setAttribute('aria-expanded', !isOpen);
+                });
+                document.addEventListener('click', function(e) {
+                    if (menu.classList.contains('is-open') && !menu.contains(e.target) && !toggleBtn.contains(e.target)) {
+                        menu.classList.remove('is-open');
+                        toggleBtn.setAttribute('aria-expanded', 'false');
+                    }
+                });
+                document.addEventListener('keydown', function(e) {
+                    if (e.key === 'Escape' && menu.classList.contains('is-open')) {
+                        menu.classList.remove('is-open');
+                        toggleBtn.setAttribute('aria-expanded', 'false');
+                        toggleBtn.focus();
+                    }
+                });
+                
+                // Allow enter/space to toggle if focused
+                toggleBtn.addEventListener('keydown', function(e) {
+                    if (e.key === 'Enter' || e.key === ' ') {
+                        e.preventDefault();
+                        toggleBtn.click();
+                    }
+                });
+                
+                // Close menu if window is resized to desktop width
+                window.addEventListener('resize', function() {
+                    if (window.innerWidth > 768 && menu.classList.contains('is-open')) {
+                        menu.classList.remove('is-open');
+                        toggleBtn.setAttribute('aria-expanded', 'false');
+                    }
+                });
+            }
+        })();
     </script>
 </body>
 </html>
+
