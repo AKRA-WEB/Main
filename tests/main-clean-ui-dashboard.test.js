@@ -13,7 +13,7 @@ test('1. Version Parity & Syntax Verification', () => {
     const match = html.match(/const CURRENT_VERSION = ["']([^"']+)["'];/);
     assert(match, 'CURRENT_VERSION must exist in index.html');
     assert.strictEqual(match[1], versionData.version, 'index.html version must match version.json');
-    assert.strictEqual(match[1], '20260915.01', 'Version must be 20260915.01');
+    assert.strictEqual(match[1], '20260915.02', 'Version must be 20260915.02');
 
     // Parse all inline scripts
     const scriptRegex = /<script(?![^>]*\bsrc=)[^>]*>([\s\S]*?)<\/script>/gi;

@@ -56,65 +56,55 @@
         .app-preview-card { transition: all 0.3s ease; filter: grayscale(100%) opacity(40%); }
         .app-preview-card.unlocked { filter: grayscale(0%) opacity(100%); transform: translateY(-2px); border-color: #171C8F; }
 
-        :root { --main-font: 'Inter', 'Noto Sans Thai', system-ui, sans-serif; }
+        :root { --main-font: 'Inter', 'Noto Sans Thai', system-ui, sans-serif; --main-navy: #0f172a; --main-blue: #2563eb; --main-ink: #17243b; --main-muted: #58677d; --main-line: #e3e8ef; --main-canvas: #f5f7fb; }
         body { font-family: var(--main-font); }
-        body.main-dashboard-active { display: block; padding: 0; background: #F8FAFC; }
-        body.main-dashboard-active #dashboard-section { width: 100%; max-width: none; min-height: 100vh; padding: 0 0 48px; position: relative; }
-
-        /* Ambient Glow */
-        .main-portal-ambient { position: absolute; top: 0; left: 0; right: 0; height: 380px; background: radial-gradient(circle at 50% -10%, rgba(23, 28, 143, 0.09), rgba(227, 82, 5, 0.03) 50%, transparent 80%); pointer-events: none; z-index: 0; }
-
-        /* Frosted Topbar */
-        .main-dashboard-topbar { position: relative; z-index: 20; min-height: 70px; display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 0 max(28px, calc((100% - 1440px) / 2 + 28px)); color: #fff; background: rgba(15, 23, 42, 0.96); backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px); border-bottom: 1px solid rgba(255, 255, 255, 0.08); box-shadow: 0 4px 20px rgba(0, 0, 0, 0.06); }
-        .main-brand-lockup { display: flex; align-items: center; gap: 12px; min-width: 0; }
-        .main-brand-mark { display: grid; place-items: center; width: 38px; height: 38px; flex: 0 0 auto; border: 1px solid rgba(255, 255, 255, 0.2); border-radius: 10px; color: #fff; background: linear-gradient(135deg, #171C8F, #2A36CC); box-shadow: 0 4px 12px rgba(23, 28, 143, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.3); font-size: 14px; font-weight: 800; letter-spacing: -.04em; }
-        .main-brand-copy { display: flex; flex-direction: column; min-width: 0; }
-        .main-brand-copy small { color: #94A3B8; font-size: 9px; font-weight: 700; letter-spacing: .12em; text-transform: uppercase; line-height: 1; }
-        .main-brand-copy strong { overflow: hidden; color: #F8FAFC; font-size: 15px; font-weight: 700; letter-spacing: -.03em; text-overflow: ellipsis; white-space: nowrap; line-height: 1.3; }
-        .main-dashboard-actions { display: flex; align-items: center; gap: 6px; min-width: 0; }
-        .main-nav-user { display: flex; align-items: center; gap: 7px; padding: 5px 12px; color: #E2E8F0; background: rgba(255, 255, 255, 0.06); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 20px; font-size: 11px; font-weight: 600; white-space: nowrap; }
-        .main-nav-user__dot { width: 7px; height: 7px; flex: 0 0 auto; border-radius: 999px; background: #10B981; box-shadow: 0 0 8px rgba(16, 185, 129, 0.6); }
-        .main-nav-user__text { color: #CBD5E1; font-weight: 600; font-size: 11px; }
-        .main-nav-role-badge { display: inline-block; margin-left: 4px; padding: 1px 6px; color: #93C5FD; border: 1px solid rgba(147, 197, 253, 0.3); border-radius: 4px; background: rgba(37, 99, 235, 0.2); font-size: 10px; font-weight: 700; }
-        .main-dashboard-action { position: relative; display: flex; align-items: center; justify-content: center; gap: 6px; height: 34px; padding: 0 12px; border: 1px solid rgba(255, 255, 255, 0.12); border-radius: 8px; color: #CBD5E1; background: rgba(255, 255, 255, 0.06); font-size: 12px; font-weight: 600; transition: all 0.2s ease; }
-        .main-dashboard-action:hover { border-color: rgba(255, 255, 255, 0.25); color: #fff; background: rgba(255, 255, 255, 0.12); }
+        body.main-dashboard-active { display: block; padding: 0; background: var(--main-canvas); }
+        body.main-dashboard-active #dashboard-section { width: 100%; max-width: none; min-height: 100vh; padding: 0 0 32px 240px; position: relative; }
+        #dashboard-section ::selection { background: #dbeafe; color: #172554; }
+        #dashboard-section :is(button, a):focus-visible { outline: 3px solid #e35205; outline-offset: 3px; }
+        .main-sidebar { position: fixed; inset: 0 auto 0 0; width: 240px; display: flex; flex-direction: column; background: var(--main-navy); color: #d6e0ef; z-index: 30; }
+        .main-brand-lockup { min-height: 92px; display: flex; align-items: center; gap: 12px; padding: 24px; border-bottom: 1px solid #243047; }
+        .main-brand-mark { display: grid; place-items: center; width: 40px; height: 40px; flex-shrink: 0; color: #fff; background: #2563eb; border-radius: 10px; font-size: 16px; font-weight: 800; }
+        .main-brand-copy { display: flex; flex-direction: column; gap: 3px; }
+        .main-brand-copy strong { color: #fff; font-size: 15px; font-weight: 700; }
+        .main-brand-copy small { color: #abbcd5; font-size: 11px; }
+        .main-portal-controls { padding: 26px 14px; }
+        .main-category-tabs { display: flex; flex-direction: column; gap: 8px; }
+        .main-cat-tab { width: 100%; display: flex; align-items: center; gap: 12px; padding: 13px 14px; min-height: 48px; border: 0; border-radius: 8px; color: #c5d1e4; background: transparent; text-align: left; font-family: var(--main-font); font-size: 13px; font-weight: 600; cursor: pointer; transition: background .18s ease, color .18s ease; }
+        .main-cat-tab svg { width: 18px; height: 18px; flex-shrink: 0; }
+        .main-cat-tab:hover { background: #1e2b42; color: #fff; }
+        .main-cat-tab.active { background: var(--main-blue); color: #fff; }
+        .main-sidebar-footer { margin-top: auto; padding: 22px 24px; border-top: 1px solid #243047; font-size: 12px; line-height: 1.8; color: #a9bad4; }
+        .main-sidebar-footer strong { display: block; color: #e4ebf7; font-weight: 600; }
+        .main-sidebar-footer span { display: inline-block; width: 6px; height: 6px; margin-right: 7px; border-radius: 50%; background: #e35205; }
+        .main-dashboard-topbar { position: relative; z-index: 40; min-height: 76px; display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 14px 32px; color: var(--main-ink); background: #fff; border-bottom: 1px solid var(--main-line); }
+        .main-topbar-title { font-size: 15px; font-weight: 700; white-space: nowrap; }
+        .main-topbar-title small { display: block; color: var(--main-muted); font-size: 11px; font-weight: 400; margin-top: 3px; }
+        .main-dashboard-actions, .account-actions-menu { display: flex; align-items: center; gap: 8px; min-width: 0; }
+        .main-nav-user { display: flex; align-items: center; gap: 8px; padding-right: 8px; }
+        .main-nav-user__dot { width: 7px; height: 7px; flex-shrink: 0; border-radius: 50%; background: #059669; }
+        .main-nav-user__text { color: #334155; font-size: 12px; font-weight: 600; }
+        .main-nav-role-badge { display: inline-block; margin-left: 6px; padding: 2px 6px; color: #1e40af; border-radius: 4px; background: #eff6ff; font-size: 10px; font-weight: 600; }
+        .main-dashboard-action { position: relative; display: flex; align-items: center; justify-content: center; gap: 7px; min-height: 40px; padding: 0 11px; border: 1px solid var(--main-line); border-radius: 7px; color: #46566f; background: #fff; font-size: 12px; font-weight: 600; transition: background .18s ease, color .18s ease; }
+        .main-dashboard-action:hover { background: #eff6ff; color: #1e40af; border-color: #b8cdf5; }
         .main-dashboard-action.hidden { display: none; }
-        .main-dashboard-action--danger { border-color: rgba(239, 68, 68, 0.2); background: rgba(239, 68, 68, 0.08); color: #FCA5A5; }
-        .main-dashboard-action--danger:hover { border-color: rgba(239, 68, 68, 0.4); color: #fff; background: #EF4444; }
-
-        /* Content Container */
-        .main-dashboard-content { position: relative; z-index: 10; width: min(1200px, calc(100% - 48px)); margin: 0 auto; padding: 40px 0 0; }
-
-        /* Modern Intro / Hero */
-        .main-dashboard-intro { margin-bottom: 24px; text-align: left; }
-        .main-dashboard-intro .eyebrow { display: inline-flex; align-items: center; gap: 6px; font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.12em; color: #171C8F; background: rgba(23, 28, 143, 0.06); padding: 4px 10px; border-radius: 20px; border: 1px solid rgba(23, 28, 143, 0.12); margin-bottom: 8px; }
-        .main-dashboard-intro h1 { margin: 0; color: #0F172A; font-size: clamp(24px, 3.5vw, 32px); font-weight: 800; letter-spacing: -.03em; line-height: 1.2; }
-        .main-dashboard-intro h1 span { color: #171C8F; }
-        .main-dashboard-intro p { margin: 6px 0 0; color: #64748B; font-size: 13px; }
-
-        /* Controls: Search & Categories */
-        .main-portal-controls { display: flex; align-items: center; gap: 12px; margin-bottom: 24px; background: #FFFFFF; border: 1px solid #E2E8F0; border-radius: 14px; padding: 10px 14px; box-shadow: 0 4px 12px rgba(15, 23, 42, 0.03); flex-wrap: wrap; }
-        .main-category-tabs { display: flex; align-items: center; gap: 6px; overflow-x: auto; max-width: 100%; padding-bottom: 2px; -webkit-overflow-scrolling: touch; }
-        .main-category-tabs::-webkit-scrollbar { display: none; }
-        .main-cat-tab { background: #F1F5F9; border: 1px solid transparent; color: #475569; padding: 6px 12px; border-radius: 8px; font-family: var(--main-font); font-size: 11px; font-weight: 600; cursor: pointer; white-space: nowrap; transition: all 0.2s ease; }
-        .main-cat-tab:hover { background: #E2E8F0; color: #0F172A; }
-        .main-cat-tab.active { background: #171C8F; color: #fff; }
-
-        /* Launcher & Cards */
-        .main-launcher { border: none; background: transparent; box-shadow: none; }
-        .main-launcher-head { display: flex; align-items: center; justify-content: space-between; gap: 16px; margin-bottom: 12px; padding: 0; border-bottom: none; }
-        .main-launcher-head h2 { margin: 0; color: #0F172A; font-size: 14px; font-weight: 800; letter-spacing: -.02em; }
-        .main-section-count { padding: 3px 8px; color: #475569; border: none; border-radius: 6px; background: #F1F5F9; font-size: 11px; font-weight: 700; white-space: nowrap; }
-        #app-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px; padding: 0; }
-        .main-app-card { position: relative; min-height: 145px; display: flex; flex-direction: column; justify-content: space-between; padding: 18px; overflow: hidden; text-align: left; border: 1px solid #E2E8F0; border-radius: 14px; background: #FFFFFF; box-shadow: 0 4px 14px rgba(15, 23, 42, 0.03); transition: all 0.22s cubic-bezier(0.16, 1, 0.3, 1); cursor: pointer; text-decoration: none; color: inherit; }
-        .main-app-card::before { position: absolute; top: 0; left: 0; right: 0; height: 3px; content: ''; background: transparent; transition: all 0.22s ease; }
-        .main-app-card:hover { border-color: #C7D2FE; box-shadow: 0 14px 28px -4px rgba(15, 23, 42, 0.08), 0 0 0 1px rgba(23, 28, 143, 0.1); transform: translateY(-3px); }
-        .main-app-card:hover::before { background: var(--app-color, #171C8F); }
-        .main-app-card:active { transform: translateY(-1px); }
-        .main-app-card:focus-visible { outline: 3px solid rgba(23, 28, 143, .25); outline-offset: 2px; }
-        .main-app-card__top { position: relative; min-height: 46px; display: flex; align-items: flex-start; justify-content: space-between; gap: 10px; margin-bottom: 12px; }
-        .main-app-logo { display: grid; place-items: center; width: 46px; height: 46px; border-radius: 12px; flex-shrink: 0; box-shadow: 0 3px 8px rgba(0, 0, 0, 0.03); transition: transform 0.2s ease; }
-        .main-app-card:hover .main-app-logo { transform: scale(1.05); }
+        .main-dashboard-action--danger { color: #b42332; }
+        .main-dashboard-action--danger:hover { color: #9f1239; background: #fff1f2; border-color: #fecdd3; }
+        .hidden-desktop { display: none !important; }
+        .main-dashboard-content { max-width: 1240px; margin: 0 auto; padding: 36px 32px 0; }
+        .main-dashboard-intro { margin-bottom: 30px; }
+        .main-dashboard-intro h1 { margin: 0; color: var(--main-ink); font-size: 26px; font-weight: 700; line-height: 1.5; }
+        .main-dashboard-intro h1 span { color: #1e3a8a; }
+        .main-dashboard-intro p { margin: 6px 0 0; color: var(--main-muted); font-size: 14px; line-height: 1.7; }
+        .main-launcher-head { display: flex; align-items: center; justify-content: space-between; gap: 16px; margin-bottom: 18px; padding-bottom: 16px; border-bottom: 1px solid var(--main-line); }
+        .main-launcher-head h2 { margin: 0; color: var(--main-ink); font-size: 16px; font-weight: 700; }
+        .main-section-count { padding: 4px 10px; border-radius: 6px; background: #eaf0fb; color: #234784; font-size: 12px; font-weight: 600; white-space: nowrap; font-variant-numeric: tabular-nums; }
+        #app-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 18px; }
+        .main-app-card { position: relative; min-height: 172px; display: flex; flex-direction: column; gap: 18px; padding: 22px; text-align: left; border: 1px solid var(--main-line); border-radius: 12px; background: #fff; color: inherit; cursor: pointer; transition: border-color .18s ease, background .18s ease; }
+        .main-app-card:hover { border-color: #94b5ed; background: #fbfdff; }
+        .main-app-card:active { background: #eff6ff; }
+        .main-app-card__top { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+        .main-app-logo { display: grid; place-items: center; width: 44px; height: 44px; border-radius: 10px; flex-shrink: 0; }
         .main-app-logo svg { width: 24px; height: 24px; }
         .main-app-logo[data-app-id="app-w5"] { color: #2563eb; border: 1px solid #bfdbfe; background: #eff6ff; }
         .main-app-logo[data-app-id="app-trd"] { color: #7c3aed; border: 1px solid #ddd6fe; background: #f5f3ff; }
@@ -125,85 +115,66 @@
         .main-app-logo[data-app-id="app-damage"] { color: #c026d3; border: 1px solid #f5d0fe; background: #fdf4ff; }
         .main-app-logo[data-app-id="app-kpi"] { color: #0d9488; border: 1px solid #99f6e4; background: #f0fdfa; }
         .main-app-logo[data-app-id="app-manual"] { color: #475569; border: 1px solid #cbd5e1; background: #f8fafc; }
-        .main-app-card__arrow { width: 20px; height: 20px; color: #CBD5E1; transition: transform 0.2s ease, color 0.2s ease; flex-shrink: 0; }
-        .main-app-card:hover .main-app-card__arrow { color: var(--app-color, #171C8F); transform: translate(2px, -2px); }
-        .main-app-card__copy { display: flex; flex-direction: column; gap: 4px; text-align: left; }
-        .main-app-card__title { max-width: 100%; color: #0F172A; font-size: 15px; font-weight: 750; letter-spacing: -.02em; line-height: 1.25; margin-bottom: 2px; }
-        .main-app-card__type { color: #64748B; font-size: 12px; line-height: 1.4; }
-        .main-app-empty { grid-column: 1 / -1; padding: 40px 20px; color: #94a3b8; text-align: center; }
-        .main-app-empty h3 { color: #64748b; font-size: 16px; font-weight: 700; margin-top: 8px; }
-        .main-dashboard-footer { padding: 36px 0 0; color: #94A3B8; font-size: 11px; text-align: center; }
-
-        .hidden-desktop { display: none !important; }
-        .account-actions-menu { display: flex; align-items: center; gap: 6px; min-width: 0; }
-        
-        @media (max-width: 1023px) {
-            .main-dashboard-topbar { min-height: 64px; padding: 0 14px; gap: 8px; flex-wrap: wrap; }
-            .main-brand-copy small, .main-dashboard-action__label,
-            #line-account-btn #line-status-badge { display: none; }
-            .main-brand-copy strong { font-size: 13px; }
-            .main-dashboard-actions { gap: 4px; padding: 0; border: 0; background: transparent; flex-wrap: wrap; }
-            .main-dashboard-action, #line-account-btn { width: 40px; min-width: 40px; min-height: 40px; padding: 0; flex: 0 0 auto; justify-content: center; }
-            .account-actions-menu { gap: 4px; }
-            #app-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+        .main-app-card__arrow { width: 18px; height: 18px; color: #64748b; }
+        .main-app-card:hover .main-app-card__arrow { color: #2563eb; }
+        .main-app-card__copy { display: flex; flex-direction: column; gap: 5px; min-width: 0; }
+        .main-app-card__title { margin: 0; color: var(--main-ink); font-size: 15px; font-weight: 700; line-height: 1.65; overflow-wrap: anywhere; }
+        .main-app-card__type { margin: 0; color: var(--main-muted); font-size: 12px; line-height: 1.65; }
+        .main-app-empty { grid-column: 1 / -1; padding: 56px 20px; color: var(--main-muted); text-align: center; background: #fff; border: 1px solid var(--main-line); border-radius: 12px; }
+        .main-app-empty h3 { color: var(--main-ink); font-size: 16px; font-weight: 700; margin-top: 12px; }
+        .main-app-empty p { color: var(--main-muted); }
+        .main-dashboard-footer { padding-top: 30px; color: var(--main-muted); font-size: 11px; text-align: center; }
+        @media (max-width: 1250px) {
+            .main-dashboard-action__label, #line-status-badge { display: none; }
+            .main-dashboard-action { width: 40px; padding: 0; }
+            .main-dashboard-topbar { padding-inline: 24px; }
+            .main-dashboard-content { padding-inline: 24px; }
+            #app-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
         }
         @media (max-width: 768px) {
-            .main-brand-copy { display: none; }
-            .main-dashboard-topbar { height: 60px; min-height: 60px; padding: 0 14px; gap: 8px; }
-            .main-brand-mark { width: 32px; height: 32px; font-size: 12px; }
-            .main-nav-user { padding: 4px 8px; font-size: 10px; }
-            .main-nav-user__text { display: none; }
-            
+            body.main-dashboard-active #dashboard-section { display: flex; flex-direction: column; padding: 0 0 24px; }
+            body.main-dashboard-active #dashboard-section.hidden { display: none; }
+            .main-dashboard-topbar { order: -2; min-height: 68px; padding: 12px 16px; gap: 12px; }
+            .main-topbar-title { font-size: 14px; }
+            .main-topbar-title small { font-size: 10px; }
+            .main-sidebar { position: static; width: auto; display: block; background: transparent; z-index: auto; order: -1; }
+            .main-sidebar .main-brand-lockup, .main-sidebar-footer { display: none; }
+            .main-portal-controls { padding: 18px 16px 0; }
+            .main-category-tabs { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+            .main-cat-tab { gap: 8px; padding: 12px; min-height: 48px; font-size: 12px; color: #40516c; background: #fff; border: 1px solid var(--main-line); }
+            .main-cat-tab:hover { background: #eaf0fb; color: #1e40af; }
+            .main-cat-tab.active { background: #2563eb; border-color: #2563eb; color: #fff; }
+            .main-cat-tab svg { width: 16px; height: 16px; }
+            .main-nav-user { display: none; }
             .hidden-desktop { display: flex !important; }
             .main-dashboard-actions { position: relative; }
-            .main-dashboard-action, #line-account-btn { width: auto; min-width: 44px; height: 44px; min-height: 44px; padding: 0 12px; justify-content: flex-start; }
-            .main-dashboard-action__label { display: inline-block !important; }
-            
-            .account-actions-menu {
-                display: none;
-                flex-direction: column;
-                position: absolute;
-                top: calc(100% + 8px);
-                right: 0;
-                background: #0f172a;
-                border: 1px solid rgba(255,255,255,0.1);
-                border-radius: 12px;
-                padding: 8px;
-                box-shadow: 0 10px 25px rgba(0,0,0,0.3);
-                z-index: 100;
-                min-width: 180px;
-            }
+            .main-dashboard-action { width: auto; min-height: 44px; padding: 0 12px; }
+            .main-dashboard-action__label { display: inline-block; }
+            .account-actions-menu { display: none; flex-direction: column; position: absolute; top: calc(100% + 8px); right: 0; width: 220px; padding: 8px; background: #fff; border: 1px solid var(--main-line); border-radius: 10px; box-shadow: 0 12px 30px rgba(15,23,42,.14); z-index: 100; }
             .account-actions-menu.is-open { display: flex; }
-            .account-actions-menu .main-dashboard-action { width: 100%; justify-content: flex-start; }
-            .account-actions-menu .main-dashboard-action__label { display: inline-block !important; }
-
-            .main-dashboard-content { width: calc(100% - 24px); padding: 18px 0 0; }
-            .main-dashboard-intro { margin-bottom: 16px; }
-            .main-dashboard-intro h1 { margin: 0; font-size: 21px; line-height: 1.25; letter-spacing: -.03em; }
-            .main-dashboard-intro p { font-size: 12px; margin-top: 4px; }
-
-            .main-portal-controls { padding: 10px; gap: 8px; margin-bottom: 16px; border-radius: 12px; }
-            .main-category-tabs { width: 100%; display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; overflow: visible; padding-bottom: 0; }
-            .main-cat-tab { min-height: 44px; white-space: normal; line-height: 1.2; padding: 8px; display: flex; align-items: center; justify-content: center; }
-
-            .main-launcher-head { margin-bottom: 10px; }
-            .main-launcher-head h2 { font-size: 13px; }
-
-            #app-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
-            .main-app-card { min-height: 120px; height: auto; padding: 12px; border-radius: 12px; }
-            .main-app-card__top { min-height: 38px; margin-bottom: 8px; }
-            .main-app-logo { width: 38px; height: 38px; border-radius: 10px; }
-            .main-app-logo svg { width: 20px; height: 20px; }
-            .main-app-card__arrow { width: 16px; height: 16px; }
-            .main-app-card__title { font-size: 14px; line-height: 1.45; margin-bottom: 2px; }
-            .main-app-card__type { font-size: 12px; line-height: 1.45; display: block; overflow: visible; -webkit-line-clamp: unset; }
-            .main-dashboard-footer { padding-top: 24px; }
+            .account-actions-menu .main-dashboard-action { width: 100%; justify-content: flex-start; border-color: transparent; }
+            .main-dashboard-content { width: 100%; padding: 24px 16px 0; }
+            .main-dashboard-intro { margin-bottom: 24px; }
+            .main-dashboard-intro h1 { font-size: 22px; line-height: 1.55; }
+            .main-dashboard-intro p { font-size: 13px; }
+            .main-launcher-head { margin-bottom: 14px; padding-bottom: 12px; }
+            .main-launcher-head h2 { font-size: 14px; }
+            #app-grid { gap: 12px; }
+            .main-app-card { padding: 15px; gap: 14px; min-height: 166px; }
+            .main-app-card__title { font-size: 14px; }
+            .main-app-card__type { font-size: 12px; }
+            .main-app-logo { width: 38px; height: 38px; }
+            .main-app-logo svg { width: 21px; height: 21px; }
         }
-        @media (max-width: 359px) {
-            #app-grid { grid-template-columns: minmax(0, 1fr); }
-            .main-app-card { min-height: 60px; flex-direction: row; justify-content: flex-start; gap: 12px; text-align: left; }
-            .main-app-card__top { flex: 0 0 38px; margin-bottom: 0; }
+        @media (max-width: 360px) {
+            #app-grid { grid-template-columns: 1fr; }
+            .main-app-card { flex-direction: row; align-items: center; min-height: 92px; }
             .main-app-card__arrow { display: none; }
+            .main-cat-tab { padding: 10px 8px; gap: 6px; }
+        }
+        @media (prefers-reduced-motion: reduce) {
+            #dashboard-section.fade-in { animation: none; }
+            #dashboard-section * { transition: none !important; }
         }
     </style>
 </head>
@@ -261,12 +232,20 @@
 
     <!-- 2. ส่วนหน้าหลัก (Dashboard Section) -->
     <main id="dashboard-section" class="w-full max-w-6xl hidden fade-in py-8">
-        <div class="main-portal-ambient" aria-hidden="true"></div>
+        <aside class="main-sidebar" aria-label="เมนูระบบงาน">
+            <div class="main-brand-lockup"><div class="main-brand-mark" aria-hidden="true">AK</div><div class="main-brand-copy"><strong>AKRA-TRD WEB</strong><small>ระบบงานภายในองค์กร</small></div></div>
+            <section class="main-portal-controls" id="main-portal-controls">
+                <div class="main-category-tabs" id="main-category-tabs" role="tablist" aria-label="หมวดหมู่แอปพลิเคชัน">
+                    <button type="button" class="main-cat-tab active" data-category="all" role="tab" aria-selected="true"><i data-lucide="layout-grid" aria-hidden="true"></i>ทั้งหมด</button>
+                    <button type="button" class="main-cat-tab" data-category="warehouse" role="tab" aria-selected="false"><i data-lucide="warehouse" aria-hidden="true"></i>คลังสินค้า & ขนส่ง</button>
+                    <button type="button" class="main-cat-tab" data-category="procurement" role="tab" aria-selected="false"><i data-lucide="clipboard-check" aria-hidden="true"></i>จัดซื้อ & ตรวจรับ</button>
+                    <button type="button" class="main-cat-tab" data-category="analytics" role="tab" aria-selected="false"><i data-lucide="chart-no-axes-combined" aria-hidden="true"></i>รายงาน & มาตรฐาน</button>
+                </div>
+            </section>
+            <div class="main-sidebar-footer"><strong><span aria-hidden="true"></span>AKRA WEB SYSTEM</strong>ศูนย์รวมระบบงาน AKRA-TRD</div>
+        </aside>
         <div class="main-dashboard-topbar">
-            <div class="main-brand-lockup">
-                <div class="main-brand-mark" aria-hidden="true">AK</div>
-                <div class="main-brand-copy"><small>Central portal</small><strong>AKRA-TRD WEB</strong></div>
-            </div>
+            <div class="main-topbar-title">หน้าหลัก<small>ศูนย์รวมระบบงาน AKRA-TRD</small></div>
             <nav class="main-dashboard-actions" aria-label="เมนูผู้ใช้งานระบบ">
                 <div class="main-nav-user"><i class="main-nav-user__dot" aria-hidden="true"></i><span id="user-name-display" class="main-nav-user__text"><strong>ADMIN</strong> · SESSION ACTIVE</span></div>
                 
@@ -286,22 +265,9 @@
 
         <div class="main-dashboard-content">
             <header class="main-dashboard-intro">
-                <div class="eyebrow">
-                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><path d="m12 6 4 6h-8z"/></svg>
-                    AKRA-TRD / CENTRAL PORTAL
-                </div>
                 <h1>ระบบปฏิบัติการ <span>AKRA-TRD</span></h1>
                 <p>เลือกระบบที่คุณต้องการใช้งานจากรายการด้านล่าง</p>
             </header>
-
-            <section class="main-portal-controls" id="main-portal-controls">
-                <div class="main-category-tabs" id="main-category-tabs" role="tablist" aria-label="หมวดหมู่แอปพลิเคชัน">
-                    <button type="button" class="main-cat-tab active" data-category="all" role="tab" aria-selected="true">ทั้งหมด</button>
-                    <button type="button" class="main-cat-tab" data-category="warehouse" role="tab" aria-selected="false">คลังสินค้า & ขนส่ง</button>
-                    <button type="button" class="main-cat-tab" data-category="procurement" role="tab" aria-selected="false">จัดซื้อ & ตรวจรับ</button>
-                    <button type="button" class="main-cat-tab" data-category="analytics" role="tab" aria-selected="false">รายงาน & มาตรฐาน</button>
-                </div>
-            </section>
 
             <section class="main-launcher">
                 <div class="main-launcher-head">
@@ -311,7 +277,7 @@
                 <section id="app-grid" aria-label="แอปพลิเคชันที่เปิดใช้งานได้"></section>
             </section>
 
-            <footer class="main-dashboard-footer">© 2026 AKRA WEB SYSTEM · Central SSO portal</footer>
+            <footer class="main-dashboard-footer">© 2026 AKRA WEB SYSTEM</footer>
         </div>
     </main>
 
@@ -632,7 +598,7 @@
             STORAGE_USER_DATA: "akra_user_data",
             STORAGE_APP_CONFIG: "akra_app_config"
         };
-        const CURRENT_VERSION = "20260915.01";
+        const CURRENT_VERSION = "20260915.02";
         async function checkAppVersion() {
             try {
                 const res = await fetch('version.json?t=' + Date.now());
