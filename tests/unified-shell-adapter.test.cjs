@@ -23,6 +23,8 @@ assert.match(source, /function embeddedActionHost\(header, rule\)/);
 assert.match(source, /header\.querySelector\(rule\.action\)/);
 assert.match(source, /data-akra-shell-action-group/);
 assert.match(source, /createActionGroup: true/);
+assert.match(source, /if \(element\.dataset\.akraShellAction\) return element\.dataset\.akraShellAction === type;/, 'injected actions must be recognized by type so the observer remains idempotent');
+assert.doesNotMatch(source, /if \(element\.dataset\.akraShellAction\) return false;/, 'injected actions must not be ignored by duplicate detection');
 assert.doesNotMatch(source, /const EMBEDDED_HEADER_SELECTORS/);
 assert.doesNotMatch(source, /const EMBEDDED_ACTION_SELECTORS/);
 
