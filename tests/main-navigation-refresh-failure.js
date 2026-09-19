@@ -25,7 +25,9 @@ const context = vm.createContext({
     sessionRefreshFailed: false,
     pendingNavigation: { type: 'app', appId: 'app-tracking', sessionEpoch: 1, popup },
     mustChangePassword: false,
-    currentUser: 'Fixture User'
+    currentUser: 'Fixture User',
+    currentRoles: ['WAREHOUSE'],
+    appConfig: [{id:'app-tracking',url:'https://example.test/po',roles:['WAREHOUSE']}]
   },
   UI: {
     showToast(message) { toasts.push(message); },
@@ -34,6 +36,7 @@ const context = vm.createContext({
   API: { sendLog() {} },
   safeAppUrl: url => url,
   window: {
+    AkraShell: { open(id) { openedUrls.push(id); return true; } },
     open(url) { openedUrls.push(url); },
     location: { assign(url) { openedUrls.push(url); } }
   }
@@ -54,6 +57,6 @@ assert.match(toasts.at(-1), /รีโหลดหน้า Main/, 'blocked navi
 context.state.sessionRefreshFailed = false;
 context.state.sessionToken = 'fresh-token';
 vm.runInContext("SsoUnderTest.openApp('https://example.test/po', 'app-tracking')", context);
-assert.equal(new URL(openedUrls[0]).searchParams.get('sso'), 'fresh-token', 'navigation may resume with a refreshed token after reload/success');
+assert.equal(openedUrls[0], 'app-tracking', 'navigation resumes via shell ID after refresh, without a token URL');
 
 console.log('PASS main-navigation-refresh-failure: failed refresh cancels and blocks stale-token app launches');

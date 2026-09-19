@@ -188,6 +188,9 @@ test('Functional: LineAccount lifecycle, UI rendering, intent validation and act
 
   // 1. AC1: Unlinked status rendering
   state.sessionToken = 'test-token';
+  state.identityId = '10000000-0000-4000-8000-000000000011';
+  state.sessionVersion = 1;
+  state.sessionAuthorizationRevision = 'fixture-revision';
   sandbox.mockLinked = false;
   await LineAccount.refreshStatus();
   assert.strictEqual(LineAccount.state.linked, false);
@@ -264,6 +267,9 @@ test('Functional: LineAccount lifecycle, UI rendering, intent validation and act
   // 9. R1 / M4: Callback intent validation - matching user preserves URL parameters until liff.init
   sessionStorageMock.setItem('akra_line_link_intent', JSON.stringify({
     userId: 'active_user',
+    identityId: state.identityId,
+    sessionVersion: state.sessionVersion,
+    authorizationRevision: state.sessionAuthorizationRevision,
     marker: 'marker-active',
     epoch: state.sessionEpoch,
     timestamp: Date.now()

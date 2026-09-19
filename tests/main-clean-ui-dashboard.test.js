@@ -13,7 +13,7 @@ test('1. Version Parity & Syntax Verification', () => {
     const match = html.match(/const CURRENT_VERSION = ["']([^"']+)["'];/);
     assert(match, 'CURRENT_VERSION must exist in index.html');
     assert.strictEqual(match[1], versionData.version, 'index.html version must match version.json');
-    assert.strictEqual(match[1], '20260915.02', 'Version must be 20260915.02');
+    assert.strictEqual(match[1], '20260918.05', 'Version must be 20260918.05');
 
     // Parse all inline scripts
     const scriptRegex = /<script(?![^>]*\bsrc=)[^>]*>([\s\S]*?)<\/script>/gi;
@@ -38,7 +38,8 @@ test('2. Strict Invariant: Official App Names NOT Modified', () => {
         "app-tracking": "จัดการคำสั่งชื้อ (PO)",
         "app-damage": "รับคืนสินค้าและเคลม",
         "app-kpi": "KPI Tracker",
-        "app-manual": "คู่มือ"
+        "app-manual": "คู่มือ",
+        "app-evaluation": "แบบประเมินพนักงาน"
     };
 
     for (const [id, name] of Object.entries(expectedLabels)) {
@@ -160,7 +161,7 @@ test('4. Dashboard Controls & Grid Functional Execution', () => {
             body: { classList: { toggle: () => {} } }
         },
         window: {
-            location: { href: 'https://example.com' },
+            location: new URL('https://akra-web.github.io/Main/'),
             addEventListener: () => {},
             open: () => {}
         },
@@ -192,7 +193,7 @@ test('4. Dashboard Controls & Grid Functional Execution', () => {
     state.currentRoles = ['ADMIN'];
     state.sessionToken = 'token-12345';
     state.appConfig = [
-        { id: "app-w5", name: "เบิกย้ายสินค้า (AKRA)", icon: "package", url: "https://akra-web.github.io/W5/", roles: ["ADMIN"] },
+        { id: "app-w5", name: "เบิกย้ายสินค้า (AKRA)", icon: "package", url: "https://akra-web.github.io/AKRA/", roles: ["ADMIN"] },
         { id: "app-trd", name: "เบิกย้ายสินค้าสต๊อก (AKRA>TRD)", icon: "repeat", url: "https://akra-web.github.io/TRDAKRA/", roles: ["ADMIN"] },
         { id: "app-gr", name: "ตรวจรับเข้าสินค้า (GR)", icon: "clipboard-check", url: "https://akra-web.github.io/GR/", roles: ["ADMIN"] },
         { id: "app-pr", name: "ขอสั่งชื้อสินค้า (PR)", icon: "shopping-cart", url: "https://akra-web.github.io/PR/", roles: ["ADMIN"] },
@@ -200,13 +201,14 @@ test('4. Dashboard Controls & Grid Functional Execution', () => {
         { id: "app-tracking", name: "จัดการคำสั่งชื้อ (PO)", icon: "truck", url: "https://akra-web.github.io/TrackingPO/", roles: ["ADMIN"] },
         { id: "app-damage", name: "รับคืนสินค้าและเคลม", icon: "package-x", url: "https://akra-web.github.io/Returnitem/", roles: ["ADMIN"] },
         { id: "app-kpi", name: "KPI Tracker", icon: "bar-chart-2", url: "https://akra-web.github.io/KPITRACKER/", roles: ["ADMIN"] },
-        { id: "app-manual", name: "คู่มือ", icon: "book-open", url: "https://akra-web.github.io/SOP/", roles: ["ADMIN"] }
+        { id: "app-manual", name: "คู่มือ", icon: "book-open", url: "https://akra-web.github.io/SOP/", roles: ["ADMIN"] },
+        { id: "app-evaluation", name: "แบบประเมินพนักงาน", icon: "clipboard-check", url: "https://akra-web.github.io/Evaluation/", roles: ["ADMIN"] }
     ];
 
-    // Initial render - all 9 apps
+    // Initial render - all 10 apps
     App.renderDashboard();
-    assert.strictEqual(elementsMap['app-grid-count'].textContent, '09', 'Should show 09 apps for all categories');
-    assert.strictEqual(elementsMap['app-grid'].children.length, 9, 'Should render 9 cards');
+    assert.strictEqual(elementsMap['app-grid-count'].textContent, '10', 'Should show 10 apps for all categories');
+    assert.strictEqual(elementsMap['app-grid'].children.length, 10, 'Should render 10 cards');
 
     // Filter by category: "warehouse" -> should have 3 apps (w5, trd, pick)
     state.appActiveCategory = 'warehouse';
@@ -219,6 +221,12 @@ test('4. Dashboard Controls & Grid Functional Execution', () => {
     App.renderDashboard();
     assert.strictEqual(elementsMap['app-grid-count'].textContent, '04', 'Procurement category should have 4 apps');
     assert.strictEqual(elementsMap['app-grid'].children.length, 4);
+
+    // Filter by category: "analytics" -> KPI, handbook, and Evaluation
+    state.appActiveCategory = 'analytics';
+    App.renderDashboard();
+    assert.strictEqual(elementsMap['app-grid-count'].textContent, '03', 'Analytics category should have 3 apps');
+    assert.strictEqual(elementsMap['app-grid'].children.length, 3);
 
     // Filter by category with zero matching apps
     state.appActiveCategory = 'nonexistent';

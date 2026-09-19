@@ -2,7 +2,7 @@
 // Rebuild after any HTML/class change:
 //   npx -y tailwindcss@3.4.17 -c tailwind.config.js -i tailwind.src.css -o tailwind.css --minify
 module.exports = {
-  content: ['./index.html'],
+  content: ['./index.html', './js/user-permission-editor.js'],
   theme: {
     extend: {
       colors: {

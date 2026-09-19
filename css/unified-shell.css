@@ -1,0 +1,19 @@
+#unified-shell[hidden], #unified-shell [hidden] { display: none !important; }
+#unified-shell { position: fixed; inset: 0; z-index: 40; display: flex; flex-direction: column; background: #f8fafc; color: #172033; }
+.shell-toolbar { display: flex; align-items: center; flex-wrap: wrap; gap: 12px; padding: 10px 16px; border-bottom: 1px solid #dce3ed; background: #fff; flex-shrink: 0; }
+.shell-toolbar button, .shell-toolbar select, #shell-retry { font: inherit; min-height: 40px; border: 1px solid #cbd5e1; border-radius: 8px; background: #fff; padding: 6px 12px; color: #172033; cursor: pointer; }
+.shell-toolbar select { max-width: min(440px, 100%); min-width: 0; flex: 1; }
+.shell-toolbar button:focus-visible, .shell-toolbar select:focus-visible { outline: 3px solid #3b82f6; outline-offset: 2px; }
+#shell-user { margin-left: auto; font-size: 13px; }
+#shell-frame-host { flex: 1; min-height: 0; }
+#shell-module-frame { border: 0; display: block; width: 100%; height: 100%; background: white; }
+#shell-status { padding: 24px; text-align: center; }
+#shell-retry { align-self: center; margin: 12px; }
+body.shell-active { overflow: hidden; }
+@media (max-width: 640px) {
+    .shell-toolbar { gap: 6px; padding: 8px; }
+    .shell-toolbar button { padding: 6px 8px; font-size: 13px; }
+    .shell-toolbar select { flex-basis: calc(100% - 100px); font-size: 14px; }
+    #shell-user { margin-left: 0; margin-right: auto; }
+}
+@media print { .shell-toolbar, #shell-status, #shell-retry { display: none !important; } }

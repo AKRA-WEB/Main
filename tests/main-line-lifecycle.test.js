@@ -14,7 +14,7 @@ function rig(storage = new Map()) {
     elements.set(id,{textContent:'',classList:{toggle:(name,force)=>force?classes.add(name):classes.delete(name),contains:name=>classes.has(name)}});
   }
   const ctx = {
-    state:{currentUserId:'account-a',sessionToken:'synthetic',sessionEpoch:1,lifecycleMarker:'login-a'},
+    state:{currentUserId:'account-a',identityId:'10000000-0000-4000-8000-000000000011',sessionVersion:1,sessionAuthorizationRevision:'revision-one',sessionToken:'synthetic',sessionEpoch:1,lifecycleMarker:'login-a'},
     document:{getElementById:id=>elements.get(id)||null,title:'Main'},
     window:{location:new URL('https://example.test/Main/'),liff:{init:async()=>{},isLoggedIn:()=>true,getAccessToken:()=>'synthetic-line'}},
     CONFIG:{LINE_LIFF_ID:'synthetic'},
@@ -28,7 +28,7 @@ function rig(storage = new Map()) {
 }
 const putIntent = (r, fields={}) => {
   r.ctx.window.location=new URL('https://example.test/Main/?code=synthetic&state=synthetic');
-  r.storage.set('akra_line_link_intent',JSON.stringify({userId:'account-a',marker:'login-a',timestamp:Date.now(),...fields}));
+  r.storage.set('akra_line_link_intent',JSON.stringify({userId:'account-a',identityId:r.ctx.state.identityId,sessionVersion:1,authorizationRevision:'revision-one',marker:'login-a',timestamp:Date.now(),...fields}));
 };
 
 test('T1: same login survives fresh OAuth page after logout/login or password change epoch',async()=>{
@@ -128,4 +128,37 @@ test('obsolete operation releases its disabled control for the next login',async
   init.resolve();await pending;
   assert.equal(button.disabled,false,'New login must not inherit a disabled LINE control');
   assert.deepEqual(r.calls,[]);
+});
+
+for(const fields of [{identityId:'10000000-0000-4000-8000-000000000012'},{identityId:undefined},{sessionVersion:2},{authorizationRevision:'old'}])test('callback cannot carry an old UUID/session/revision intent into the current account',async()=>{
+ const r=rig();putIntent(r,fields);await r.subject.checkCallbackIntent();assert.deepEqual(r.calls,[]);assert.equal(r.storage.has('akra_line_link_intent'),false);
+});
+
+test('changed UUID during SDK initialization cannot bind even if the username and page epoch are unchanged',async()=>{
+ const r=rig(),init=deferred(),entered=deferred();r.ctx.window.liff.init=()=>{entered.resolve();return init.promise;};
+ const pending=r.subject.connect();await entered.promise;r.ctx.state.identityId='10000000-0000-4000-8000-000000000012';init.resolve();await pending;assert.deepEqual(r.calls,[]);
+});
+
+test('session reset releases old operation; its late finalizer cannot release a new login operation or its control',async()=>{
+ const r=rig(),oldInit=deferred(),oldEntered=deferred(),newInit=deferred(),newEntered=deferred();let n=0;
+ const button={disabled:false,innerHTML:''};r.elements.set('line-connect-btn',button);r.ctx.lucide={createIcons(){}};
+ r.ctx.window.liff.init=()=>{if(++n===1){oldEntered.resolve();return oldInit.promise;}newEntered.resolve();return newInit.promise;};
+ const old=r.subject.connect();await oldEntered.promise;r.subject.resetOperations();r.ctx.state.sessionEpoch++;
+ const next=r.subject.connect();await newEntered.promise;oldInit.resolve();await old;
+ assert.notEqual(r.subject._inFlightOp,null);assert.equal(button.disabled,true);assert.deepEqual(r.calls,[]);
+ newInit.resolve();await next;assert.equal(r.subject._inFlightOp,null);assert.equal(button.disabled,false);assert.deepEqual(r.calls,['bindLineAccount']);
+});
+
+for(const metadata of [{identityId:'not-a-uuid'},{sessionVersion:0},{sessionVersion:undefined},{sessionAuthorizationRevision:''}])test('incomplete verified identity cannot start a LINE operation',async()=>{
+ const r=rig();Object.assign(r.ctx.state,metadata);let sdkCalls=0;r.ctx.window.liff.init=async()=>{sdkCalls++;};
+ await r.subject.connect();await r.subject.unbind();await r.subject.refreshStatus();
+ assert.equal(sdkCalls,0);assert.deepEqual(r.calls,[]);
+});
+
+for(const method of ['refreshStatus','unbind'])test(`late ${method} response cannot paint another UUID with the same employee ID`,async()=>{
+ const r=rig(),reply=deferred();r.ctx.API.postAction=()=>reply.promise;
+ const pending=r.subject[method]();r.ctx.state.identityId='10000000-0000-4000-8000-000000000012';
+ r.subject.state={loading:false,linked:false,displayName:null,error:null};
+ reply.resolve({status:'success',linked:true,lineDisplayName:'Old LINE'});await pending;
+ assert.equal(r.subject.state.linked,false);assert.equal(r.subject.state.displayName,null);
 });

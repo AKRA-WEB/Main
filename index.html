@@ -4,6 +4,11 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>AKRA Portal | Centralized System</title>
+    <link rel="stylesheet" href="css/unified-shell.css?v=20260917.01">
+    <script src="js/akra-shell-bridge.js?v=20260918.02"></script>
+    <script src="js/unified-shell.js?v=20260918.02"></script>
+    <script src="js/permission-catalog.js?v=20260918.02"></script>
+    <script src="js/user-permission-editor.js?v=20260917.03"></script>
     <link rel="preconnect" href="https://script.google.com">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -13,7 +18,7 @@
     <noscript><link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Noto+Sans+Thai:wght@300;400;500;600;700&display=swap" rel="stylesheet"></noscript>
     
     <!-- Tailwind CSS (precompiled; see tailwind.config.js / tailwind.src.css) -->
-    <link rel="stylesheet" href="tailwind.css?v=20260907.04">
+    <link rel="stylesheet" href="tailwind.css?v=20260917.02">
 
     <!-- Lucide Icons -->
     <script src="assets/lucide-0.468.0.min.js" defer></script>
@@ -21,6 +26,10 @@
     <style>
         .fade-in { animation: fadeIn 0.3s ease-out forwards; }
         .admin-overflow-guard { overflow-x: hidden; }
+        @media (min-width: 1024px) {
+            #tab-content-users > article:first-child { width: calc((100% - 1.5rem) / 3); }
+            #tab-content-users > article:last-child { width: calc((100% - 1.5rem) * 2 / 3); }
+        }
         .authorization-switch:focus-visible + .authorization-switch-track {
             outline: 3px solid #E35205;
             outline-offset: 3px;
@@ -272,7 +281,7 @@
             <section class="main-launcher">
                 <div class="main-launcher-head">
                     <h2>แอปพลิเคชันของคุณ</h2>
-                    <span class="main-section-count"><span id="app-grid-count">09</span> ระบบ</span>
+                    <span class="main-section-count"><span id="app-grid-count">10</span> ระบบ</span>
                 </div>
                 <section id="app-grid" aria-label="แอปพลิเคชันที่เปิดใช้งานได้"></section>
             </section>
@@ -280,6 +289,20 @@
             <footer class="main-dashboard-footer">© 2026 AKRA WEB SYSTEM</footer>
         </div>
     </main>
+
+    <section id="unified-shell" hidden aria-label="พื้นที่ทำงาน AKRA">
+        <nav class="shell-toolbar" aria-label="เปลี่ยนระบบงาน">
+            <button type="button" id="shell-home">หน้าหลัก</button>
+            <label for="shell-module-select" class="sr-only">เลือกแอป</label>
+            <select id="shell-module-select"></select>
+            <span id="shell-user"></span>
+            <button type="button" id="shell-admin" hidden>จัดการสิทธิ์</button>
+            <button type="button" id="shell-logout">ออกจากระบบ</button>
+        </nav>
+        <p id="shell-status" role="status" aria-live="polite"></p>
+        <button type="button" id="shell-retry" hidden>ลองเปิดอีกครั้ง</button>
+        <div id="shell-frame-host"></div>
+    </section>
 
     <!-- 3. ส่วนจัดการผู้ใช้งาน (Admin Section) -->
     <main id="admin-section" class="w-full max-w-7xl hidden fade-in py-6 h-screen max-h-[900px] flex flex-col admin-overflow-guard">
@@ -365,6 +388,7 @@
                         </div>
                     </div>
 
+                    <p id="user-profile-status" role="status" aria-live="polite" class="text-sm text-slate-600 px-6 py-3"></p>
                     <div class="flex-grow overflow-y-auto p-6 flex flex-col gap-8 bg-white">
                         <div>
                             <div class="flex justify-between items-end mb-4">
@@ -383,6 +407,13 @@
                             </h3>
                             <div id="interactive-app-preview" class="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-8 gap-3"></div>
                         </div>
+                        <section aria-labelledby="user-permissions-title" class="border-t border-slate-200 pt-5">
+                            <h3 id="user-permissions-title" class="text-lg font-semibold text-slate-800">สิทธิ์ย่อยเฉพาะบุคคล</h3>
+                            <p class="text-sm text-slate-600 mt-2">ช่องเลือกคือสิทธิ์ที่เพิ่มให้คนนี้โดยตรง ไม่ใช่การห้ามสิทธิ์จากบทบาท หากต้องการลดสิทธิ์ที่ได้จากบทบาท ให้แก้สิทธิ์บทบาทหรือเปลี่ยนบทบาทแล้วบันทึกก่อน</p>
+                            <p id="user-permissions-status" role="status" aria-live="polite" class="text-sm text-slate-600 mt-3"></p>
+                            <div id="user-permissions-editor"></div>
+                            <button id="save-user-permissions-btn" type="button" disabled class="mt-4 bg-brand-blue text-white px-5 py-3 rounded-xl font-semibold disabled:opacity-50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2">บันทึกสิทธิ์เฉพาะบุคคล</button>
+                        </section>
                     </div>
                 </form>
             </article>
@@ -444,7 +475,7 @@
                     <h3 class="text-xl font-bold text-brand-blue flex items-center gap-2">
                         <i data-lucide="shield-check" class="w-6 h-6 text-brand-orange"></i> ตารางสิทธิ์การทำงาน (Permission Matrix)
                     </h3>
-                    <p class="text-slate-500 text-sm mt-1">กำหนดว่า Role ใดทำ Action อะไรได้ในแต่ละแอป — มีผลทันทีที่พนักงาน Login ครั้งถัดไป</p>
+                    <p class="text-slate-500 text-sm mt-1">กำหนดว่า Role ใดทำ Action อะไรได้ในแต่ละแอป — หลังบันทึก หน้าที่เปิดค้างอาจต้องโหลดสิทธิ์ใหม่ก่อนทำรายการต่อ</p>
                 </div>
                 <button id="save-perm-config-btn" onclick="AdminInteractive.savePermConfig()" class="bg-brand-orange hover:bg-[#c94804] text-white px-6 py-2.5 rounded-xl font-semibold shadow-md transition-all flex items-center gap-2 shrink-0" disabled>
                     <i data-lucide="save" class="w-4 h-4"></i> บันทึกสิทธิ์
@@ -598,7 +629,7 @@
             STORAGE_USER_DATA: "akra_user_data",
             STORAGE_APP_CONFIG: "akra_app_config"
         };
-        const CURRENT_VERSION = "20260915.02";
+        const CURRENT_VERSION = "20260919.06";
         async function checkAppVersion() {
             try {
                 const res = await fetch('version.json?t=' + Date.now());
@@ -778,7 +809,8 @@
             { id: "app-tracking", name: "จัดการคำสั่งชื้อ (PO)", icon: "truck", url: "https://akra-web.github.io/TrackingPO/", roles: ["ADMIN", "AKRA", "TRD", "WAREHOUSE", "Cashier"] },
             { id: "app-damage", name: "รับคืนสินค้าและเคลม", icon: "package-x", url: "https://akra-web.github.io/Returnitem/", roles: ["ADMIN", "AKRA", "TRD", "WAREHOUSE", "Cashier"] },
             { id: "app-kpi", name: "KPI Tracker", icon: "bar-chart-2", url: "https://akra-web.github.io/KPITRACKER/", roles: ["ADMIN", "AKRA", "TRD", "WAREHOUSE", "Cashier"] },
-            { id: "app-manual", name: "คู่มือ", icon: "book-open", url: "https://akra-web.github.io/SOP/", roles: ["ADMIN", "AKRA", "TRD", "WAREHOUSE", "Cashier"] }
+            { id: "app-manual", name: "คู่มือ", icon: "book-open", url: "https://akra-web.github.io/SOP/", roles: ["ADMIN", "AKRA", "TRD", "WAREHOUSE", "Cashier"] },
+            { id: "app-evaluation", name: "แบบประเมินพนักงาน", icon: "clipboard-check", url: "https://akra-web.github.io/Evaluation/", roles: ["ADMIN", "SUPERVISOR"] }
         ];
 
         const MAIN_APP_LABELS = {
@@ -790,7 +822,8 @@
             "app-tracking": "จัดการคำสั่งชื้อ (PO)",
             "app-damage": "รับคืนสินค้าและเคลม",
             "app-kpi": "KPI Tracker",
-            "app-manual": "คู่มือ"
+            "app-manual": "คู่มือ",
+            "app-evaluation": "แบบประเมินพนักงาน"
         };
 
         const MAIN_APP_TYPES = {
@@ -802,7 +835,8 @@
             "app-tracking": "Purchase order control",
             "app-damage": "Returns and claims",
             "app-kpi": "Operations intelligence",
-            "app-manual": "Frontline handbook"
+            "app-manual": "Frontline handbook",
+            "app-evaluation": "People evaluation"
         };
         const MAIN_APP_CATEGORIES = {
             "app-w5": "warehouse",
@@ -813,7 +847,8 @@
             "app-tracking": "procurement",
             "app-damage": "procurement",
             "app-kpi": "analytics",
-            "app-manual": "analytics"
+            "app-manual": "analytics",
+            "app-evaluation": "analytics"
         };
 
         const MAIN_APP_COLORS = {
@@ -825,7 +860,8 @@
             "app-tracking": "#0284c7",
             "app-damage": "#c026d3",
             "app-kpi": "#0d9488",
-            "app-manual": "#475569"
+            "app-manual": "#475569",
+            "app-evaluation": "#ea580c"
         };
 
         const MAIN_APP_LOGOS = {
@@ -837,7 +873,8 @@
             "app-tracking": '<svg viewBox="0 0 80 80" fill="none" stroke="currentColor" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M13 25h36v26H13zM49 34h10l8 9v8H49z"></path><circle cx="26" cy="56" r="6"></circle><circle cx="57" cy="56" r="6"></circle><path d="M49 43h16"></path></svg>',
             "app-damage": '<svg viewBox="0 0 80 80" fill="none" stroke="currentColor" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M19 28l21-12 21 12v25L40 65 19 53z"></path><path d="M19 28l21 13 21-13M40 41v24M29 22l22 13M26 21H15v11M15 21l9-8"></path></svg>',
             "app-kpi": '<svg viewBox="0 0 80 80" fill="none" stroke="currentColor" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M16 63V45M32 63V33M48 63V23M64 63V14M14 31l15-11 16 7 19-16"></path><circle cx="14" cy="31" r="3"></circle><circle cx="29" cy="20" r="3"></circle><circle cx="45" cy="27" r="3"></circle><circle cx="64" cy="13" r="3"></circle></svg>',
-            "app-manual": '<svg viewBox="0 0 80 80" fill="none" stroke="currentColor" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 18c10-4 19-2 26 4v43c-7-6-16-8-26-4zM66 18c-10-4-19-2-26 4v43c7-6 16-8 26-4zM40 22v43"></path></svg>'
+            "app-manual": '<svg viewBox="0 0 80 80" fill="none" stroke="currentColor" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 18c10-4 19-2 26 4v43c-7-6-16-8-26-4zM66 18c-10-4-19-2-26 4v43c7-6 16-8 26-4zM40 22v43"></path></svg>',
+            "app-evaluation": '<svg viewBox="0 0 80 80" fill="none" stroke="currentColor" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="18" y="12" width="44" height="56" rx="7"></rect><path d="M29 28h22M29 40h12M29 52h8l5 5 10-12"></path></svg>'
         };
 
         const PERMISSION_APP_DEPENDENCIES = {
@@ -929,7 +966,8 @@
         function safeAppUrl(value) {
             try {
                 const url = new URL(String(value ?? ''));
-                if (url.protocol === 'https:' && url.hostname === 'akra-web.github.io') return url.toString();
+                const local = ['localhost', '127.0.0.1'].includes(window.location.hostname);
+                if (url.origin === window.location.origin && (url.protocol === 'https:' || (local && url.protocol === 'http:'))) return url.toString();
             } catch (e) {}
             return '';
         }
@@ -980,6 +1018,9 @@
             currentPerms: {},
             mustChangePassword: false,
             sessionToken: null,
+            identityId: null,
+            sessionVersion: null,
+            sessionAuthorizationRevision: null,
             sessionEpoch: 0,
             lifecycleMarker: null,
             sessionRefreshPending: false,
@@ -992,6 +1033,10 @@
             authorizationSaving: false,
             authorizationDirty: false,
             authorizationRevision: null,
+            authorizationAppConfig: null,
+            userPermissionEditorReady: false,
+            userMutationEditorReady: false,
+            userPermissionsDirty: false,
             appActiveCategory: 'all'
         };
 
@@ -1013,6 +1058,12 @@
                 }, 3000);
             },
             switchSection: (sectionId) => {
+                if (sectionId !== 'admin-section' && !AdminInteractive.confirmProfileLeave()) return false;
+                if (sectionId !== 'admin-section' && AdminInteractive.userPermissionEditor?.pending()) {
+                    if (!AdminInteractive.userPermissionEditor.confirmLeave()) return false;
+                    AdminInteractive.userPermissionEditor.reset();
+                }
+                if (sectionId !== 'admin-section') AdminInteractive.resetProfile();
                 ['boot-section', 'login-section', 'dashboard-section', 'admin-section'].forEach(sec => {
                     document.getElementById(sec).classList.toggle('hidden', sec !== sectionId);
                 });
@@ -1025,13 +1076,20 @@
 
         const API = {
             postAction: async (payload) => {
+                const requestEpoch = state.sessionEpoch, requestToken = state.sessionToken;
+                const body = JSON.stringify({ ...payload, ...(requestToken ? {token:requestToken} : {}) });
+                const assertCurrent = () => {
+                    if (state.sessionEpoch !== requestEpoch || state.sessionToken !== requestToken) {
+                        throw Object.assign(new Error('session_changed'), {code:'session_changed'});
+                    }
+                };
                 if (await AppVersionGuard.blockIfStale(payload && payload.action)) {
                     const err = new Error('client_update_required');
                     err.code = 'client_update_required';
                     throw err;
                 }
 
-                if(state.sessionToken) payload.token = state.sessionToken;
+                assertCurrent();
                 const controller = new AbortController();
                 const timeoutId = setTimeout(() => controller.abort(), 30000);
                 let response;
@@ -1039,13 +1097,18 @@
                     response = await fetch(CONFIG.API_URL, {
                         method: 'POST',
                         headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-                        body: JSON.stringify(payload),
+                        body,
                         signal: controller.signal
                     });
+                    assertCurrent();
+                } catch (error) {
+                    assertCurrent();
+                    throw error;
                 } finally {
                     clearTimeout(timeoutId);
                 }
                 const data = await response.json();
+                assertCurrent();
                 if (!response.ok || data.status !== 'success') {
                     const error = new Error(data.reason || data.message || 'request_failed');
                     error.code = data.reason || data.message || 'request_failed';
@@ -1062,14 +1125,122 @@
         const AdminInteractive = {
             editingUserId: null,
             editingRoles: [],
+            editingProfile: null,
+            profileSaving: false,
+            profileUncertain: false,
             focusedRole: null,
             adminDataLoadEpoch: 0,
+            userPermissionEditor: null,
+            authorizationApps: () => state.authorizationAppConfig || state.appConfig,
+            profileDirty: () => {
+                if (document.getElementById('interactive-form').classList.contains('hidden')) return false;
+                const name = document.getElementById('editor-name').value.trim();
+                const id = document.getElementById('editor-id').value.trim();
+                const saved = AdminInteractive.editingProfile;
+                return saved ? name !== saved.name || id !== saved.id || JSON.stringify([...AdminInteractive.editingRoles].sort()) !== JSON.stringify([...saved.roles].sort())
+                    : !!(name || id || AdminInteractive.editingRoles.length);
+            },
+            confirmProfileLeave: () => {
+                if (AdminInteractive.profileSaving || state.authorizationSaving) { UI.showToast('กำลังบันทึกข้อมูลหรือสิทธิ์ กรุณารอผลก่อน', 'warning'); return false; }
+                return !(AdminInteractive.profileDirty() || AdminInteractive.profileUncertain) || confirm('มีร่างข้อมูลผู้ใช้หรือผลบันทึกที่ยังไม่ยืนยัน ต้องการทิ้งร่างและโหลดข้อมูลล่าสุดภายหลังหรือไม่?');
+            },
+            syncProfileControls: () => {
+                const disabled = !state.authorizationLoaded || !state.userMutationEditorReady || state.authorizationSaving || AdminInteractive.profileUncertain;
+                document.querySelectorAll('#editor-id, #editor-name, #interactive-role-grid button, #btn-save-user, #btn-delete-user, #btn-reset-user-pwd').forEach(control => { control.disabled = disabled; });
+                document.getElementById('user-profile-status').textContent = AdminInteractive.profileSaving ? 'กำลังบันทึกข้อมูลผู้ใช้ กรุณารอผลก่อนออกจากหน้านี้'
+                    : AdminInteractive.profileUncertain ? 'ต้องกดรีเฟรชเพื่อตรวจสอบผลล่าสุดก่อนแก้ไขหรือส่งคำสั่งอีกครั้ง'
+                    : !state.authorizationLoaded || !state.userMutationEditorReady ? 'ยังแก้ไขไม่ได้ กรุณารีเฟรชข้อมูลล่าสุด หากยังไม่พร้อมให้โหลดหน้าเว็บใหม่'
+                    : AdminInteractive.profileDirty() ? 'มีร่างข้อมูลผู้ใช้ที่ยังไม่ได้บันทึก' : 'แสดงข้อมูลล่าสุดที่บันทึกแล้ว';
+            },
+            resetProfile: () => {
+                AdminInteractive.editingProfile = null;
+                AdminInteractive.editingUserId = null;
+                AdminInteractive.editingRoles = [];
+                AdminInteractive.profileSaving = false;
+                AdminInteractive.profileUncertain = false;
+                document.getElementById('editor-id').value = '';
+                document.getElementById('editor-name').value = '';
+                document.getElementById('interactive-form').classList.add('hidden');
+                document.getElementById('empty-selection-state').classList.remove('hidden');
+            },
+            reconcileProfile: () => {
+                AdminInteractive.profileUncertain = false;
+                const id = AdminInteractive.editingUserId;
+                if (id && state.users[id]) AdminInteractive.selectUser(id, true);
+                else if (AdminInteractive.editingProfile || id) {
+                    AdminInteractive.editingUserId = null;
+                    AdminInteractive.editingProfile = null;
+                    AdminInteractive.editingRoles = [];
+                    document.getElementById('interactive-form').classList.add('hidden');
+                    document.getElementById('empty-selection-state').classList.remove('hidden');
+                }
+                AdminInteractive.syncProfileControls();
+            },
+            runUserMutation: async (payload, successMessage) => {
+                if (AdminInteractive.profileSaving || state.authorizationSaving || AdminInteractive.profileUncertain) return false;
+                if (!state.authorizationLoaded || !state.userMutationEditorReady || state.authorizationDirty) {
+                    UI.showToast('กรุณารีเฟรชข้อมูลล่าสุด และบันทึกหรือยกเลิกร่างสิทธิ์บทบาทก่อน', 'warning'); return false;
+                }
+                if (AdminInteractive.userPermissionEditor && !AdminInteractive.userPermissionEditor.confirmLeave()) return false;
+                const profile = AdminInteractive.editingProfile;
+                if (AdminInteractive.editingUserId && (!profile || profile.id !== payload.id || !profile.identityId || !Number.isSafeInteger(profile.sessionVersion))) return false;
+                if (!profile && payload.action !== 'saveUser') return false;
+                const request = { ...payload, ...(payload.roles ? { roles: [...payload.roles] } : {}), expectedUser: profile
+                    ? { mode: 'existing', userId: profile.identityId, sessionVersion: profile.sessionVersion } : { mode: 'create' } };
+                const epoch = state.sessionEpoch;
+                AdminInteractive.userPermissionEditor?.reset();
+                AdminInteractive.profileSaving = true;
+                state.authorizationSaving = true;
+                AdminInteractive.syncAuthorizationControls('กำลังบันทึกข้อมูลผู้ใช้...');
+                let committed = false;
+                try {
+                    const result = await API.postAction(request);
+                    if (epoch !== state.sessionEpoch) return false;
+                    if (result?.status !== 'success') throw new Error('unconfirmed_user_mutation');
+                    committed = true;
+                    if (request.id === state.currentUserId) {
+                        UI.showToast(`${successMessage} กรุณาเข้าสู่ระบบใหม่`, 'success');
+                        App.handleLogout(); return true;
+                    }
+                    AdminInteractive.editingUserId = request.id;
+                    const reloaded = await AdminInteractive.fetchAdminData(true);
+                    if (epoch !== state.sessionEpoch) return false;
+                    if (!reloaded) throw new Error('user_reload_failed');
+                    UI.showToast(successMessage, 'success'); return true;
+                } catch (error) {
+                    if (epoch !== state.sessionEpoch) return false;
+                    AdminInteractive.profileUncertain = true;
+                    state.authorizationLoaded = false;
+                    const conflict = ['stale_user_profile', 'user_already_exists', 'client_update_required'].includes(error?.code);
+                    UI.showToast(committed ? 'บันทึกแล้ว แต่โหลดข้อมูลล่าสุดไม่สำเร็จ กรุณากดรีเฟรชก่อนทำต่อ'
+                        : conflict ? 'ข้อมูลผู้ใช้เปลี่ยนไปหรือหน้าเว็บเก่า ไม่มีการเขียนทับ กรุณารีเฟรชและตรวจสอบใหม่'
+                        : 'ยังยืนยันผลบันทึกไม่ได้ กรุณากดรีเฟรชเพื่อตรวจสอบก่อนทำต่อ', 'warning');
+                    return false;
+                } finally {
+                    if (epoch === state.sessionEpoch) {
+                        AdminInteractive.profileSaving = false;
+                        state.authorizationSaving = false;
+                        AdminInteractive.syncAuthorizationControls();
+                        AdminInteractive.userPermissionEditor?.render();
+                    }
+                }
+            },
+            loadUserPermissions: () => {
+                const username = AdminInteractive.editingUserId;
+                const user = username && state.users[username];
+                AdminInteractive.userPermissionEditor?.load(user ? {
+                    username, user, apps: AdminInteractive.authorizationApps(), permRows: state.permRows,
+                    revision: state.authorizationRevision, epoch: state.sessionEpoch,
+                    ready: state.authorizationLoaded && state.userPermissionEditorReady
+                } : null, true);
+            },
 
             syncAuthorizationControls: (message) => {
+                AdminInteractive.syncProfileControls();
                 const disabled = !state.authorizationLoaded || state.authorizationSaving;
                 ['refresh-data-btn', 'role-access-selector', 'save-role-access-btn', 'save-app-config-btn', 'save-perm-config-btn'].forEach(id => {
                     const control = document.getElementById(id);
-                    if (control) control.disabled = disabled;
+                    if (control) control.disabled = id === 'refresh-data-btn' ? state.authorizationSaving : disabled;
                 });
                 if (disabled) {
                     document.querySelectorAll('#role-access-editor input, #app-permission-matrix input, #perm-matrix-body input').forEach(control => {
@@ -1095,6 +1266,8 @@
 
             fetchAdminData: async (force = false) => {
                 if (state.authorizationSaving && !force) return null;
+                if (!force && !AdminInteractive.confirmProfileLeave()) return null;
+                if (!force && AdminInteractive.userPermissionEditor && !AdminInteractive.userPermissionEditor.confirmLeave()) return null;
                 if (state.authorizationDirty && !force && !confirm('มีการเปลี่ยนแปลงสิทธิ์ที่ยังไม่ได้บันทึก การโหลดข้อมูลล่าสุดจะยกเลิกการเปลี่ยนแปลงเหล่านี้\nยืนยันดำเนินการหรือไม่?')) return null;
                 const requestEpoch = ++AdminInteractive.adminDataLoadEpoch;
                 const requestSessionEpoch = state.sessionEpoch;
@@ -1104,6 +1277,11 @@
                 document.getElementById('list-loading-state').classList.remove('hidden');
                 let loadedFromServer = false;
                 try {
+                    // Refresh after role/user grant changes; the old token revision
+                    // must not be reused for an editor fetch or the next mutation.
+                    if (!await App.refreshSession({ allowAuthorizationRevisionChange: force && state.authorizationSaving })) return null;
+                    if (requestEpoch !== AdminInteractive.adminDataLoadEpoch || requestSessionEpoch !== state.sessionEpoch) return null;
+                    if (!state.currentRoles.includes('ADMIN') || state.mustChangePassword) throw new Error('permission_denied');
                     const data = await API.postAction({ action: 'getAdminData' });
                     if (requestEpoch !== AdminInteractive.adminDataLoadEpoch || requestSessionEpoch !== state.sessionEpoch) return null;
 
@@ -1111,20 +1289,24 @@
                         loadedFromServer = true;
                         state.users = data.users;
                         state.appConfig = data.appConfig;
+                        state.authorizationAppConfig = Array.isArray(data.authorizationAppConfig) ? data.authorizationAppConfig : data.appConfig;
+                        state.userPermissionEditorReady = data.authorizationSchemaVersion === 2;
+                        state.userMutationEditorReady = data.userMutationSchemaVersion === 1;
                         if (data.roleConfig && data.roleConfig.length) state.roleConfig = data.roleConfig;
                         state.permRows = data.permRows;
                         state.authorizationRevision = data.authorizationRevision;
                         state.authorizationLoaded = true;
                         state.authorizationDirty = false;
-                        safeStorage.setItem(CONFIG.STORAGE_USER_DB, JSON.stringify(state.users));
                         safeStorage.setItem(CONFIG.STORAGE_APP_CONFIG, JSON.stringify(state.appConfig));
-                        const dependencyRepairs = reconcileAuthorizationDependencies(state.appConfig, state.permRows, state.roleConfig);
+                        const dependencyRepairs = reconcileAuthorizationDependencies(AdminInteractive.authorizationApps(), state.permRows, state.roleConfig);
                         state.authorizationDirty = dependencyRepairs.length > 0;
                         AdminInteractive.renderUserList();
                         AdminInteractive.setupAppPreviewGrid();
                         AdminInteractive.renderRoleAccessEditor();
                         AdminInteractive.renderAppMatrix();
                         AdminInteractive.renderPermMatrix();
+                        AdminInteractive.reconcileProfile();
+                        AdminInteractive.loadUserPermissions();
                         if (dependencyRepairs.length) {
                             UI.showToast(`พบสิทธิ์เข้าแอปที่ขาด ${dependencyRepairs.length} รายการ ระบบเติมตาม Action เดิมแล้ว กรุณาตรวจสอบและบันทึก`, 'warning');
                         }
@@ -1137,23 +1319,40 @@
                     }
                 } catch (error) {
                     if (requestEpoch !== AdminInteractive.adminDataLoadEpoch || requestSessionEpoch !== state.sessionEpoch) return null;
-                    console.warn("ดึงข้อมูลไม่สำเร็จ ใช้ Cache แທน");
+                    console.warn('Main administrator data is unavailable; no private cache fallback');
                     state.authorizationLoaded = false;
                     state.authorizationRevision = null;
+                    state.userPermissionEditorReady = false;
+                    state.userMutationEditorReady = false;
+                    AdminInteractive.userPermissionEditor?.render('โหลดสิทธิ์ล่าสุดไม่สำเร็จ กรุณากดรีเฟรชก่อนแก้ไข');
                     AdminInteractive.syncAuthorizationControls('โหลดสิทธิ์ล่าสุดไม่สำเร็จ ปิดการแก้ไขเพื่อป้องกันข้อมูลถูกเขียนทับ');
-                    const cachedUsers = safeStorage.getItem(CONFIG.STORAGE_USER_DB);
-                    if (cachedUsers) {
-                        state.users = JSON.parse(cachedUsers);
-                        AdminInteractive.renderUserList();
-                    } else {
-                        UI.showToast("ไม่สามารถโหลดรายชื่อพนักงานได้", "error");
-                    }
+                    state.users = {};
+                    AdminInteractive.resetProfile();
+                    AdminInteractive.userPermissionEditor?.reset();
+                    AdminInteractive.renderUserList();
+                    UI.showToast("ไม่สามารถโหลดรายชื่อพนักงานได้ กรุณาตรวจสอบสิทธิ์และลองใหม่", "error");
                 }
                 document.getElementById('list-loading-state').classList.add('hidden');
                 return loadedFromServer;
             },
 
             init: () => {
+                AdminInteractive.userPermissionEditor = window.AkraUserPermissions.create({
+                    root: document.getElementById('user-permissions-editor'), status: document.getElementById('user-permissions-status'),
+                    button: document.getElementById('save-user-permissions-btn'), document,
+                    describe: (app, key) => window.AkraPermissionCatalog.describe(app, key),
+                    isCurrent: snapshot => snapshot.epoch === state.sessionEpoch && snapshot.username === AdminInteractive.editingUserId,
+                    canEdit: () => state.authorizationLoaded && state.userPermissionEditorReady && !AdminInteractive.profileSaving && !AdminInteractive.profileDirty(),
+                    hasRoleDraft: () => state.authorizationDirty,
+                    onDirty: dirty => { state.userPermissionsDirty = dirty; },
+                    onBusy: busy => { state.authorizationSaving = busy; AdminInteractive.syncAuthorizationControls(); },
+                    send: payload => API.postAction(payload), reload: () => AdminInteractive.fetchAdminData(true),
+                    notify: message => UI.showToast(message, 'warning'), confirm: message => confirm(message)
+                });
+                window.addEventListener('beforeunload', event => {
+                    if (AdminInteractive.userPermissionEditor.pending() || AdminInteractive.profileSaving || AdminInteractive.profileUncertain || AdminInteractive.profileDirty()) { event.preventDefault(); event.returnValue = ''; }
+                });
+                document.getElementById('editor-name').addEventListener('input', () => { AdminInteractive.syncProfileControls(); AdminInteractive.userPermissionEditor?.render(); });
                 let searchDebounceTimer = null;
                 document.getElementById('search-input').addEventListener('input', () => {
                     clearTimeout(searchDebounceTimer);
@@ -1168,25 +1367,13 @@
             },
 
             handleResetPassword: async () => {
+                if (AdminInteractive.profileSaving || state.authorizationSaving) return;
+                if (!AdminInteractive.confirmProfileLeave()) return;
                 const id = AdminInteractive.editingUserId;
                 if(!id) return;
                 const name = state.users[id].name;
-
                 if (!confirm(`ยืนยันการรีเซ็ตรหัสผ่านของพนักงาน ${name} (${id}) กลับเป็นรหัสเริ่มต้น (รหัสพนักงาน) หรือไม่?`)) return;
-
-                const btn = document.getElementById('btn-reset-user-pwd');
-                const origHtml = btn.innerHTML;
-                btn.disabled = true; btn.innerHTML = '<i data-lucide="loader-2" class="w-4 h-4 animate-spin text-brand-orange"></i>'; lucide.createIcons();
-
-                try {
-                    await API.postAction({ action: "adminResetPassword", id });
-                    UI.showToast(`รีเซ็ตรหัสผ่านของพนักงาน ${name} สำเร็จแล้ว`);
-                    API.sendLog("Admin Action", "Portal", `รีเซ็ตรหัสผ่านพนักงาน: ${id} (${name})`);
-                } catch(e) {
-                    UI.showToast("รีเซ็ตรหัสผ่านไม่สำเร็จ", "error");
-                } finally {
-                    btn.disabled = false; btn.innerHTML = origHtml; lucide.createIcons();
-                }
+                return AdminInteractive.runUserMutation({ action: 'adminResetPassword', id }, `รีเซ็ตรหัสผ่านของพนักงาน ${name} สำเร็จแล้ว`);
             },
 
             switchTab: (tabName) => {
@@ -1250,7 +1437,9 @@
                 document.getElementById('user-count').innerText = count;
             },
 
-            selectUser: (id) => {
+            selectUser: (id, force = false) => {
+                if (!force && !AdminInteractive.confirmProfileLeave()) return;
+                if (!force && AdminInteractive.userPermissionEditor && !AdminInteractive.userPermissionEditor.confirmLeave()) return;
                 const data = state.users[id];
                 if(!data) return;
 
@@ -1262,6 +1451,8 @@
 
                 AdminInteractive.editingUserId = id;
                 AdminInteractive.editingRoles = Array.isArray(data.roles) ? [...data.roles] : [];
+                AdminInteractive.editingProfile = { id, identityId: data.identityId, sessionVersion: data.sessionVersion, name: data.name, roles: [...AdminInteractive.editingRoles] };
+                AdminInteractive.profileUncertain = false;
 
                 const idInput = document.getElementById('editor-id');
                 idInput.value = id; idInput.readOnly = true;
@@ -1272,9 +1463,14 @@
                 AdminInteractive.renderUserList();
                 AdminInteractive.renderRoleGrid();
                 AdminInteractive.updateAppPreview();
+                AdminInteractive.loadUserPermissions();
+                AdminInteractive.syncProfileControls();
             },
 
             setupNewUser: () => {
+                if (!AdminInteractive.confirmProfileLeave()) return;
+                if (AdminInteractive.userPermissionEditor && !AdminInteractive.userPermissionEditor.confirmLeave()) return;
+                AdminInteractive.userPermissionEditor?.reset();
                 document.getElementById('empty-selection-state').classList.add('hidden');
                 document.getElementById('interactive-form').classList.remove('hidden');
                 document.getElementById('btn-delete-user').classList.add('hidden'); 
@@ -1283,6 +1479,8 @@
 
                 AdminInteractive.editingUserId = null; 
                 AdminInteractive.editingRoles = []; 
+                AdminInteractive.editingProfile = null;
+                AdminInteractive.profileUncertain = false;
 
                 const idInput = document.getElementById('editor-id');
                 idInput.value = ''; idInput.readOnly = false; idInput.focus();
@@ -1294,6 +1492,7 @@
                 AdminInteractive.renderRoleGrid();
                 AdminInteractive.updateAppPreview();
                 lucide.createIcons();
+                AdminInteractive.syncProfileControls();
             },
 
             renderRoleGrid: () => {
@@ -1326,6 +1525,7 @@
             },
 
             toggleRole: (roleVal) => {
+                if (!state.authorizationLoaded || state.authorizationSaving || AdminInteractive.profileSaving || AdminInteractive.profileUncertain) return;
                 const idx = AdminInteractive.editingRoles.indexOf(roleVal);
                 if (idx === -1) AdminInteractive.editingRoles.push(roleVal);
                 else AdminInteractive.editingRoles.splice(idx, 1);
@@ -1333,12 +1533,14 @@
                 document.getElementById('role-error-msg').classList.add('hidden');
                 AdminInteractive.renderRoleGrid();
                 AdminInteractive.updateAppPreview(); 
+                AdminInteractive.syncProfileControls();
+                AdminInteractive.userPermissionEditor?.render();
             },
 
             setupAppPreviewGrid: () => {
                 const grid = document.getElementById('interactive-app-preview');
                 grid.innerHTML = '';
-                state.appConfig.forEach(app => {
+                AdminInteractive.authorizationApps().forEach(app => {
                     const appId = safeIdentifier(app.id);
                     if (!appId) return;
                     grid.insertAdjacentHTML('beforeend', `
@@ -1347,18 +1549,19 @@
                                 <i data-lucide="${safeIdentifier(app.icon, 'box')}" class="w-4 h-4"></i>
                             </div>
                             <span class="text-[9px] font-bold leading-tight line-clamp-2">${escapeHtml(getAppDisplayName(app))}</span>
+                            ${app.isActive === false ? '<small class="text-slate-600">ปิดใช้งาน</small>' : ''}
                         </div>
                     `);
                 });
             },
             updateAppPreview: () => {
-                state.appConfig.forEach(app => {
+                AdminInteractive.authorizationApps().forEach(app => {
                     const appId = safeIdentifier(app.id);
                     if (!appId) return;
                     const el = document.getElementById(`preview-app-${appId}`);
                     if (!el) return;
                     
-                    const isUnlocked = app.roles.some(role => AdminInteractive.editingRoles.includes(role));
+                    const isUnlocked = app.isActive !== false && app.roles.some(role => AdminInteractive.editingRoles.includes(role));
                     const iconDiv = el.querySelector('div'); 
                     
                     if (isUnlocked) {
@@ -1379,60 +1582,20 @@
                 if (!idInput || !nameInput) { UI.showToast("กรุณากรอกรหัสและชื่อพนักงาน", "warning"); return; }
                 if (AdminInteractive.editingRoles.length === 0) { document.getElementById('role-error-msg').classList.remove('hidden'); return; }
 
-                const btn = document.getElementById('btn-save-user');
-                const btnText = document.getElementById('save-btn-text');
-                btn.disabled = true; btnText.innerHTML = '<i data-lucide="loader-2" class="w-4 h-4 animate-spin inline"></i> กำลังบันทึก...';
-
-                try {
-                    const payload = { action: "saveUser", id: idInput, name: nameInput, roles: AdminInteractive.editingRoles };
-                    
-                    await API.postAction(payload);
-                    
-                    state.users[idInput] = { name: nameInput, roles: [...AdminInteractive.editingRoles] };
-                    safeStorage.setItem(CONFIG.STORAGE_USER_DB, JSON.stringify(state.users));
-                    
-                    API.sendLog("Admin Action", "Portal", `จัดการสิทธิ์: ${idInput} (${nameInput})`);
-                    UI.showToast("อัปเดตสิทธิ์สำเร็จ", "success");
-                    
-                    if(idInput === state.currentUserId) {
-                        state.currentRoles = [...AdminInteractive.editingRoles];
-                        safeStorage.setItem(CONFIG.STORAGE_USER_DATA, JSON.stringify({
-                            id: state.currentUserId,
-                            name: nameInput,
-                            roles: state.currentRoles,
-                            perms: state.currentPerms,
-                            mustChangePassword: state.mustChangePassword
-                        }));
-                    }
-
-                    AdminInteractive.editingUserId = idInput; 
-                    document.getElementById('editor-id').readOnly = true;
-                    document.getElementById('btn-delete-user').classList.remove('hidden');
-                    AdminInteractive.renderUserList();
-
-                } catch (err) { UI.showToast("บันทึกไม่สำเร็จ ลองใหม่อีกครั้ง", "error"); } 
-                finally { btn.disabled = false; btnText.innerText = 'บันทึกข้อมูล'; }
+                return AdminInteractive.runUserMutation({ action: 'saveUser', id: idInput, name: nameInput, roles: [...AdminInteractive.editingRoles] }, 'บันทึกข้อมูลผู้ใช้สำเร็จ');
             },
 
             handleDelete: async () => {
+                if (AdminInteractive.profileSaving || state.authorizationSaving) return;
+                if (!AdminInteractive.confirmProfileLeave()) return;
                 const id = AdminInteractive.editingUserId;
                 if(!id) return;
                 const name = state.users[id].name;
 
-                if (name === state.currentUser) { UI.showToast("ไม่อนุญาตให้ลบบัญชีที่กำลังใช้งานอยู่", "warning"); return; }
+                if (id === state.currentUserId) { UI.showToast("ไม่อนุญาตให้ลบบัญชีที่กำลังใช้งานอยู่", "warning"); return; }
 
                 if(confirm(`ยืนยันการลบ ${name} (${id}) ถาวรหรือไม่?`)) {
-                    try {
-                        await API.postAction({ action: "deleteUser", id });
-                        
-                        delete state.users[id];
-                        safeStorage.setItem(CONFIG.STORAGE_USER_DB, JSON.stringify(state.users));
-                        
-                        UI.showToast("ลบผู้ใช้สำเร็จ", "success");
-                        AdminInteractive.setupNewUser();
-                        document.getElementById('empty-selection-state').classList.remove('hidden');
-                        document.getElementById('interactive-form').classList.add('hidden');
-                    } catch(e) { UI.showToast("ลบไม่สำเร็จ", "error"); }
+                    return AdminInteractive.runUserMutation({ action: 'deleteUser', id }, 'ลบผู้ใช้สำเร็จ');
                 }
             },
 
@@ -1467,7 +1630,7 @@
                 const roleVal = safeIdentifier(AdminInteractive.focusedRole);
                 const focusedRole = state.roleConfig.find(role => role.val === AdminInteractive.focusedRole);
                 const isAdmin = roleVal === 'ADMIN';
-                state.appConfig.forEach(app => {
+                AdminInteractive.authorizationApps().forEach(app => {
                     const appId = safeIdentifier(app.id);
                     if (!appId || !roleVal) return;
                     const canEnter = app.roles.includes(AdminInteractive.focusedRole);
@@ -1480,15 +1643,16 @@
                             const permKey = safeIdentifier(row.permKey);
                             if (!permissionAppId || !permKey) return '';
                             const checked = row[AdminInteractive.focusedRole] === true;
+                            const permission = window.AkraPermissionCatalog.describe(row.appId, row.permKey);
                             return `<label class="flex items-center justify-between gap-3 text-xs text-slate-600 py-1">
-                                <span>${escapeHtml(row.permKey)}</span>
+                                <span>${escapeHtml(permission.label)} <span class="text-slate-400">(${escapeHtml(row.permKey)})</span><small class="block mt-1 leading-relaxed">${escapeHtml(permission.detail)}</small></span>
                                 <input type="checkbox" ${checked ? 'checked' : ''} ${isAdmin || !canEnter ? 'disabled' : ''}
-                                    aria-label="${escapeHtml(authorizationControlLabel('permission', { id: row.appId, name: getAppDisplayName(app) }, { key: row.permKey, label: row.permKey }, focusedRole))}"
+                                    aria-label="${escapeHtml(authorizationControlLabel('permission', { id: row.appId, name: getAppDisplayName(app) }, { key: row.permKey, label: permission.label }, focusedRole))}"
                                     onchange="AdminInteractive.togglePermRole('${permissionAppId}','${permKey}','${roleVal}',this.checked)"
                                     class="w-4 h-4 accent-brand-blue disabled:opacity-40">
                             </label>`;
                         }).join('')
-                        : '<p class="text-xs text-slate-400">แอปนี้ไม่มีสิทธิ์ Action เพิ่มเติม</p>';
+                        : `<p class="text-xs text-slate-500">${escapeHtml(window.AkraPermissionCatalog.appNote(app.id))}</p>`;
 
                     const card = document.createElement('article');
                     card.className = `bg-white border rounded-xl p-4 ${canEnter ? 'border-brand-blue/30' : 'border-slate-200'}`;
@@ -1496,6 +1660,7 @@
                         <div class="flex items-center gap-2 min-w-0">
                             <i data-lucide="${safeIdentifier(app.icon, 'box')}" class="w-4 h-4 text-brand-orange shrink-0"></i>
                             <span class="font-semibold text-slate-800 truncate">${escapeHtml(getAppDisplayName(app))}</span>
+                            ${app.isActive === false ? '<small class="text-slate-600">ปิดใช้งาน</small>' : ''}
                         </div>
                         <label class="flex items-center gap-2 text-xs font-semibold text-brand-blue shrink-0 ${isAdmin ? 'opacity-50' : 'cursor-pointer'}">
                             เข้าแอป
@@ -1516,13 +1681,14 @@
 
             markAuthorizationDirty: () => {
                 state.authorizationDirty = true;
+                AdminInteractive.userPermissionEditor?.render();
                 const status = document.getElementById('authorization-load-status');
                 if (status) status.textContent = 'มีการเปลี่ยนแปลงที่ยังไม่ได้บันทึก';
             },
 
             setAppRole: (appId, roleVal, checked) => {
                 if (!state.authorizationLoaded || state.authorizationSaving) return;
-                const app = state.appConfig.find(item => item.id === appId);
+                const app = AdminInteractive.authorizationApps().find(item => item.id === appId);
                 if (!app || roleVal === 'ADMIN') return;
                 const index = app.roles.indexOf(roleVal);
                 const dependentPermissions = AdminInteractive.getDependentPermissions(appId, roleVal);
@@ -1547,7 +1713,11 @@
 
             saveAuthorizationChanges: async (button, successMessage, logDetails) => {
                 if (!AdminInteractive.requireAuthorizationReady() || state.authorizationSaving) return false;
+                if (!AdminInteractive.confirmProfileLeave()) return false;
+                if (AdminInteractive.userPermissionEditor && !AdminInteractive.userPermissionEditor.confirmLeave()) return false;
+                AdminInteractive.userPermissionEditor?.reset();
                 const originalHtml = button.innerHTML;
+                const saveSessionEpoch = state.sessionEpoch;
                 state.authorizationSaving = true;
                 AdminInteractive.syncAuthorizationControls('กำลังบันทึกสิทธิ์ กรุณารอสักครู่...');
                 button.innerHTML = '<i data-lucide="loader-2" class="w-4 h-4 animate-spin"></i> กำลังบันทึก...';
@@ -1555,33 +1725,39 @@
                 try {
                     const data = await API.postAction({
                         action: "saveAuthorizationConfig",
-                        appConfig: state.appConfig,
+                        appConfig: AdminInteractive.authorizationApps(),
                         rows: state.permRows,
                         authorizationRevision: state.authorizationRevision
                     });
+                    if (saveSessionEpoch !== state.sessionEpoch) return false;
                     if (!data.authorizationRevision) throw new Error('invalid_authorization_save_response');
                     state.authorizationRevision = data.authorizationRevision;
                     state.authorizationDirty = false;
+                    const reloaded = await AdminInteractive.fetchAdminData(true);
+                    if (saveSessionEpoch !== state.sessionEpoch) return false;
                     safeStorage.setItem(CONFIG.STORAGE_APP_CONFIG, JSON.stringify(state.appConfig));
-                    UI.showToast(successMessage, 'success');
+                    UI.showToast(reloaded ? successMessage : 'บันทึกสิทธิ์แล้ว แต่โหลดข้อมูลล่าสุดไม่สำเร็จ กรุณาโหลดข้อมูลล่าสุดก่อนทำต่อ', reloaded ? 'success' : 'warning');
                     if (logDetails) API.sendLog('Admin Action', 'Portal', logDetails);
                     return true;
                 } catch (error) {
-                    await AdminInteractive.handleAuthorizationSaveError(error, 'บันทึกไม่สำเร็จ ระบบคงสิทธิ์ชุดเดิมไว้');
+                    if (saveSessionEpoch !== state.sessionEpoch) return false;
+                    await AdminInteractive.handleAuthorizationSaveError(error, 'ยังยืนยันผลบันทึกไม่ได้');
                     return false;
                 } finally {
-                    state.authorizationSaving = false;
                     button.innerHTML = originalHtml;
-                    if (state.authorizationLoaded) {
+                    if (saveSessionEpoch === state.sessionEpoch) {
+                      state.authorizationSaving = false;
+                      if (state.authorizationLoaded) {
                         AdminInteractive.renderRoleAccessEditor();
                         AdminInteractive.renderAppMatrix();
                         AdminInteractive.renderPermMatrix();
                         AdminInteractive.setupAppPreviewGrid();
                         if (AdminInteractive.editingUserId) AdminInteractive.updateAppPreview();
-                    }
-                    AdminInteractive.syncAuthorizationControls(state.authorizationLoaded
+                      }
+                      AdminInteractive.syncAuthorizationControls(state.authorizationLoaded
                         ? (state.authorizationDirty ? 'มีการเปลี่ยนแปลงที่ยังไม่ได้บันทึก' : 'โหลดสิทธิ์ล่าสุดแล้ว พร้อมแก้ไขและบันทึก')
                         : undefined);
+                    }
                     lucide.createIcons({ root: button });
                 }
             },
@@ -1610,7 +1786,7 @@
                 }
 
                 tbody.innerHTML = '';
-                state.appConfig.forEach(app => {
+                AdminInteractive.authorizationApps().forEach(app => {
                     const tr = document.createElement('tr');
                     tr.className = "hover:bg-brand-blue/5 transition-colors";
 
@@ -1644,6 +1820,7 @@
                                     <i data-lucide="${safeIdentifier(app.icon, 'box')}" class="w-4 h-4"></i>
                                 </div>
                                 <span>${escapeHtml(getAppDisplayName(app))}</span>
+                                ${app.isActive === false ? '<small class="text-slate-600">ปิดใช้งาน</small>' : ''}
                             </div>
                         </td>
                         ${roleCells}
@@ -1654,7 +1831,7 @@
             },
 
             toggleMatrixRole: (appId, roleVal) => {
-                const app = state.appConfig.find(a => a.id === appId);
+                const app = AdminInteractive.authorizationApps().find(a => a.id === appId);
                 if(!app) return;
                 const roleIdx = app.roles.indexOf(roleVal);
                 AdminInteractive.setAppRole(appId, roleVal, roleIdx === -1);
@@ -1699,16 +1876,6 @@
                     'app-kpi': MAIN_APP_LABELS['app-kpi'],
                     'app-manual': MAIN_APP_LABELS['app-manual']
                 };
-                const PERM_LABELS = {
-                    'receiveGR': 'รับสินค้า (Pending Review)', 'approveGR': 'อนุมัติ GR Completed',
-                    'approvePR': 'อนุมัติ PR → เปิด PO', 'createPO': 'สร้าง Direct PO', 'closePO': 'ปิด APV',
-                    'manageProducts': 'จัดการสินค้า (เพิ่ม/ลบ/แก้ไข)',
-                    'adminDashboard': 'Admin Dashboard + Settings',
-                    'ADD_RET': 'เพิ่มรายการ Return', 'QC_RET': 'QC สินค้าคืน', 'BATCH_RET': 'Batch Return',
-                    'TRACK_CUST': 'ติดตาม Customer', 'ADD_CLM': 'เปิด Claim', 'WH_CLM': 'WH Claim',
-                    'MANAGE_CLM': 'จัดการ Claim'
-                };
-
                 tbody.innerHTML = '';
                 let lastAppId = null;
 
@@ -1723,7 +1890,8 @@
 
                     const tr = document.createElement('tr');
                     tr.className = "hover:bg-slate-50 transition-colors";
-                    let cells = `<td class="p-3 pl-6 text-slate-700 text-sm border-r border-slate-100">${escapeHtml(PERM_LABELS[row.permKey] || row.permKey)}</td>`;
+                    const permission = window.AkraPermissionCatalog.describe(row.appId, row.permKey);
+                    let cells = `<td class="p-3 pl-6 text-slate-700 text-sm border-r border-slate-100">${escapeHtml(permission.label)}<small class="block mt-1 text-slate-500">${escapeHtml(permission.detail)}</small></td>`;
                     state.roleConfig.forEach(r => {
                         const appId = safeIdentifier(row.appId);
                         const permKey = safeIdentifier(row.permKey);
@@ -1735,7 +1903,7 @@
                             <td class="p-3 text-center border-l border-slate-100">
                                 <label class="inline-flex items-center ${isAdminCol ? 'cursor-not-allowed opacity-40' : 'cursor-pointer'}">
                                     <input type="checkbox" class="sr-only peer authorization-switch" ${isChecked ? 'checked' : ''} ${isAdminCol ? 'disabled' : ''}
-                                        aria-label="${escapeHtml(authorizationControlLabel('permission', { id: row.appId, name: APP_LABELS[row.appId] || row.appId }, { key: row.permKey, label: PERM_LABELS[row.permKey] || row.permKey }, r))}"
+                                        aria-label="${escapeHtml(authorizationControlLabel('permission', { id: row.appId, name: APP_LABELS[row.appId] || row.appId }, { key: row.permKey, label: permission.label }, r))}"
                                         onchange="AdminInteractive.togglePermRole('${appId}','${permKey}','${roleVal}',this.checked)">
                                     <div class="authorization-switch-track w-10 h-5 bg-slate-200 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-brand-blue relative"></div>
                                 </label>
@@ -1756,7 +1924,7 @@
                 row[roleVal] = checked;
                 if (checked) {
                     const requiredAppId = PERMISSION_APP_DEPENDENCIES[appId] || appId;
-                    const requiredApp = state.appConfig.find(app => app.id === requiredAppId);
+                    const requiredApp = AdminInteractive.authorizationApps().find(app => app.id === requiredAppId);
                     if (requiredApp && !requiredApp.roles.includes(roleVal)) requiredApp.roles.push(roleVal);
                 }
                 AdminInteractive.markAuthorizationDirty();
@@ -1781,6 +1949,21 @@
             _statusGen: 0,
             _inFlightOp: null,
 
+            owner: () => ({identityId:state.identityId,sessionVersion:state.sessionVersion,authorizationRevision:state.sessionAuthorizationRevision}),
+            sameOwner: owner => Boolean(/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(owner?.identityId || '')
+                && Number.isSafeInteger(owner.sessionVersion) && owner.sessionVersion > 0
+                && typeof owner.authorizationRevision === 'string' && owner.authorizationRevision
+                && owner.identityId === state.identityId
+                && owner.sessionVersion === state.sessionVersion && owner.authorizationRevision === state.sessionAuthorizationRevision),
+            resetOperations: () => {
+                ++LineAccount._statusGen;
+                LineAccount._inFlightOp = null;
+                for (const id of ['line-connect-btn','line-unbind-btn']) {
+                    const button = document.getElementById(id);
+                    if (button) { button.disabled = false; button.textContent = id === 'line-connect-btn' ? 'เชื่อมต่อด้วย LINE (1-Tap)' : 'ยกเลิกการเชื่อมต่อ'; }
+                }
+            },
+
             loadSdk: () => {
                 if (window.liff && typeof window.liff.init === 'function') {
                     return Promise.resolve();
@@ -1802,17 +1985,18 @@
             },
 
             refreshStatus: async () => {
-                if (!state.sessionToken || LineAccount._inFlightOp) return;
+                if (!state.sessionToken || !LineAccount.sameOwner(LineAccount.owner()) || LineAccount._inFlightOp) return;
                 const thisGen = ++LineAccount._statusGen;
                 const reqEpoch = state.sessionEpoch;
                 const reqUserId = state.currentUserId;
+                const reqOwner = LineAccount.owner();
 
                 LineAccount.state.loading = true;
                 LineAccount.updateHeaderButton();
                 try {
                     const res = await API.postAction({ action: 'getLineAccountStatus' });
                     // Discard response if newer status was requested, session changed, or user logged out
-                    if (thisGen !== LineAccount._statusGen || reqEpoch !== state.sessionEpoch || reqUserId !== state.currentUserId || !state.sessionToken) {
+                    if (thisGen !== LineAccount._statusGen || reqEpoch !== state.sessionEpoch || reqUserId !== state.currentUserId || !LineAccount.sameOwner(reqOwner) || !state.sessionToken) {
                         return;
                     }
                     LineAccount.state.loading = false;
@@ -1820,7 +2004,7 @@
                     LineAccount.state.displayName = res?.lineDisplayName || null;
                     LineAccount.state.error = null;
                 } catch (err) {
-                    if (thisGen !== LineAccount._statusGen || reqEpoch !== state.sessionEpoch || reqUserId !== state.currentUserId || !state.sessionToken) {
+                    if (thisGen !== LineAccount._statusGen || reqEpoch !== state.sessionEpoch || reqUserId !== state.currentUserId || !LineAccount.sameOwner(reqOwner) || !state.sessionToken) {
                         return;
                     }
                     LineAccount.state.loading = false;
@@ -1912,11 +2096,14 @@
 
             connect: async (options = {}) => {
                 if (LineAccount._inFlightOp) return;
-                LineAccount._inFlightOp = 'connect';
+                if (!LineAccount.sameOwner(LineAccount.owner()) || !state.sessionToken) return;
+                const operation = {kind:'connect'};
+                LineAccount._inFlightOp = operation;
                 ++LineAccount._statusGen; // Invalidate any prior in-flight status reads
                 const opGen = LineAccount._statusGen;
                 const startingUserId = state.currentUserId;
                 const startingEpoch = state.sessionEpoch;
+                const startingOwner = LineAccount.owner();
 
                 const connectBtn = document.getElementById('line-connect-btn');
                 if (connectBtn) {
@@ -1944,7 +2131,7 @@
                     }
 
                     // Strict session & identity verification after asynchronous SDK initialization
-                    if (!state.sessionToken || !state.currentUserId || state.currentUserId !== startingUserId || state.sessionEpoch !== startingEpoch) {
+                    if (!state.sessionToken || !state.currentUserId || state.currentUserId !== startingUserId || state.sessionEpoch !== startingEpoch || !LineAccount.sameOwner(startingOwner)) {
                         return;
                     }
 
@@ -1952,6 +2139,7 @@
                         try {
                             sessionStorage.setItem('akra_line_link_intent', JSON.stringify({
                                 userId: state.currentUserId,
+                                ...startingOwner,
                                 marker: state.lifecycleMarker,
                                 timestamp: Date.now()
                             }));
@@ -1969,7 +2157,7 @@
                     });
 
                     // Check again before applying mutation state
-                    if (opGen !== LineAccount._statusGen || state.sessionEpoch !== startingEpoch || state.currentUserId !== startingUserId || !state.sessionToken) {
+                    if (opGen !== LineAccount._statusGen || state.sessionEpoch !== startingEpoch || state.currentUserId !== startingUserId || !LineAccount.sameOwner(startingOwner) || !state.sessionToken) {
                         return;
                     }
 
@@ -1982,7 +2170,7 @@
                         UI.showToast(`เชื่อมต่อกับ LINE (${res.lineDisplayName || 'สำเร็จ'}) เรียบร้อยแล้ว!`, 'success');
                     }
                 } catch (err) {
-                    if (opGen !== LineAccount._statusGen || state.sessionEpoch !== startingEpoch || state.currentUserId !== startingUserId || !state.sessionToken) {
+                    if (opGen !== LineAccount._statusGen || state.sessionEpoch !== startingEpoch || state.currentUserId !== startingUserId || !LineAccount.sameOwner(startingOwner) || !state.sessionToken) {
                         return;
                     }
                     console.error('LINE connect error:', err);
@@ -1994,15 +2182,16 @@
                     LineAccount.updateModalView();
                     UI.showToast(msg, 'warning');
                 } finally {
-                    if (LineAccount._inFlightOp === 'connect') {
+                    const ownsControl = LineAccount._inFlightOp === operation;
+                    if (ownsControl) {
                         LineAccount._inFlightOp = null;
                     }
-                    if (opGen === LineAccount._statusGen && state.sessionEpoch === startingEpoch && state.currentUserId === startingUserId && state.sessionToken) {
+                    if (opGen === LineAccount._statusGen && state.sessionEpoch === startingEpoch && state.currentUserId === startingUserId && LineAccount.sameOwner(startingOwner) && state.sessionToken) {
                         LineAccount.state.loading = false;
                         LineAccount.updateHeaderButton();
                         LineAccount.updateModalView();
                     }
-                    if (connectBtn) {
+                    if (connectBtn && ownsControl) {
                         connectBtn.disabled = false;
                         connectBtn.innerHTML = '<i data-lucide="message-circle" class="w-5 h-5"></i> เชื่อมต่อด้วย LINE (1-Tap)';
                         lucide.createIcons({ root: connectBtn });
@@ -2012,14 +2201,17 @@
 
             unbind: async () => {
                 if (LineAccount._inFlightOp) return;
+                if (!LineAccount.sameOwner(LineAccount.owner()) || !state.sessionToken) return;
                 if (!confirm('คุณต้องการยกเลิกการเชื่อมต่อบัญชี LINE หรือไม่?\n(การแจ้งเตือนงานผ่าน LINE จะหยุดทำงาน)')) {
                     return;
                 }
-                LineAccount._inFlightOp = 'unbind';
+                const operation = {kind:'unbind'};
+                LineAccount._inFlightOp = operation;
                 ++LineAccount._statusGen; // Invalidate any prior in-flight status reads
                 const opGen = LineAccount._statusGen;
                 const startingUserId = state.currentUserId;
                 const startingEpoch = state.sessionEpoch;
+                const startingOwner = LineAccount.owner();
 
                 const unbindBtn = document.getElementById('line-unbind-btn');
                 if (unbindBtn) {
@@ -2030,7 +2222,7 @@
                 try {
                     const res = await API.postAction({ action: 'unbindLineAccount' });
                     // Check before applying unbind result
-                    if (opGen !== LineAccount._statusGen || state.sessionEpoch !== startingEpoch || state.currentUserId !== startingUserId || !state.sessionToken) {
+                    if (opGen !== LineAccount._statusGen || state.sessionEpoch !== startingEpoch || state.currentUserId !== startingUserId || !LineAccount.sameOwner(startingOwner) || !state.sessionToken) {
                         return;
                     }
                     if (res && res.status === 'success') {
@@ -2042,7 +2234,7 @@
                         UI.showToast('ยกเลิกการเชื่อมต่อ LINE เรียบร้อยแล้ว', 'success');
                     }
                 } catch (err) {
-                    if (opGen !== LineAccount._statusGen || state.sessionEpoch !== startingEpoch || state.currentUserId !== startingUserId || !state.sessionToken) {
+                    if (opGen !== LineAccount._statusGen || state.sessionEpoch !== startingEpoch || state.currentUserId !== startingUserId || !LineAccount.sameOwner(startingOwner) || !state.sessionToken) {
                         return;
                     }
                     console.error('LINE unbind error:', err);
@@ -2050,15 +2242,16 @@
                     LineAccount.updateModalView();
                     UI.showToast(err.message || 'ไม่สามารถยกเลิกการเชื่อมต่อได้', 'warning');
                 } finally {
-                    if (LineAccount._inFlightOp === 'unbind') {
+                    const ownsControl = LineAccount._inFlightOp === operation;
+                    if (ownsControl) {
                         LineAccount._inFlightOp = null;
                     }
-                    if (opGen === LineAccount._statusGen && state.sessionEpoch === startingEpoch && state.currentUserId === startingUserId && state.sessionToken) {
+                    if (opGen === LineAccount._statusGen && state.sessionEpoch === startingEpoch && state.currentUserId === startingUserId && LineAccount.sameOwner(startingOwner) && state.sessionToken) {
                         LineAccount.state.loading = false;
                         LineAccount.updateHeaderButton();
                         LineAccount.updateModalView();
                     }
-                    if (unbindBtn) {
+                    if (unbindBtn && ownsControl) {
                         unbindBtn.disabled = false;
                         unbindBtn.innerHTML = '<i data-lucide="link-2-off" class="w-4 h-4"></i> ยกเลิกการเชื่อมต่อ';
                         lucide.createIcons({ root: unbindBtn });
@@ -2095,7 +2288,7 @@
                 const currentUserId = String(state.currentUserId || '').trim().toLowerCase();
                 const markerMatch = typeof intent.marker === 'string' && intent.marker.trim().length > 0 && intent.marker === state.lifecycleMarker;
 
-                if (!intentUserId || intentUserId !== currentUserId || !markerMatch) {
+                if (!intentUserId || intentUserId !== currentUserId || !markerMatch || !LineAccount.sameOwner(intent)) {
                     sessionStorage.removeItem('akra_line_link_intent');
                     console.warn('LINE linking intent identity mismatch, discarded');
                     return;
@@ -2112,8 +2305,16 @@
         window.LineAccount = LineAccount;
 
         const App = {
-            saveSession: (data) => {
+            saveSession: (data, options = {}) => {
+                if (state.identityId && (state.identityId !== data.user.identityId
+                    || state.sessionVersion !== data.user.sessionVersion
+                    || (state.sessionAuthorizationRevision !== data.user.authorizationRevision && options.allowAuthorizationRevisionChange !== true))) {
+                    App.handleLogout({preserveStoredSession:true});
+                }
                 state.sessionToken = data.token;
+                state.identityId = data.user.identityId || null;
+                state.sessionVersion = data.user.sessionVersion ?? null;
+                state.sessionAuthorizationRevision = data.user.authorizationRevision || null;
                 state.currentUserId = data.user.id || null;
                 state.currentUser = data.user.name;
                 state.currentRoles = data.user.roles || [];
@@ -2121,33 +2322,50 @@
                 state.mustChangePassword = data.user.mustChangePassword === true;
                 state.sessionRefreshPending = false;
                 state.sessionRefreshFailed = false;
-                state.appConfig = data.appConfig && data.appConfig.length > 0
+                state.appConfig = Array.isArray(data.appConfig)
                     ? data.appConfig
                     : JSON.parse(JSON.stringify(DEFAULT_APP_CONFIG));
 
+                // Publish the coherent record first: peer processes can receive a
+                // storage event before this writer finishes the compatibility keys.
+                safeStorage.setItem('akra_main_session', JSON.stringify({version:1, token:state.sessionToken,
+                    identityId:state.identityId, sessionVersion:state.sessionVersion,
+                    authorizationRevision:state.sessionAuthorizationRevision}));
                 safeStorage.setItem(CONFIG.STORAGE_SESSION, state.sessionToken);
                 safeStorage.setItem(CONFIG.STORAGE_USER_DATA, JSON.stringify({
                     id: state.currentUserId,
+                    identityId: state.identityId,
+                    sessionVersion: state.sessionVersion,
+                    authorizationRevision: state.sessionAuthorizationRevision,
                     name: state.currentUser,
                     roles: state.currentRoles,
                     perms: state.currentPerms,
                     mustChangePassword: state.mustChangePassword
                 }));
                 safeStorage.setItem(CONFIG.STORAGE_APP_CONFIG, JSON.stringify(state.appConfig));
+                window.AkraModule?.watchSession({appId:'', user:data.user, token:state.sessionToken,
+                    invalidated:() => App.handleLogout({preserveStoredSession:true}),
+                    refreshed:token => { state.sessionToken = token; window.AkraShell?.sync(); }
+                });
             },
 
-            refreshSession: async () => {
+            refreshSession: async (options = {}) => {
                 const refreshToken = state.sessionToken;
                 const refreshEpoch = state.sessionEpoch;
+                const storedToken = safeStorage.getItem(CONFIG.STORAGE_SESSION);
+                const storedMain = safeStorage.getItem('akra_main_session');
+                const isCurrent = () => state.sessionEpoch === refreshEpoch && state.sessionToken === refreshToken
+                    && safeStorage.getItem(CONFIG.STORAGE_SESSION) === storedToken
+                    && safeStorage.getItem('akra_main_session') === storedMain;
                 let data;
                 try {
                     data = await API.postAction({ action: 'refreshSession' });
                 } catch (error) {
-                    if (state.sessionEpoch !== refreshEpoch || state.sessionToken !== refreshToken) return false;
+                    if (!isCurrent()) return false;
                     throw error;
                 }
-                if (state.sessionEpoch !== refreshEpoch || state.sessionToken !== refreshToken) return false;
-                App.saveSession(data);
+                if (!isCurrent()) return false;
+                App.saveSession(data, options);
                 return true;
             },
 
@@ -2173,31 +2391,10 @@
                 }
                 if (!state.sessionRefreshPending) return false;
 
-                const previous = state.pendingNavigation;
-                let popup = previous && previous.type === 'app' && previous.popup && !previous.popup.closed
-                    ? previous.popup
-                    : null;
-                if (previous && previous.type === 'app' && intent.type !== 'app' && popup) {
-                    try { popup.close(); } catch (e) {}
-                    popup = null;
-                }
-                if (intent.type === 'app' && !popup) {
-                    popup = window.open('about:blank', '_blank');
-                    if (popup) {
-                        try {
-                            popup.opener = null;
-                            popup.document.title = 'AKRA Portal';
-                            popup.document.body.textContent = 'กำลังตรวจสอบสิทธิ์ กรุณารอสักครู่...';
-                            popup.document.body.style.cssText = 'font-family:system-ui,sans-serif;padding:32px;color:#171C8F';
-                        } catch (e) {}
-                    }
-                }
-
                 state.pendingNavigation = {
                     type: intent.type,
                     appId: intent.appId || null,
-                    sessionEpoch: state.sessionEpoch,
-                    popup: popup
+                    sessionEpoch: state.sessionEpoch
                 };
                 UI.showToast('กำลังตรวจสอบสิทธิ์ล่าสุด ระบบจะเปิดให้อัตโนมัติ', 'warning');
                 return true;
@@ -2251,6 +2448,14 @@
             },
 
             init: async () => {
+                window.AkraShell.init({
+                    state: () => state,
+                    label: getAppDisplayName,
+                    notify: message => UI.showToast(message, 'warning'),
+                    home: () => { UI.switchSection('dashboard-section'); App.renderDashboard(); },
+                    admin: () => { if (state.currentRoles.includes('ADMIN')) UI.switchSection('admin-section'); },
+                    logout: options => App.handleLogout(options)
+                });
                 AppVersionGuard.start({ current: CURRENT_VERSION, readActions: ['log', 'getAdminData', 'login', 'refreshSession', 'getLineAccountStatus'] });
                 setTimeout(checkAppVersion, 0);
 
@@ -2258,7 +2463,10 @@
                 AdminInteractive.init();
                 
                 document.getElementById('login-form').addEventListener('submit', App.handleLogin);
-                document.getElementById('logout-btn').addEventListener('click', App.handleLogout);
+                document.getElementById('logout-btn').addEventListener('click', () => {
+                    if (!AdminInteractive.confirmProfileLeave()) return;
+                    if (!AdminInteractive.userPermissionEditor || AdminInteractive.userPermissionEditor.confirmLeave()) App.handleLogout();
+                });
                 const catTabs = document.getElementById('main-category-tabs');
                 if (catTabs) {
                     catTabs.addEventListener('click', (e) => {
@@ -2294,7 +2502,7 @@
                         return;
                     }
                     UI.showToast(
-                        loadedFromServer ? "อัปเดตข้อมูลล่าสุดจากเซิร์ฟเวอร์แล้ว" : "ไม่สามารถดึงข้อมูลล่าสุดได้ กำลังใช้ข้อมูลสำรอง",
+                        loadedFromServer ? "อัปเดตข้อมูลล่าสุดจากเซิร์ฟเวอร์แล้ว" : "ยังยืนยันรายชื่อพนักงานไม่ได้ กรุณาตรวจสอบสิทธิ์แล้วกดรีเฟรชอีกครั้ง",
                         loadedFromServer ? "success" : "warning"
                     );
                     setTimeout(()=>document.getElementById('refresh-icon').classList.remove('animate-spin'), 500);
@@ -2335,17 +2543,8 @@
                 });
 
                 const savedToken = safeStorage.getItem(CONFIG.STORAGE_SESSION);
-                const savedUserData = safeStorage.getItem(CONFIG.STORAGE_USER_DATA);
-                
-                if (savedToken && savedUserData) {
-                    let parsedUser;
-                    try {
-                        parsedUser = parseCachedUserData(savedUserData);
-                    } catch (e) {
-                        // ข้อมูลเซสชันที่บันทึกไว้เสียหาย — บังคับเข้าสู่ระบบใหม่
-                        App.handleLogout();
-                        return;
-                    }
+
+                if (savedToken && !window.AkraModule?.isMainSignedOut?.()) {
                     state.sessionToken = savedToken;
                     state.sessionEpoch += 1;
                     // Restore tab lifecycle marker or generate fresh if not present in tab
@@ -2359,37 +2558,29 @@
                     } catch (_e) {
                         state.lifecycleMarker = generateLifecycleMarker();
                     }
-                    state.currentUserId = parsedUser.id || null;
-                    state.currentUser = parsedUser.name;
-                    state.currentRoles = parsedUser.roles || [];
-                    state.currentPerms = parsedUser.perms || {};
-                    state.mustChangePassword = parsedUser.mustChangePassword === true;
-                    state.sessionRefreshPending = !state.mustChangePassword;
-                    state.appConfig = parseCachedAppConfig(safeStorage.getItem(CONFIG.STORAGE_APP_CONFIG));
-
-                    UI.switchSection('dashboard-section');
-                    App.renderDashboard();
-                    if (state.mustChangePassword) {
-                        App.openChangePasswordModal();
-                    } else {
-                        try {
-                            const refreshApplied = await App.refreshSession();
-                            if (!refreshApplied) return;
-                            App.renderDashboard();
+                    state.sessionRefreshPending = true;
+                    UI.switchSection('boot-section');
+                    try {
+                        const refreshApplied = await App.refreshSession();
+                        if (!refreshApplied) return;
+                        UI.switchSection('dashboard-section');
+                        App.renderDashboard();
+                        if (state.mustChangePassword) {
+                            App.openChangePasswordModal();
+                        } else {
                             App.runPendingNavigation();
                             LineAccount.refreshStatus();
                             LineAccount.checkCallbackIntent();
-                        } catch (e) {
-                            if (e.code === 'invalid_or_expired_token') {
-                                // Token หมดอายุจริงหรือสิทธิ์ถูกถอน — ต้องเข้าสู่ระบบใหม่
-                                pwdModal.classList.add('hidden');
-                                UI.showToast('เซสชันหมดอายุหรือสิทธิ์ถูกเปลี่ยน กรุณาเข้าสู่ระบบใหม่', 'warning');
-                                App.handleLogout();
-                            } else {
-                                // เชื่อมต่อเซิร์ฟเวอร์ไม่ได้ (network / timeout / cold start) — ใช้ข้อมูลที่บันทึกไว้ ไม่ล้าง Token
-                                App.handleSessionRefreshFailure('เชื่อมต่อเซิร์ฟเวอร์ไม่ได้ ยังใช้หน้า Main จากข้อมูลที่บันทึกไว้ได้ แต่กรุณารีโหลดก่อนเข้าแอป');
-                                LineAccount.refreshStatus();
-                            }
+                        }
+                    } catch (e) {
+                        if (e.code === 'invalid_or_expired_token') {
+                            pwdModal.classList.add('hidden');
+                            UI.showToast('เซสชันหมดอายุหรือสิทธิ์ถูกเปลี่ยน กรุณาเข้าสู่ระบบใหม่', 'warning');
+                            App.handleLogout();
+                        } else {
+                            // Keep credentials for retry, but never expose cached private identity.
+                            App.handleSessionRefreshFailure('ยังยืนยันเซสชันกับ Main ไม่สำเร็จ กรุณารีโหลดหรือเข้าสู่ระบบใหม่');
+                            UI.switchSection('login-section');
                         }
                     }
                 } else {
@@ -2409,6 +2600,10 @@
 
             handleLogin: async (e) => {
                 e.preventDefault();
+                const loginEpoch = state.sessionEpoch, storedToken = safeStorage.getItem(CONFIG.STORAGE_SESSION);
+                const storedMain = safeStorage.getItem('akra_main_session');
+                const isCurrent = () => state.sessionEpoch === loginEpoch && safeStorage.getItem(CONFIG.STORAGE_SESSION) === storedToken
+                    && safeStorage.getItem('akra_main_session') === storedMain;
                 const userEl = document.getElementById('username-input');
                 const pwdEl = document.getElementById('password-input');
                 const username = userEl.value.trim();
@@ -2425,6 +2620,7 @@
                 
                 try {
                     const data = await API.postAction({ action: 'login', id: username, password: pwd });
+                    if (!isCurrent()) return;
                     if (data.status === 'success') {
                         // จัดการการจดจำรหัสพนักงาน (Remember Employee ID)
                         const rememberIdCheckbox = document.getElementById('remember-id-checkbox');
@@ -2456,6 +2652,7 @@
                         }
                     }
                 } catch (error) {
+                    if (!isCurrent()) return;
                     if (error.code === 'invalid_credentials' || error.message === 'invalid_credentials') {
                         UI.showToast("รหัสพนักงานหรือรหัสผ่านไม่ถูกต้อง (หากเข้าครั้งแรก ให้ใช้รหัสพนักงานเป็นรหัสผ่าน)", 'error');
                         pwdEl.focus();
@@ -2518,6 +2715,7 @@
                     App.renderDashboard();
                     App.runPendingNavigation();
                 } catch (error) {
+                    if (state.sessionEpoch !== changeSessionEpoch || error.code === 'session_changed') return;
                     if (error.code === 'invalid_current_password') {
                         UI.showToast("รหัสผ่านปัจจุบันไม่ถูกต้อง (หากเข้าครั้งแรกให้ใช้รหัสพนักงาน)", "error");
                         document.getElementById('curr-pwd-input').focus();
@@ -2537,13 +2735,29 @@
                 }
             },
 
-            handleLogout: () => {
+            handleLogout: (options = {}) => {
+                window.AkraModule?.stopWatchingSession();
+                window.AkraShell?.reset();
                 state.sessionEpoch += 1;
+                AdminInteractive.userPermissionEditor?.reset();
+                AdminInteractive.resetProfile();
+                state.authorizationSaving = false;
+                state.authorizationLoaded = false;
+                state.authorizationRevision = null;
+                state.authorizationAppConfig = null;
+                state.userPermissionEditorReady = false;
+                state.userMutationEditorReady = false;
+                state.authorizationDirty = false;
+                state.users = {};
+                state.permRows = [];
                 state.lifecycleMarker = null;
                 App.closePendingNavigation();
-                safeStorage.removeItem(CONFIG.STORAGE_SESSION);
-                safeStorage.removeItem(CONFIG.STORAGE_USER_DATA);
-                safeStorage.removeItem(CONFIG.STORAGE_USER_DB);
+                if (options.preserveStoredSession !== true) {
+                    safeStorage.setItem('akra_main_session', JSON.stringify({version:1,signedOut:true}));
+                    safeStorage.removeItem(CONFIG.STORAGE_SESSION);
+                    safeStorage.removeItem(CONFIG.STORAGE_USER_DATA);
+                    safeStorage.removeItem(CONFIG.STORAGE_USER_DB);
+                }
                 try {
                     sessionStorage.removeItem('akra_line_link_intent');
                     sessionStorage.removeItem('akra_line_link_user');
@@ -2555,9 +2769,13 @@
                 state.currentPerms = {};
                 state.mustChangePassword = false;
                 state.sessionToken = null;
+                state.identityId = null;
+                state.sessionVersion = null;
+                state.sessionAuthorizationRevision = null;
                 state.sessionRefreshPending = false;
                 state.sessionRefreshFailed = false;
                 LineAccount.state = { loading: false, linked: false, displayName: null, error: null };
+                LineAccount.resetOperations?.();
                 LineAccount.updateHeaderButton();
                 LineAccount.closeModal();
                 state.appActiveCategory = 'all';
@@ -2574,6 +2792,7 @@
             },
 
             renderDashboard: () => {
+                window.AkraShell?.sync();
                 const userDisplay = document.getElementById('user-name-display');
                 userDisplay.replaceChildren();
                 userDisplay.append(document.createTextNode(String(state.currentUser || '')));
@@ -2676,16 +2895,15 @@
                     UI.showToast('ไม่สามารถเปิดแอปนี้ได้ เนื่องจาก URL ไม่ถูกต้อง', 'error');
                     return;
                 }
-                const target = new URL(safeUrl);
-                target.searchParams.set('sso', state.sessionToken);
-                if (pendingPopup && !pendingPopup.closed) {
-                    pendingPopup.location.replace(target.toString());
-                } else if (wasQueued) {
-                    window.location.assign(target.toString());
-                } else {
-                    window.open(target.toString(), '_blank', 'noopener');
+                const allowedApp = state.appConfig.find(app => app.id === appId && app.url === url && app.roles.some(role => state.currentRoles.includes(role)));
+                if (!allowedApp) {
+                    UI.showToast('คุณไม่มีสิทธิ์เข้าแอปนี้', 'warning');
+                    return;
                 }
-                API.sendLog("Open App", appId, `${state.currentUser} เปิดแอป`);
+                if (pendingPopup && !pendingPopup.closed) {
+                    try { pendingPopup.close(); } catch (e) {}
+                }
+                if (window.AkraShell.open(appId)) API.sendLog("Open App", appId, `${state.currentUser} เปิดแอป`);
             }
         };
 
