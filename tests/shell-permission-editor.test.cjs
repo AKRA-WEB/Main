@@ -15,7 +15,7 @@ function runtime(){
  let answer=false;const confirms=[];
  const c=vm.createContext({state,window:{AkraPermissionCatalog:catalog},escapeHtml,safeIdentifier:x=>String(x||''),getAppDisplayName:app=>app.name,PERMISSION_APP_DEPENDENCIES:dependencies,lucide:{createIcons(){}},confirm:message=>{confirms.push(message);return answer;},document:{getElementById:id=>nodes[id],createElement:node}});
  vm.runInContext(between('function safeIdentifier(','\n        function getAppDisplayName')+between('function authorizationControlLabel(','\n        function safeAppUrl'),c);
- vm.runInContext(`const AdminInteractive={focusedRole:'SUPERVISOR',authorizationApps:()=>state.authorizationAppConfig||state.appConfig,renderAppMatrix(){},renderPermMatrix(){},${between('renderRoleAccessEditor: () =>','            saveAuthorizationChanges:')}${between('togglePermRole: (','            savePermConfig:')}};this.editor=AdminInteractive;`,c);
+ vm.runInContext(`const AdminInteractive={focusedRole:'SUPERVISOR',authorizationApps:()=>state.authorizationAppConfig||state.appConfig,${between('renderRoleAccessEditor: () =>','            saveAuthorizationChanges:')}${between('togglePermRole: (','\n        };')}};this.editor=AdminInteractive;`,c);
  return{c,state,nodes,confirms,confirm:value=>answer=value};
 }
 test('role editor renders actual action scope and stable labels, escapes unknown definitions',()=>{

@@ -34,6 +34,9 @@
             outline: 3px solid #E35205;
             outline-offset: 3px;
         }
+        .authorization-details > summary { list-style: none; }
+        .authorization-details > summary::-webkit-details-marker { display: none; }
+        .authorization-details[open] .authorization-details-chevron { transform: rotate(180deg); }
         @keyframes fadeIn {
             from { opacity: 0; transform: translateY(10px); }
             to { opacity: 1; transform: translateY(0); }
@@ -331,10 +334,7 @@
                         <i data-lucide="users" class="w-4 h-4"></i> จัดการพนักงาน
                     </button>
                     <button id="tab-btn-apps" onclick="AdminInteractive.switchTab('apps')" class="px-5 py-2 rounded-lg font-medium text-slate-500 hover:text-brand-blue transition-all flex items-center gap-2 whitespace-nowrap">
-                        <i data-lucide="layout-grid" class="w-4 h-4"></i> ตั้งค่าการเห็นแอป
-                    </button>
-                    <button id="tab-btn-perms" onclick="AdminInteractive.switchTab('perms')" class="px-5 py-2 rounded-lg font-medium text-slate-500 hover:text-brand-blue transition-all flex items-center gap-2 whitespace-nowrap">
-                        <i data-lucide="shield-check" class="w-4 h-4"></i> สิทธิ์ละเอียด
+                        <i data-lucide="shield-check" class="w-4 h-4"></i> ตั้งค่าสิทธิ์
                     </button>
                 </div>
             </div>
@@ -437,20 +437,20 @@
             </article>
         </section>
 
-        <!-- [TAB 2] จัดการแอป -->
-        <section id="tab-content-apps" class="hidden flex flex-col flex-grow bg-white rounded-2xl shadow-xl border-t-8 border-t-brand-blue overflow-y-auto p-6 min-h-0">
+        <!-- [TAB 2] ตั้งค่าสิทธิ์แบบรวม -->
+        <section id="tab-content-apps" class="hidden flex flex-col flex-grow bg-white rounded-2xl shadow-xl border border-brand-blue/20 overflow-y-auto p-6 min-h-0">
             <div class="mb-6 p-5 bg-slate-50 border border-slate-200 rounded-2xl">
                 <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-4">
                     <div>
                         <h3 class="text-xl font-bold text-brand-blue flex items-center gap-2">
-                            <i data-lucide="user-cog" class="w-6 h-6 text-brand-orange"></i> จัดสิทธิ์ตาม Role
+                            <i data-lucide="user-cog" class="w-6 h-6 text-brand-orange"></i> ตั้งค่าสิทธิ์การใช้งาน
                         </h3>
-                        <p class="text-slate-500 text-sm mt-1">เลือก Role แล้วกำหนดทั้งสิทธิ์เข้าแอปและสิทธิ์การทำงานในจอเดียว</p>
+                        <p class="text-slate-500 text-sm mt-1">เลือก Role แล้วกำหนดการเห็นแอปและสิทธิ์ย่อยจากที่เดียว</p>
                     </div>
                     <div class="flex flex-col sm:flex-row gap-3 w-full sm:w-auto">
                         <select id="role-access-selector" aria-describedby="authorization-load-status" onchange="AdminInteractive.selectRoleAccess(this.value)" class="px-4 py-2.5 rounded-xl bg-white border border-slate-200 text-brand-blue font-semibold min-w-[180px]" disabled></select>
                         <button id="save-role-access-btn" onclick="AdminInteractive.saveRoleAccess()" class="bg-brand-orange hover:bg-[#c94804] text-white px-6 py-2.5 rounded-xl font-semibold shadow-md transition-all flex items-center justify-center gap-2 shrink-0" disabled>
-                            <i data-lucide="save" class="w-4 h-4"></i> บันทึกสิทธิ์ Role นี้
+                            <i data-lucide="save" class="w-4 h-4"></i> บันทึกสิทธิ์
                         </button>
                     </div>
                 </div>
@@ -458,60 +458,9 @@
                 <div id="role-access-editor" class="grid grid-cols-1 md:grid-cols-2 gap-3"></div>
             </div>
 
-            <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-4">
-                <div>
-                    <h3 class="text-lg font-bold text-brand-blue flex items-center gap-2">
-                        <i data-lucide="sliders" class="w-6 h-6 text-brand-orange"></i> ตารางสิทธิ์การมองเห็นแอป (App-Role Matrix)
-                    </h3>
-                    <p class="text-slate-500 text-sm mt-1">มุมมองขั้นสูงสำหรับเปรียบเทียบทุก Role พร้อมกัน</p>
-                </div>
-                <button id="save-app-config-btn" onclick="AdminInteractive.saveAppConfig()" class="bg-brand-blue hover:bg-[#121670] text-white px-6 py-2.5 rounded-xl font-semibold shadow-md transition-all flex items-center gap-2 shrink-0" disabled>
-                    <i data-lucide="save" class="w-4 h-4"></i> บันทึกการตั้งค่าแอป
-                </button>
-            </div>
-
-            <div class="overflow-x-auto border border-slate-200 rounded-xl">
-                <table class="w-full text-left border-collapse min-w-[700px]">
-                    <thead class="bg-slate-50">
-                        <tr id="app-matrix-header-row" class="border-b border-slate-200">
-                            <th class="p-4 font-bold text-slate-700 bg-slate-100 border-r border-slate-200">แอปพลิเคชัน / ระบบ</th>
-                        </tr>
-                    </thead>
-                    <tbody id="app-permission-matrix" class="divide-y divide-slate-100"></tbody>
-                </table>
-            </div>
-            <div class="mt-4 p-4 bg-orange-50 text-brand-orange rounded-xl text-sm flex items-start gap-3">
+            <div class="mt-auto p-4 bg-orange-50 text-[#9a3412] rounded-xl text-sm flex items-start gap-3">
                 <i data-lucide="info" class="w-5 h-5 shrink-0 mt-0.5"></i>
-                <p><b>หมายเหตุ:</b> การตั้งค่าส่วนนี้จะถูกซิงค์ไปยัง Google Sheets อัตโนมัติ (แผ่นงานชื่อ AppConfig) เพื่อให้การตั้งค่าสะท้อนไปยังพนักงานทุกคนทันทีที่เข้าสู่ระบบครั้งถัดไป</p>
-            </div>
-        </section>
-
-        <!-- [TAB 3] สิทธิ์ละเอียด -->
-        <section id="tab-content-perms" class="hidden flex flex-col flex-grow bg-white rounded-2xl shadow-xl border-t-8 border-t-brand-orange overflow-hidden p-6 min-h-0">
-            <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-4">
-                <div>
-                    <h3 class="text-xl font-bold text-brand-blue flex items-center gap-2">
-                        <i data-lucide="shield-check" class="w-6 h-6 text-brand-orange"></i> ตารางสิทธิ์การทำงาน (Permission Matrix)
-                    </h3>
-                    <p class="text-slate-500 text-sm mt-1">กำหนดว่า Role ใดทำ Action อะไรได้ในแต่ละแอป — หลังบันทึก หน้าที่เปิดค้างอาจต้องโหลดสิทธิ์ใหม่ก่อนทำรายการต่อ</p>
-                </div>
-                <button id="save-perm-config-btn" onclick="AdminInteractive.savePermConfig()" class="bg-brand-orange hover:bg-[#c94804] text-white px-6 py-2.5 rounded-xl font-semibold shadow-md transition-all flex items-center gap-2 shrink-0" disabled>
-                    <i data-lucide="save" class="w-4 h-4"></i> บันทึกสิทธิ์
-                </button>
-            </div>
-            <div class="overflow-auto border border-slate-200 rounded-xl flex-1 min-h-0">
-                <table class="w-full text-left border-collapse min-w-[600px]">
-                    <thead class="bg-slate-50 sticky top-0 z-10">
-                        <tr id="perm-matrix-header-row" class="border-b border-slate-200">
-                            <th class="p-3 font-bold text-slate-700 bg-slate-100 border-r border-slate-200 min-w-[220px]">แอป / Action</th>
-                        </tr>
-                    </thead>
-                    <tbody id="perm-matrix-body" class="divide-y divide-slate-100"></tbody>
-                </table>
-            </div>
-            <div class="mt-4 p-4 bg-orange-50 text-brand-orange rounded-xl text-sm flex items-start gap-3">
-                <i data-lucide="info" class="w-5 h-5 shrink-0 mt-0.5"></i>
-                <p><b>หมายเหตุ:</b> คอลัมน์ ADMIN ล็อกอยู่เสมอ ไม่สามารถปลด ADMIN ออกจากสิทธิ์ใดได้</p>
+                <p><b>วิธีใช้:</b> ปิดการเข้าแอปจะปิดสิทธิ์ย่อยของ Role นั้นด้วย ส่วนการเปิดสิทธิ์ย่อยจะเปิดสิทธิ์เข้าแอปให้โดยอัตโนมัติ และคอลัมน์ ADMIN จะถูกล็อกไว้เสมอ</p>
             </div>
         </section>
     </main>
@@ -647,7 +596,7 @@
             STORAGE_USER_DATA: "akra_user_data",
             STORAGE_APP_CONFIG: "akra_app_config"
         };
-        const CURRENT_VERSION = "20260919.12";
+        const CURRENT_VERSION = "20260919.13";
         async function checkAppVersion() {
             try {
                 const res = await fetch('version.json?t=' + Date.now());
@@ -1256,12 +1205,12 @@
             syncAuthorizationControls: (message) => {
                 AdminInteractive.syncProfileControls();
                 const disabled = !state.authorizationLoaded || state.authorizationSaving;
-                ['refresh-data-btn', 'role-access-selector', 'save-role-access-btn', 'save-app-config-btn', 'save-perm-config-btn'].forEach(id => {
+                ['refresh-data-btn', 'role-access-selector', 'save-role-access-btn'].forEach(id => {
                     const control = document.getElementById(id);
                     if (control) control.disabled = id === 'refresh-data-btn' ? state.authorizationSaving : disabled;
                 });
                 if (disabled) {
-                    document.querySelectorAll('#role-access-editor input, #app-permission-matrix input, #perm-matrix-body input').forEach(control => {
+                    document.querySelectorAll('#role-access-editor input').forEach(control => {
                         control.disabled = true;
                     });
                 }
@@ -1321,8 +1270,6 @@
                         AdminInteractive.renderUserList();
                         AdminInteractive.setupAppPreviewGrid();
                         AdminInteractive.renderRoleAccessEditor();
-                        AdminInteractive.renderAppMatrix();
-                        AdminInteractive.renderPermMatrix();
                         AdminInteractive.reconcileProfile();
                         AdminInteractive.loadUserPermissions();
                         if (dependencyRepairs.length) {
@@ -1395,7 +1342,7 @@
             },
 
             switchTab: (tabName) => {
-                ['users','apps','perms'].forEach(t => {
+                ['users','apps'].forEach(t => {
                     document.getElementById(`tab-content-${t}`).classList.toggle('hidden', t !== tabName);
                     const btn = document.getElementById(`tab-btn-${t}`);
                     if (!btn) return;
@@ -1406,7 +1353,6 @@
                     }
                 });
                 if (tabName === 'apps') AdminInteractive.renderRoleAccessEditor();
-                if (tabName === 'perms') AdminInteractive.renderPermMatrix();
             },
 
             renderUserList: () => {
@@ -1655,6 +1601,7 @@
                     const permissionRows = state.permRows.filter(row =>
                         (PERMISSION_APP_DEPENDENCIES[row.appId] || row.appId) === app.id
                     );
+                    const activeActionCount = permissionRows.filter(row => row[AdminInteractive.focusedRole] === true).length;
                     const actionControls = permissionRows.length
                         ? permissionRows.map(row => {
                             const permissionAppId = safeIdentifier(row.appId);
@@ -1680,14 +1627,24 @@
                             <span class="font-semibold text-slate-800 truncate">${escapeHtml(getAppDisplayName(app))}</span>
                             ${app.isActive === false ? '<small class="text-slate-600">ปิดใช้งาน</small>' : ''}
                         </div>
-                        <label class="flex items-center gap-2 text-xs font-semibold text-brand-blue shrink-0 ${isAdmin ? 'opacity-50' : 'cursor-pointer'}">
-                            เข้าแอป
+                        <div class="flex items-center gap-3 shrink-0">
+                            <span class="text-xs font-semibold ${canEnter ? 'text-emerald-600' : 'text-slate-500'}">${canEnter ? 'เข้าได้' : 'ปิดอยู่'}</span>
+                            <label class="flex items-center gap-2 text-xs font-semibold text-brand-blue ${isAdmin ? 'opacity-50' : 'cursor-pointer'}">
+                                เห็นแอป
                             <input type="checkbox" ${canEnter ? 'checked' : ''} ${isAdmin ? 'disabled' : ''}
                                 aria-label="${escapeHtml(authorizationControlLabel('app', { ...app, displayName: getAppDisplayName(app) }, null, focusedRole))}"
                                 onchange="AdminInteractive.setAppRole('${appId}','${roleVal}',this.checked)"
                                 class="w-4 h-4 accent-brand-blue">
-                        </label>
-                    </div><div class="border-t border-slate-100 pt-2">${actionControls}</div>`;
+                            </label>
+                        </div>
+                    </div>
+                    ${permissionRows.length ? `<details class="authorization-details mt-3 border-t border-slate-100 pt-3" ${activeActionCount ? 'open' : ''}>
+                        <summary class="flex items-center justify-between gap-3 cursor-pointer text-xs font-semibold text-slate-600">
+                            <span>สิทธิ์ย่อย</span>
+                            <span class="inline-flex items-center gap-1 text-brand-blue">${activeActionCount}/${permissionRows.length} เปิดใช้งาน <i data-lucide="chevron-down" class="authorization-details-chevron w-4 h-4 transition-transform"></i></span>
+                        </summary>
+                        <div class="border-t border-slate-100 mt-3 pt-2">${actionControls}</div>
+                    </details>` : `<p class="text-xs text-slate-500 border-t border-slate-100 pt-3">${escapeHtml(window.AkraPermissionCatalog.appNote(app.id))}</p>`}`;
                     editor.appendChild(card);
                 });
                 lucide.createIcons({ root: editor });
@@ -1715,7 +1672,6 @@
                     const affected = dependentPermissions.map(row => row.permKey).join(', ');
                     if (!confirm(`การปิดสิทธิ์เข้าแอปจะยกเลิก Action ต่อไปนี้ด้วย: ${affected}\nยืนยันดำเนินการหรือไม่?`)) {
                         AdminInteractive.renderRoleAccessEditor();
-                        AdminInteractive.renderAppMatrix();
                         return;
                     }
                     dependentPermissions.forEach(row => { row[roleVal] = false; });
@@ -1725,10 +1681,7 @@
                 if (!checked && index !== -1) { app.roles.splice(index, 1); changed = true; }
                 if (changed) AdminInteractive.markAuthorizationDirty();
                 AdminInteractive.renderRoleAccessEditor();
-                AdminInteractive.renderAppMatrix();
-                AdminInteractive.renderPermMatrix();
             },
-
             saveAuthorizationChanges: async (button, successMessage, logDetails) => {
                 if (!AdminInteractive.requireAuthorizationReady() || state.authorizationSaving) return false;
                 if (!AdminInteractive.confirmProfileLeave()) return false;
@@ -1767,8 +1720,6 @@
                       state.authorizationSaving = false;
                       if (state.authorizationLoaded) {
                         AdminInteractive.renderRoleAccessEditor();
-                        AdminInteractive.renderAppMatrix();
-                        AdminInteractive.renderPermMatrix();
                         AdminInteractive.setupAppPreviewGrid();
                         if (AdminInteractive.editingUserId) AdminInteractive.updateAppPreview();
                       }
@@ -1782,157 +1733,9 @@
 
             saveRoleAccess: async () => AdminInteractive.saveAuthorizationChanges(
                 document.getElementById('save-role-access-btn'),
-                `บันทึกสิทธิ์ ${AdminInteractive.focusedRole} สำเร็จ`,
-                `ปรับสิทธิ์ Role: ${AdminInteractive.focusedRole}`
+                'บันทึกสิทธิ์สำเร็จ — มีผลครั้งถัดไปที่พนักงาน Login',
+                `ปรับสิทธิ์จากหน้า Unified Authorization (Role: ${AdminInteractive.focusedRole})`
             ),
-
-            renderAppMatrix: () => {
-                const tbody = document.getElementById('app-permission-matrix');
-                const headerRow = document.getElementById('app-matrix-header-row');
-                if (!state.authorizationLoaded) {
-                    tbody.innerHTML = '';
-                    return;
-                }
-
-                if (headerRow.children.length === 1) {
-                    state.roleConfig.forEach(r => {
-                        const th = document.createElement('th');
-                        th.className = "p-4 font-bold text-slate-700 bg-slate-100 text-center border-l border-slate-200 min-w-[100px]";
-                        th.innerHTML = `<i data-lucide="${safeIdentifier(r.icon, 'shield')}" class="w-4 h-4 mx-auto mb-1 text-brand-orange"></i>${escapeHtml(r.label)}`;
-                        headerRow.appendChild(th);
-                    });
-                }
-
-                tbody.innerHTML = '';
-                AdminInteractive.authorizationApps().forEach(app => {
-                    const tr = document.createElement('tr');
-                    tr.className = "hover:bg-brand-blue/5 transition-colors";
-
-                    let roleCells = '';
-                    state.roleConfig.forEach(r => {
-                        const appId = safeIdentifier(app.id);
-                        const roleVal = safeIdentifier(r.val);
-                        if (!appId || !roleVal) return;
-                        const hasRole = app.roles.includes(r.val);
-                        const isAdminCol = r.val === 'ADMIN';
-                        const checkedAttr = hasRole ? 'checked' : '';
-                        const disabledAttr = isAdminCol ? 'disabled' : '';
-                        const cursorClass = isAdminCol ? 'cursor-not-allowed opacity-50' : 'cursor-pointer';
-
-                        roleCells += `
-                            <td class="p-4 text-center border-l border-slate-100 align-middle">
-                                <label class="inline-flex items-center ${cursorClass}">
-                                    <input type="checkbox" class="sr-only peer authorization-switch" ${checkedAttr} ${disabledAttr}
-                                           aria-label="${escapeHtml(authorizationControlLabel('app', { ...app, displayName: getAppDisplayName(app) }, null, r))}"
-                                           onchange="AdminInteractive.toggleMatrixRole('${appId}', '${roleVal}')">
-                                    <div class="authorization-switch-track w-11 h-6 bg-slate-200 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-brand-blue relative"></div>
-                                </label>
-                            </td>
-                        `;
-                    });
-
-                    tr.innerHTML = `
-                        <td class="p-4 font-medium text-slate-800 border-r border-slate-200 bg-white">
-                            <div class="flex items-center gap-3">
-                                <div class="w-8 h-8 rounded-lg bg-slate-100 text-slate-500 flex items-center justify-center shrink-0">
-                                    <i data-lucide="${safeIdentifier(app.icon, 'box')}" class="w-4 h-4"></i>
-                                </div>
-                                <span>${escapeHtml(getAppDisplayName(app))}</span>
-                                ${app.isActive === false ? '<small class="text-slate-600">ปิดใช้งาน</small>' : ''}
-                            </div>
-                        </td>
-                        ${roleCells}
-                    `;
-                    tbody.appendChild(tr);
-                });
-                lucide.createIcons();
-            },
-
-            toggleMatrixRole: (appId, roleVal) => {
-                const app = AdminInteractive.authorizationApps().find(a => a.id === appId);
-                if(!app) return;
-                const roleIdx = app.roles.indexOf(roleVal);
-                AdminInteractive.setAppRole(appId, roleVal, roleIdx === -1);
-            },
-            saveAppConfig: async () => AdminInteractive.saveAuthorizationChanges(
-                document.getElementById('save-app-config-btn'),
-                'บันทึกตารางสิทธิ์ลงฐานข้อมูลสำเร็จ',
-                'ปรับปรุงตารางสิทธิ์การเข้าแอปบน Database'
-            ),
-            renderPermMatrix: () => {
-                const headerRow = document.getElementById('perm-matrix-header-row');
-                const tbody = document.getElementById('perm-matrix-body');
-                if (!headerRow || !tbody) return;
-                if (!state.authorizationLoaded) {
-                    tbody.innerHTML = '';
-                    return;
-                }
-
-                // Build headers from roleConfig (only once)
-                if (headerRow.children.length === 1) {
-                    state.roleConfig.forEach(r => {
-                        const th = document.createElement('th');
-                        th.className = "p-3 font-bold text-slate-700 bg-slate-100 text-center border-l border-slate-200 min-w-[90px] text-sm";
-                        th.innerHTML = r.val === 'ADMIN'
-                            ? `<i data-lucide="${safeIdentifier(r.icon, 'shield')}" class="w-4 h-4 mx-auto mb-1 text-slate-400"></i>${escapeHtml(r.label)} 🔒`
-                            : `<i data-lucide="${safeIdentifier(r.icon, 'shield')}" class="w-4 h-4 mx-auto mb-1 text-brand-orange"></i>${escapeHtml(r.label)}`;
-                        headerRow.appendChild(th);
-                    });
-                }
-
-                const APP_LABELS = {
-                    'app-w5': MAIN_APP_LABELS['app-w5'],
-                    'app-akra': MAIN_APP_LABELS['app-w5'],
-                    'app-trd': MAIN_APP_LABELS['app-trd'],
-                    'app-gr': MAIN_APP_LABELS['app-gr'],
-                    'app-pr': MAIN_APP_LABELS['app-pr'],
-                    'app-pick': MAIN_APP_LABELS['app-pick'],
-                    'app-tracking': MAIN_APP_LABELS['app-tracking'],
-                    'app-po': MAIN_APP_LABELS['app-tracking'],
-                    'app-damage': MAIN_APP_LABELS['app-damage'],
-                    'app-ret': MAIN_APP_LABELS['app-damage'],
-                    'app-kpi': MAIN_APP_LABELS['app-kpi'],
-                    'app-manual': MAIN_APP_LABELS['app-manual']
-                };
-                tbody.innerHTML = '';
-                let lastAppId = null;
-
-                state.permRows.forEach(row => {
-                    if (row.appId !== lastAppId) {
-                        lastAppId = row.appId;
-                        const appTr = document.createElement('tr');
-                        appTr.className = "bg-brand-blue/5";
-                        appTr.innerHTML = `<td colspan="${state.roleConfig.length + 1}" class="p-3 font-bold text-brand-blue text-sm">${escapeHtml(APP_LABELS[row.appId] || row.appId)}</td>`;
-                        tbody.appendChild(appTr);
-                    }
-
-                    const tr = document.createElement('tr');
-                    tr.className = "hover:bg-slate-50 transition-colors";
-                    const permission = window.AkraPermissionCatalog.describe(row.appId, row.permKey);
-                    let cells = `<td class="p-3 pl-6 text-slate-700 text-sm border-r border-slate-100">${escapeHtml(permission.label)}<small class="block mt-1 text-slate-500">${escapeHtml(permission.detail)}</small></td>`;
-                    state.roleConfig.forEach(r => {
-                        const appId = safeIdentifier(row.appId);
-                        const permKey = safeIdentifier(row.permKey);
-                        const roleVal = safeIdentifier(r.val);
-                        if (!appId || !permKey || !roleVal) return;
-                        const isChecked = row[r.val] === true;
-                        const isAdminCol = r.val === 'ADMIN';
-                        cells += `
-                            <td class="p-3 text-center border-l border-slate-100">
-                                <label class="inline-flex items-center ${isAdminCol ? 'cursor-not-allowed opacity-40' : 'cursor-pointer'}">
-                                    <input type="checkbox" class="sr-only peer authorization-switch" ${isChecked ? 'checked' : ''} ${isAdminCol ? 'disabled' : ''}
-                                        aria-label="${escapeHtml(authorizationControlLabel('permission', { id: row.appId, name: APP_LABELS[row.appId] || row.appId }, { key: row.permKey, label: permission.label }, r))}"
-                                        onchange="AdminInteractive.togglePermRole('${appId}','${permKey}','${roleVal}',this.checked)">
-                                    <div class="authorization-switch-track w-10 h-5 bg-slate-200 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-brand-blue relative"></div>
-                                </label>
-                            </td>`;
-                    });
-
-                    tr.innerHTML = cells;
-                    tbody.appendChild(tr);
-                });
-                lucide.createIcons();
-            },
 
             togglePermRole: (appId, permKey, roleVal, checked) => {
                 if (!state.authorizationLoaded || state.authorizationSaving) return;
@@ -1947,14 +1750,7 @@
                 }
                 AdminInteractive.markAuthorizationDirty();
                 AdminInteractive.renderRoleAccessEditor();
-                AdminInteractive.renderAppMatrix();
-            },
-
-            savePermConfig: async () => AdminInteractive.saveAuthorizationChanges(
-                document.getElementById('save-perm-config-btn'),
-                'บันทึกสิทธิ์สำเร็จ — มีผลครั้งถัดไปที่พนักงาน Login',
-                'ปรับ Permission Matrix'
-            ),
+            }
         };
 
         const LineAccount = {
