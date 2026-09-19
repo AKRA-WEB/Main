@@ -94,6 +94,15 @@
         }) || null;
     }
 
+    function hideEmbeddedLogout(header) {
+        const logout = existingEmbeddedAction(header, 'logout');
+        if (!logout) return;
+        logout.dataset.akraShellChildLogout = 'true';
+        logout.hidden = true;
+        logout.setAttribute('aria-hidden', 'true');
+        logout.tabIndex = -1;
+    }
+
     function installEmbeddedHeaderStyle(doc) {
         if (doc.getElementById('akra-shell-embedded-style')) return;
         const style = doc.createElement('style');
@@ -123,6 +132,7 @@
             .akra-shell-injected-action:hover { opacity: .82; }
             .akra-shell-injected-action:focus-visible { outline: 3px solid rgba(59,130,246,.42); outline-offset: 2px; }
             .akra-shell-injected-action svg { fill: none; height: 17px; stroke: currentColor; stroke-linecap: round; stroke-linejoin: round; stroke-width: 1.8; width: 17px; }
+            [data-akra-shell-child-logout] { display: none !important; }
             @media (max-width: 640px) {
                 .akra-shell-injected-actions { gap: 4px !important; }
                 .w5-topbar .w5-operator { display: none !important; }
@@ -163,9 +173,9 @@
         if (!match) return false;
         const { element: header, rule } = match;
         installEmbeddedHeaderStyle(doc);
+        hideEmbeddedLogout(header);
         const ready = ensureEmbeddedAction(header, rule, 'home', 'กลับหน้าหลัก', '<path d="m3 10 9-7 9 7"/><path d="M5 9.5V21h14V9.5"/><path d="M9 21v-7h6v7"/>', () => home())
-            && ensureEmbeddedAction(header, rule, 'refresh', 'รีเฟรช', '<path d="M20 11a8 8 0 0 0-14.8-4L3 9"/><path d="M3 4v5h5"/><path d="M4 13a8 8 0 0 0 14.8 4L21 15"/><path d="M21 20v-5h-5"/>', () => open(active.id, {reload:true}))
-            && ensureEmbeddedAction(header, rule, 'logout', 'ออกจากระบบ', '<path d="M10 4H5v16h5"/><path d="m14 8 4 4-4 4"/><path d="M18 12H9"/>', () => { if (confirmLeave()) host.logout(); });
+            && ensureEmbeddedAction(header, rule, 'refresh', 'รีเฟรช', '<path d="M20 11a8 8 0 0 0-14.8-4L3 9"/><path d="M3 4v5h5"/><path d="M4 13a8 8 0 0 0 14.8 4L21 15"/><path d="M21 20v-5h-5"/>', () => open(active.id, {reload:true}));
         if (ready) {
             active.compactHeader = true;
             panel.classList.add('shell-child-header');
