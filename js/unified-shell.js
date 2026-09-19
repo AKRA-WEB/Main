@@ -85,7 +85,7 @@
 
     function existingEmbeddedAction(header, type) {
         return [...header.querySelectorAll('button, a')].find(element => {
-            if (element.dataset.akraShellAction) return false;
+            if (element.dataset.akraShellAction) return element.dataset.akraShellAction === type;
             const signature = actionSignature(element);
             if (type === 'home') return element.matches('[data-auth-main], .trd-topbar__action--portal')
                 || /akramodule\.home|gotoportal|gotomain|returntomain|portal/.test(signature.replace(/\s+/g, ''));
