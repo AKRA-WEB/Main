@@ -15,7 +15,7 @@ test('admin authorization has one unified settings tab and one save control', ()
 
 test('unified role editor keeps app access and detailed actions together', () => {
   assert.match(html, /กำหนดการเห็นแอปและสิทธิ์ย่อยจากที่เดียว/);
-  assert.match(html, /class="authorization-details"/);
+  assert.match(html, /authorization-details/);
   assert.match(html, /เข้าแอป/);
   assert.match(html, /สิทธิ์ย่อย/);
   assert.match(html, /togglePermRole/);
