@@ -1,19 +1,27 @@
 #unified-shell[hidden], #unified-shell [hidden] { display: none !important; }
 #unified-shell { position: fixed; inset: 0; z-index: 40; display: flex; flex-direction: column; background: #f8fafc; color: #172033; }
-.shell-toolbar { display: flex; align-items: center; flex-wrap: wrap; gap: 12px; padding: 10px 16px; border-bottom: 1px solid #dce3ed; background: #fff; flex-shrink: 0; }
-.shell-toolbar button, .shell-toolbar select, #shell-retry { font: inherit; min-height: 40px; border: 1px solid #cbd5e1; border-radius: 8px; background: #fff; padding: 6px 12px; color: #172033; cursor: pointer; }
-.shell-toolbar select { max-width: min(440px, 100%); min-width: 0; flex: 1; }
+.shell-toolbar { display: flex; align-items: center; gap: 10px; min-height: 58px; padding: 8px 16px; border-bottom: 1px solid #dce3ed; background: #fff; flex-shrink: 0; }
+.shell-toolbar button, .shell-toolbar select, #shell-retry { font: inherit; min-height: 40px; border: 1px solid #cbd5e1; border-radius: 10px; background: #fff; padding: 6px 11px; color: #172033; cursor: pointer; }
+.shell-toolbar button { display: inline-flex; align-items: center; justify-content: center; gap: 7px; white-space: nowrap; }
+.shell-toolbar button svg { width: 17px; height: 17px; fill: none; stroke: currentColor; stroke-linecap: round; stroke-linejoin: round; stroke-width: 1.8; }
+.shell-toolbar button:hover { background: #f8fafc; border-color: #94a3b8; }
 .shell-toolbar button:focus-visible, .shell-toolbar select:focus-visible { outline: 3px solid #3b82f6; outline-offset: 2px; }
-#shell-user { margin-left: auto; font-size: 13px; }
+.shell-app-context { display: grid; min-width: 0; gap: 1px; }
+.shell-app-context strong { overflow: hidden; color: #172033; font-size: 14px; line-height: 1.25; text-overflow: ellipsis; white-space: nowrap; }
+#shell-user { overflow: hidden; color: #64748b; font-size: 11px; line-height: 1.25; text-overflow: ellipsis; white-space: nowrap; }
+.shell-toolbar-actions { display: flex; align-items: center; gap: 6px; margin-left: auto; }
 #shell-frame-host { flex: 1; min-height: 0; }
 #shell-module-frame { border: 0; display: block; width: 100%; height: 100%; background: white; }
 #shell-status { padding: 24px; text-align: center; }
 #shell-retry { align-self: center; margin: 12px; }
+#unified-shell.shell-child-header .shell-toolbar { display: none; }
 body.shell-active { overflow: hidden; }
 @media (max-width: 640px) {
-    .shell-toolbar { gap: 6px; padding: 8px; }
-    .shell-toolbar button { padding: 6px 8px; font-size: 13px; }
-    .shell-toolbar select { flex-basis: calc(100% - 100px); font-size: 14px; }
-    #shell-user { margin-left: 0; margin-right: auto; }
+    .shell-toolbar { gap: 7px; min-height: 56px; padding: 7px 10px; }
+    .shell-toolbar button { min-width: 40px; padding: 6px 8px; font-size: 12px; }
+    .shell-toolbar button span { display: none; }
+    .shell-toolbar button svg { width: 18px; height: 18px; }
+    .shell-app-context strong { font-size: 13px; }
+    #shell-user { display: none; }
 }
 @media print { .shell-toolbar, #shell-status, #shell-retry { display: none !important; } }
