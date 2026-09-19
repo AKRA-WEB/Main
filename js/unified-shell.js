@@ -41,7 +41,7 @@
         { header: '#trd-topbar', action: '.trd-topbar__actions' },
         { header: '.gr-topbar', action: ':scope > div > div > .space-x-2' },
         { header: '#app-content > nav', action: ':scope > div > div > div:last-child' },
-        { header: '.returnitem-topbar', action: '.returnitem-topbar__actions' },
+        { header: '.returnitem-topbar', action: '.returnitem-topbar__actions', compactActions: true },
         { header: '.app-header', action: ':scope > div > div:last-child' },
         { header: '#app-shell > header', action: ':scope > div > div > div:last-child' },
         { header: '.w5-topbar', action: ':scope > .w5-topbar-inner', createActionGroup: true },
@@ -83,24 +83,31 @@
             .filter(Boolean).join(' ').toLowerCase();
     }
 
+    function matchesEmbeddedAction(element, type) {
+        if (element.dataset.akraShellAction) return element.dataset.akraShellAction === type;
+        const signature = actionSignature(element);
+        if (type === 'home') return element.matches('[data-auth-main], .trd-topbar__action--portal')
+            || /akramodule\.home|gotoportal|gotomain|returntomain|portal/.test(signature.replace(/\s+/g, ''));
+        if (type === 'refresh') return /refresh|รีเฟรช|loadinitialdata|fetchdata/.test(signature);
+        return element.id === 'logout-btn' || /logout|ออกจากระบบ|ออก$/.test(signature);
+    }
+
     function existingEmbeddedAction(header, type) {
         return [...header.querySelectorAll('button, a')].find(element => {
-            if (element.dataset.akraShellAction) return element.dataset.akraShellAction === type;
-            const signature = actionSignature(element);
-            if (type === 'home') return element.matches('[data-auth-main], .trd-topbar__action--portal')
-                || /akramodule\.home|gotoportal|gotomain|returntomain|portal/.test(signature.replace(/\s+/g, ''));
-            if (type === 'refresh') return /refresh|รีเฟรช|loadinitialdata|fetchdata/.test(signature);
-            return element.id === 'logout-btn' || /logout|ออกจากระบบ|ออก$/.test(signature);
+            if (element.hidden || element.getAttribute('aria-hidden') === 'true') return false;
+            return matchesEmbeddedAction(element, type);
         }) || null;
     }
 
-    function hideEmbeddedLogout(header) {
-        const logout = existingEmbeddedAction(header, 'logout');
-        if (!logout) return;
-        logout.dataset.akraShellChildLogout = 'true';
-        logout.hidden = true;
-        logout.setAttribute('aria-hidden', 'true');
-        logout.tabIndex = -1;
+    function hideEmbeddedAction(header, type, marker) {
+        const action = [...header.querySelectorAll('button, a')].find(element => {
+            return !element.dataset.akraShellAction && matchesEmbeddedAction(element, type);
+        });
+        if (!action) return;
+        action.dataset[marker] = 'true';
+        action.hidden = true;
+        action.setAttribute('aria-hidden', 'true');
+        action.tabIndex = -1;
     }
 
     function installEmbeddedHeaderStyle(doc) {
@@ -132,7 +139,9 @@
             .akra-shell-injected-action:hover { opacity: .82; }
             .akra-shell-injected-action:focus-visible { outline: 3px solid rgba(59,130,246,.42); outline-offset: 2px; }
             .akra-shell-injected-action svg { fill: none; height: 17px; stroke: currentColor; stroke-linecap: round; stroke-linejoin: round; stroke-width: 1.8; width: 17px; }
-            [data-akra-shell-child-logout] { display: none !important; }
+            .akra-shell-injected-action--compact { height: 40px !important; min-height: 40px !important; padding: 0 !important; width: 40px !important; }
+            .akra-shell-injected-action--compact span { display: none !important; }
+            [data-akra-shell-child-home], [data-akra-shell-child-logout] { display: none !important; }
             @media (max-width: 640px) {
                 .akra-shell-injected-actions { gap: 4px !important; }
                 .w5-topbar .w5-operator { display: none !important; }
@@ -143,10 +152,11 @@
         (doc.head || doc.documentElement).appendChild(style);
     }
 
-    function injectedAction(doc, type, label, icon, handler) {
+    function injectedAction(doc, type, label, icon, handler, compact) {
         const button = doc.createElement('button');
         button.type = 'button';
         button.className = 'akra-shell-injected-action';
+        if (compact) button.classList.add('akra-shell-injected-action--compact');
         button.dataset.akraShellAction = type;
         button.title = label;
         button.setAttribute('aria-label', label);
@@ -159,7 +169,7 @@
         if (existingEmbeddedAction(header, type)) return true;
         const actionHost = embeddedActionHost(header, rule);
         if (!actionHost) return false;
-        const button = injectedAction(header.ownerDocument, type, label, icon, handler);
+        const button = injectedAction(header.ownerDocument, type, label, icon, handler, rule.compactActions);
         if (type === 'home') actionHost.prepend(button);
         else actionHost.append(button);
         return true;
@@ -173,7 +183,8 @@
         if (!match) return false;
         const { element: header, rule } = match;
         installEmbeddedHeaderStyle(doc);
-        hideEmbeddedLogout(header);
+        hideEmbeddedAction(header, 'home', 'akraShellChildHome');
+        hideEmbeddedAction(header, 'logout', 'akraShellChildLogout');
         const ready = ensureEmbeddedAction(header, rule, 'home', 'กลับหน้าหลัก', '<path d="m3 10 9-7 9 7"/><path d="M5 9.5V21h14V9.5"/><path d="M9 21v-7h6v7"/>', () => home())
             && ensureEmbeddedAction(header, rule, 'refresh', 'รีเฟรช', '<path d="M20 11a8 8 0 0 0-14.8-4L3 9"/><path d="M3 4v5h5"/><path d="M4 13a8 8 0 0 0 14.8 4L21 15"/><path d="M21 20v-5h-5"/>', () => open(active.id, {reload:true}));
         if (ready) {

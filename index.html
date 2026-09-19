@@ -6,7 +6,7 @@
     <title>AKRA Portal | Centralized System</title>
     <link rel="stylesheet" href="css/unified-shell.css?v=20260919.10">
     <script src="js/akra-shell-bridge.js?v=20260918.02"></script>
-    <script src="js/unified-shell.js?v=20260919.11"></script>
+    <script src="js/unified-shell.js?v=20260919.12"></script>
     <script src="js/permission-catalog.js?v=20260918.02"></script>
     <script src="js/user-permission-editor.js?v=20260917.03"></script>
     <link rel="preconnect" href="https://script.google.com">
@@ -647,7 +647,7 @@
             STORAGE_USER_DATA: "akra_user_data",
             STORAGE_APP_CONFIG: "akra_app_config"
         };
-        const CURRENT_VERSION = "20260919.11";
+        const CURRENT_VERSION = "20260919.12";
         async function checkAppVersion() {
             try {
                 const res = await fetch('version.json?t=' + Date.now());
