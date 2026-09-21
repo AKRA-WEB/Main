@@ -50,6 +50,7 @@
 #shell-retry { align-self: center; margin: 12px; }
 #unified-shell.shell-child-header .shell-toolbar { display: none; }
 body.shell-active { overflow: hidden; }
+body.shell-active #dashboard-section { display: none !important; }
 @media (max-width: 900px) {
     .shell-sidebar { width: 72px; flex-basis: 72px; align-items: center; padding-inline: 8px; }
     .shell-sidebar-brand { justify-content: center; padding-inline: 0; border-bottom: 0; }
