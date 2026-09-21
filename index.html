@@ -596,7 +596,7 @@
             STORAGE_USER_DATA: "akra_user_data",
             STORAGE_APP_CONFIG: "akra_app_config"
         };
-        const CURRENT_VERSION = "20260919.13";
+        const CURRENT_VERSION = "20260921.01";
         async function checkAppVersion() {
             try {
                 const res = await fetch('version.json?t=' + Date.now());
@@ -1958,7 +1958,8 @@
                                 timestamp: Date.now()
                             }));
                         } catch (e) {}
-                        window.liff.login({ redirectUri: window.location.href });
+                        const redirectUri = new URL('index.html', window.location.href).toString();
+                        window.liff.login({ redirectUri });
                         return;
                     }
 
