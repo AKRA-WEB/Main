@@ -1,5 +1,24 @@
 #unified-shell[hidden], #unified-shell [hidden] { display: none !important; }
-#unified-shell { position: fixed; inset: 0; z-index: 40; display: flex; flex-direction: column; background: #f8fafc; color: #172033; }
+#unified-shell { position: fixed; inset: 0; z-index: 40; display: flex; background: #f8fafc; color: #172033; }
+.shell-sidebar { display: flex; width: 236px; flex: 0 0 236px; flex-direction: column; gap: 12px; padding: 20px 12px 14px; background: #0f172a; color: #d7e1ef; }
+.shell-sidebar-brand { display: flex; align-items: center; gap: 10px; min-height: 48px; padding: 0 10px 17px; border-bottom: 1px solid #26344c; }
+.shell-sidebar-brand > span:last-child { display: grid; gap: 2px; min-width: 0; }
+.shell-sidebar-brand strong { color: #fff; font-size: 14px; letter-spacing: .02em; }
+.shell-sidebar-brand small { color: #9eafc7; font-size: 10px; }
+.shell-sidebar-mark { display: grid; width: 34px; height: 34px; flex: 0 0 auto; place-items: center; border-radius: 9px; background: #2563eb; color: #fff; font-size: 13px; font-weight: 800; }
+.shell-sidebar-home, .shell-app-link { display: flex; width: 100%; min-height: 44px; align-items: center; gap: 10px; padding: 9px 10px; border: 1px solid transparent; border-radius: 9px; background: transparent; color: #b6c4d9; font: inherit; font-size: 12px; font-weight: 600; text-align: left; cursor: pointer; }
+.shell-sidebar-home svg, .shell-app-link svg { width: 17px; height: 17px; flex: 0 0 auto; fill: none; stroke: currentColor; stroke-linecap: round; stroke-linejoin: round; stroke-width: 1.8; }
+.shell-sidebar-home:hover, .shell-app-link:hover { border-color: #31425f; background: #1b2a43; color: #fff; }
+.shell-sidebar-home:focus-visible, .shell-app-link:focus-visible { outline: 3px solid #60a5fa; outline-offset: 2px; }
+.shell-sidebar-home { color: #e2e8f0; background: #1d4ed8; }
+.shell-sidebar-heading { padding: 6px 10px 0; color: #8394ad; font-size: 10px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; }
+.shell-app-nav { display: grid; gap: 4px; min-height: 0; overflow: auto; padding-right: 2px; }
+.shell-app-link span { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.shell-app-link[aria-current="page"] { border-color: #3b82f6; background: #2563eb; color: #fff; }
+.shell-sidebar-footer { display: grid; gap: 2px; margin-top: auto; padding: 14px 10px 0; border-top: 1px solid #26344c; color: #c9d5e6; font-size: 11px; }
+.shell-sidebar-footer span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.shell-sidebar-footer small { color: #8495ad; font-size: 10px; line-height: 1.45; }
+.shell-workspace { display: flex; min-width: 0; min-height: 0; flex: 1; flex-direction: column; }
 .shell-toolbar { display: flex; align-items: center; gap: 10px; min-height: 58px; padding: 8px 16px; border-bottom: 1px solid #dce3ed; background: #fff; flex-shrink: 0; }
 .shell-toolbar button, .shell-toolbar select, #shell-retry { font: inherit; min-height: 40px; border: 1px solid #cbd5e1; border-radius: 10px; background: #fff; padding: 6px 11px; color: #172033; cursor: pointer; }
 .shell-toolbar button { display: inline-flex; align-items: center; justify-content: center; gap: 7px; white-space: nowrap; }
@@ -16,7 +35,15 @@
 #shell-retry { align-self: center; margin: 12px; }
 #unified-shell.shell-child-header .shell-toolbar { display: none; }
 body.shell-active { overflow: hidden; }
+@media (max-width: 900px) {
+    .shell-sidebar { width: 72px; flex-basis: 72px; align-items: center; padding-inline: 8px; }
+    .shell-sidebar-brand { justify-content: center; padding-inline: 0; border-bottom: 0; }
+    .shell-sidebar-brand > span:last-child, .shell-sidebar-home span, .shell-sidebar-heading, .shell-app-link span, .shell-sidebar-footer { display: none; }
+    .shell-sidebar-home, .shell-app-link { justify-content: center; padding-inline: 0; }
+    .shell-app-nav { width: 100%; }
+}
 @media (max-width: 640px) {
+    .shell-sidebar { display: none; }
     .shell-toolbar { gap: 7px; min-height: 56px; padding: 7px 10px; }
     .shell-toolbar button { min-width: 40px; padding: 6px 8px; font-size: 12px; }
     .shell-toolbar button span { display: none; }

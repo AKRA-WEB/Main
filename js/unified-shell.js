@@ -33,7 +33,7 @@
     function acceptsMessage(event, source, origin) {
         return event.source === source && event.origin === origin && event.data?.channel === 'akra-shell' && event.data.version === 1;
     }
-    let host, panel, selector, status, frameHost, active = null, sequence = 0, readyTimer;
+    let host, panel, selector, status, frameHost, appNav, active = null, sequence = 0, readyTimer;
     let currentHash = '', suspended = false;
     const api = { moduleUrl, routeId, canLaunch, acceptsMessage, init, open, home, reset, sync, tokenFor, confirmLeave };
 
@@ -210,8 +210,10 @@
         selector = document.getElementById('shell-module-select');
         status = document.getElementById('shell-status');
         frameHost = document.getElementById('shell-frame-host');
+        appNav = document.getElementById('shell-app-nav');
         selector.addEventListener('change', () => { if (!open(selector.value)) selector.value = active?.id || ''; });
         document.getElementById('shell-home').addEventListener('click', home);
+        document.getElementById('shell-sidebar-home')?.addEventListener('click', home);
         document.getElementById('shell-refresh').addEventListener('click', () => { if (active) open(active.id, {reload:true}); });
         document.getElementById('shell-retry').addEventListener('click', () => { if (active) open(active.id, {reload:true}); });
         document.getElementById('shell-logout').addEventListener('click', () => { if (confirmLeave()) host.logout(); });
@@ -299,17 +301,38 @@
     function populate() {
         const state = host.state();
         selector.replaceChildren();
+        appNav?.replaceChildren();
         for (const app of state.appConfig || []) {
-            if (!canLaunch(app.id,state) || !moduleUrl(app,window.location.origin)) continue;
+            if (app.isActive === false || !canLaunch(app.id,state) || !moduleUrl(app,window.location.origin)) continue;
             const option = document.createElement('option');
             option.value = app.id;
             option.textContent = host.label(app);
             selector.appendChild(option);
+            if (appNav) {
+                const item = document.createElement('button');
+                item.type = 'button';
+                item.className = 'shell-app-link';
+                item.title = host.label(app);
+                item.setAttribute('aria-label', 'เปิด ' + host.label(app));
+                if (active?.id === app.id) item.setAttribute('aria-current', 'page');
+                const icon = document.createElement('i');
+                icon.setAttribute('data-lucide', app.icon || 'layout-grid');
+                icon.setAttribute('aria-hidden', 'true');
+                const label = document.createElement('span');
+                label.textContent = host.label(app);
+                item.appendChild(icon);
+                item.appendChild(label);
+                item.addEventListener('click', () => open(app.id));
+                appNav.appendChild(item);
+            }
         }
         selector.value = active?.id || '';
         document.getElementById('shell-app-title').textContent = active ? host.label(state.appConfig.find(app => app.id === active.id) || {id:active.id}) : 'กำลังเปิดแอป';
         document.getElementById('shell-user').textContent = state.currentUser || '';
+        const sidebarUser = document.getElementById('shell-sidebar-user');
+        if (sidebarUser) sidebarUser.textContent = state.currentUser || '';
         document.getElementById('shell-admin').hidden = !(state.currentRoles || []).includes('ADMIN');
+        if (window.lucide?.createIcons && appNav) window.lucide.createIcons({ root: appNav });
     }
     function open(id, options = {}) {
         if (!host) return false;

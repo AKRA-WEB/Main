@@ -4,12 +4,12 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>AKRA Portal | Centralized System</title>
-    <link rel="stylesheet" href="css/unified-shell.css?v=20260919.10">
-    <script src="js/akra-shell-bridge.js?v=20260918.02"></script>
-    <script src="js/unified-shell.js?v=20260919.12"></script>
+    <link rel="stylesheet" href="css/unified-shell.css?v=20260921.03">
+    <script src="js/akra-shell-bridge.js?v=20260921.03"></script>
+    <script src="js/unified-shell.js?v=20260921.03"></script>
     <script src="js/permission-catalog.js?v=20260918.02"></script>
     <script src="js/user-permission-editor.js?v=20260917.03"></script>
-    <link rel="preconnect" href="https://script.google.com">
+    <link rel="preconnect" href="https://hgxrrskztbpejirrdpbq.supabase.co">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 
@@ -294,35 +294,50 @@
     </main>
 
     <section id="unified-shell" hidden aria-label="พื้นที่ทำงาน AKRA">
-        <nav class="shell-toolbar" aria-label="เครื่องมือพื้นที่ทำงาน">
-            <button type="button" id="shell-home" title="กลับหน้าหลัก" aria-label="กลับหน้าหลัก">
+        <aside class="shell-sidebar" aria-label="เมนูแอปพลิเคชัน">
+            <div class="shell-sidebar-brand">
+                <span class="shell-sidebar-mark" aria-hidden="true">AK</span>
+                <span><strong>AKRA WEB</strong><small>ศูนย์รวมระบบงาน</small></span>
+            </div>
+            <button type="button" id="shell-sidebar-home" class="shell-sidebar-home" title="กลับหน้าหลัก">
                 <svg aria-hidden="true" viewBox="0 0 24 24" focusable="false"><path d="m3 10 9-7 9 7"/><path d="M5 9.5V21h14V9.5"/><path d="M9 21v-7h6v7"/></svg>
                 <span>หน้าหลัก</span>
             </button>
-            <label for="shell-module-select" class="sr-only">เลือกแอป</label>
-            <select id="shell-module-select" hidden aria-hidden="true" tabindex="-1"></select>
-            <div class="shell-app-context" aria-live="polite">
-                <strong id="shell-app-title">กำลังเปิดแอป</strong>
-                <span id="shell-user"></span>
-            </div>
-            <div class="shell-toolbar-actions">
-                <button type="button" id="shell-refresh" title="รีเฟรชแอป" aria-label="รีเฟรชแอป">
-                    <svg aria-hidden="true" viewBox="0 0 24 24" focusable="false"><path d="M20 11a8 8 0 0 0-14.8-4L3 9"/><path d="M3 4v5h5"/><path d="M4 13a8 8 0 0 0 14.8 4L21 15"/><path d="M21 20v-5h-5"/></svg>
-                    <span>รีเฟรช</span>
+            <div class="shell-sidebar-heading">แอปพลิเคชันของคุณ</div>
+            <nav id="shell-app-nav" class="shell-app-nav" aria-label="สลับแอปพลิเคชัน"></nav>
+            <div class="shell-sidebar-footer"><span id="shell-sidebar-user"></span><small>สิทธิ์และเซสชันควบคุมโดย Main</small></div>
+        </aside>
+        <div class="shell-workspace">
+            <nav class="shell-toolbar" aria-label="เครื่องมือพื้นที่ทำงาน">
+                <button type="button" id="shell-home" title="กลับหน้าหลัก" aria-label="กลับหน้าหลัก">
+                    <svg aria-hidden="true" viewBox="0 0 24 24" focusable="false"><path d="m3 10 9-7 9 7"/><path d="M5 9.5V21h14V9.5"/><path d="M9 21v-7h6v7"/></svg>
+                    <span>หน้าหลัก</span>
                 </button>
-                <button type="button" id="shell-admin" hidden title="จัดการสิทธิ์" aria-label="จัดการสิทธิ์">
-                    <svg aria-hidden="true" viewBox="0 0 24 24" focusable="false"><path d="M12 3 4.5 6v5.5c0 4.8 3.2 7.9 7.5 9.5 4.3-1.6 7.5-4.7 7.5-9.5V6z"/><path d="m9 12 2 2 4-4"/></svg>
-                    <span>สิทธิ์</span>
-                </button>
-                <button type="button" id="shell-logout" title="ออกจากระบบ" aria-label="ออกจากระบบ">
-                    <svg aria-hidden="true" viewBox="0 0 24 24" focusable="false"><path d="M10 4H5v16h5"/><path d="m14 8 4 4-4 4"/><path d="M18 12H9"/></svg>
-                    <span>ออกจากระบบ</span>
-                </button>
-            </div>
-        </nav>
-        <p id="shell-status" role="status" aria-live="polite"></p>
-        <button type="button" id="shell-retry" hidden>ลองเปิดอีกครั้ง</button>
-        <div id="shell-frame-host"></div>
+                <label for="shell-module-select" class="sr-only">เลือกแอป</label>
+                <select id="shell-module-select" hidden aria-hidden="true" tabindex="-1"></select>
+                <div class="shell-app-context" aria-live="polite">
+                    <strong id="shell-app-title">กำลังเปิดแอป</strong>
+                    <span id="shell-user"></span>
+                </div>
+                <div class="shell-toolbar-actions">
+                    <button type="button" id="shell-refresh" title="รีเฟรชแอป" aria-label="รีเฟรชแอป">
+                        <svg aria-hidden="true" viewBox="0 0 24 24" focusable="false"><path d="M20 11a8 8 0 0 0-14.8-4L3 9"/><path d="M3 4v5h5"/><path d="M4 13a8 8 0 0 0 14.8 4L21 15"/><path d="M21 20v-5h-5"/></svg>
+                        <span>รีเฟรช</span>
+                    </button>
+                    <button type="button" id="shell-admin" hidden title="จัดการสิทธิ์" aria-label="จัดการสิทธิ์">
+                        <svg aria-hidden="true" viewBox="0 0 24 24" focusable="false"><path d="M12 3 4.5 6v5.5c0 4.8 3.2 7.9 7.5 9.5 4.3-1.6 7.5-4.7 7.5-9.5V6z"/><path d="m9 12 2 2 4-4"/></svg>
+                        <span>สิทธิ์</span>
+                    </button>
+                    <button type="button" id="shell-logout" title="ออกจากระบบ" aria-label="ออกจากระบบ">
+                        <svg aria-hidden="true" viewBox="0 0 24 24" focusable="false"><path d="M10 4H5v16h5"/><path d="m14 8 4 4-4 4"/><path d="M18 12H9"/></svg>
+                        <span>ออกจากระบบ</span>
+                    </button>
+                </div>
+            </nav>
+            <p id="shell-status" role="status" aria-live="polite"></p>
+            <button type="button" id="shell-retry" hidden>ลองเปิดอีกครั้ง</button>
+            <div id="shell-frame-host"></div>
+        </div>
     </section>
 
     <!-- 3. ส่วนจัดการผู้ใช้งาน (Admin Section) -->
@@ -596,7 +611,7 @@
             STORAGE_USER_DATA: "akra_user_data",
             STORAGE_APP_CONFIG: "akra_app_config"
         };
-        const CURRENT_VERSION = "20260921.01";
+        const CURRENT_VERSION = "20260921.03";
         async function checkAppVersion() {
             try {
                 const res = await fetch('version.json?t=' + Date.now());
