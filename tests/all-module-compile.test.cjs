@@ -7,7 +7,7 @@ const vm=require('node:vm');
 const root=path.resolve(__dirname,'../..');
 const modules=['Main','PO','PR','GR','Returnitem','KPITracker','Picking','TRDAKRA','AKRA','SOP','Evaluation form'];
 const expectedVersions={
- Main:'20260921.04', PO:'20260919.04', PR:'20260921.03', GR:'20260920.04',
+ Main:'20260921.05', PO:'20260919.04', PR:'20260921.03', GR:'20260920.04',
  Returnitem:'20260919.03', KPITracker:'20260921.03', Picking:'20260918.04',
  TRDAKRA:'20260920.03', AKRA:'20260919.05', SOP:'20260919.05', 'Evaluation form':'20260918.05'
 };
