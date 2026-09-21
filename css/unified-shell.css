@@ -1,6 +1,6 @@
 #unified-shell[hidden], #unified-shell [hidden] { display: none !important; }
 #unified-shell { position: fixed; inset: 0; z-index: 40; display: flex; background: #f8fafc; color: #172033; }
-.shell-sidebar { display: flex; width: 236px; flex: 0 0 236px; flex-direction: column; gap: 12px; padding: 20px 12px 14px; background: #0f172a; color: #d7e1ef; }
+.shell-sidebar { display: flex; width: 240px; flex: 0 0 240px; flex-direction: column; gap: 12px; padding: 20px 12px 14px; background: #0f172a; color: #d7e1ef; }
 .shell-sidebar-brand { display: flex; align-items: center; gap: 10px; min-height: 48px; padding: 0 10px 17px; border-bottom: 1px solid #26344c; }
 .shell-sidebar-brand > span:last-child { display: grid; gap: 2px; min-width: 0; }
 .shell-sidebar-brand strong { color: #fff; font-size: 14px; letter-spacing: .02em; }
@@ -13,7 +13,22 @@
 .shell-sidebar-home { color: #e2e8f0; background: #1d4ed8; }
 .shell-sidebar-heading { padding: 6px 10px 0; color: #8394ad; font-size: 10px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; }
 .shell-app-nav { display: grid; gap: 4px; min-height: 0; overflow: auto; padding-right: 2px; }
-.shell-app-link span { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.shell-app-group { display: grid; gap: 2px; }
+.shell-app-row { display: flex; min-width: 0; gap: 2px; }
+.shell-app-row .shell-app-link { flex: 1; min-width: 0; }
+.shell-app-link__label { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.shell-app-toggle { display: grid; width: 34px; min-height: 44px; flex: 0 0 34px; place-items: center; padding: 0; border: 1px solid transparent; border-radius: 9px; color: #8fa5c0; background: transparent; cursor: pointer; }
+.shell-app-toggle:hover { border-color: #31425f; background: #1b2a43; color: #fff; }
+.shell-app-toggle:focus-visible { outline: 3px solid #60a5fa; outline-offset: 2px; }
+.shell-app-toggle svg { width: 15px; height: 15px; fill: none; stroke: currentColor; stroke-linecap: round; stroke-linejoin: round; stroke-width: 1.8; transition: transform .16s ease; }
+.shell-app-group.is-expanded .shell-app-toggle svg { transform: rotate(180deg); }
+.shell-workflow-nav { display: grid; gap: 2px; margin: 0 0 4px 28px; padding: 3px 0 3px 9px; border-left: 1px solid #31425f; }
+.shell-workflow-link { display: flex; min-height: 34px; align-items: center; gap: 8px; padding: 6px 8px; border: 1px solid transparent; border-radius: 7px; color: #9eb0c7; background: transparent; font: inherit; font-size: 11px; font-weight: 500; text-align: left; cursor: pointer; }
+.shell-workflow-link svg { width: 14px; height: 14px; flex: 0 0 auto; fill: none; stroke: currentColor; stroke-linecap: round; stroke-linejoin: round; stroke-width: 1.8; }
+.shell-workflow-link::before { width: 4px; height: 4px; flex: 0 0 4px; border-radius: 50%; background: currentColor; content: ''; }
+.shell-workflow-link:hover { border-color: #31425f; background: #1b2a43; color: #fff; }
+.shell-workflow-link:focus-visible { outline: 3px solid #60a5fa; outline-offset: 2px; }
+.shell-workflow-link[aria-current="page"] { color: #dbeafe; background: rgba(37,99,235,.25); }
 .shell-app-link[aria-current="page"] { border-color: #3b82f6; background: #2563eb; color: #fff; }
 .shell-sidebar-footer { display: grid; gap: 2px; margin-top: auto; padding: 14px 10px 0; border-top: 1px solid #26344c; color: #c9d5e6; font-size: 11px; }
 .shell-sidebar-footer span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
@@ -38,8 +53,9 @@ body.shell-active { overflow: hidden; }
 @media (max-width: 900px) {
     .shell-sidebar { width: 72px; flex-basis: 72px; align-items: center; padding-inline: 8px; }
     .shell-sidebar-brand { justify-content: center; padding-inline: 0; border-bottom: 0; }
-    .shell-sidebar-brand > span:last-child, .shell-sidebar-home span, .shell-sidebar-heading, .shell-app-link span, .shell-sidebar-footer { display: none; }
+    .shell-sidebar-brand > span:last-child, .shell-sidebar-home span, .shell-sidebar-heading, .shell-app-link__label, .shell-sidebar-footer, .shell-app-toggle, .shell-workflow-nav { display: none; }
     .shell-sidebar-home, .shell-app-link { justify-content: center; padding-inline: 0; }
+    .shell-app-row { display: block; }
     .shell-app-nav { width: 100%; }
 }
 @media (max-width: 640px) {

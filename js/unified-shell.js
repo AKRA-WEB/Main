@@ -12,6 +12,68 @@
         // Reserved candidate path; live enablement requires an actual hosted target.
         'app-evaluation': '/Evaluation/'
     });
+    const WORKFLOW_NAV = Object.freeze({
+        'app-w5': [
+            {label:'เบิก-รับ', icon:'boxes', selector:'.w5-bottom-nav button:nth-child(1)'},
+            {label:'ใบจัด', icon:'clipboard-check', selector:'.w5-bottom-nav button:nth-child(2)'},
+            {label:'แดชบอร์ด', icon:'chart-pie', selector:'.w5-bottom-nav button:nth-child(3)'},
+            {label:'จัดการ', icon:'settings', selector:'.w5-bottom-nav button:nth-child(4)'}
+        ],
+        'app-trd': [
+            {label:'หน้าหลัก', icon:'house', selector:'#trd-module-nav .trd-module-tab:nth-child(1)'},
+            {label:'สำรวจสต็อก', icon:'clipboard-check', selector:'#trd-module-nav .trd-module-tab:nth-child(2)'},
+            {label:'จัดส่งสินค้า', icon:'truck', selector:'#trd-module-nav .trd-module-tab:nth-child(3)'},
+            {label:'Analytics', icon:'chart-no-axes-combined', selector:'#trd-module-nav .trd-module-tab:nth-child(4)'},
+            {label:'จัดโลเคชั่น', icon:'map-pin', selector:'#trd-module-nav .trd-module-tab:nth-child(5)'}
+        ],
+        'app-gr': [
+            {label:'รายการบิลรอรับสินค้า', icon:'inbox', selector:'.gr-nav-receiving'},
+            {label:'ประวัติการรับสินค้า', icon:'history', selector:'.gr-nav-product'},
+            {label:'ระบบรับสินค้า (GR)', icon:'trending-up', selector:'.gr-nav-vendor'}
+        ],
+        'app-pr': [
+            {label:'สร้างคำขอสั่งซื้อสินค้า', icon:'file-plus-2', selector:'#pr-warehouse'}
+        ],
+        'app-pick': [
+            {label:'เบิกสินค้า', icon:'clipboard-plus', selector:'#tab-new'},
+            {label:'ประวัติการเบิก', icon:'history', selector:'#tab-history'}
+        ],
+        'app-tracking': [
+            {label:'คำขอสั่งซื้อรอเปิด PO', icon:'file-plus-2', selector:'#btn-tab-pr'},
+            {label:'จัดการบิลจัดซื้อ', icon:'shopping-cart', selector:'#btn-tab-po'},
+            {label:'กระทบยอด (2-Way Matching)', icon:'git-compare-arrows', selector:'#btn-tab-match'},
+            {label:'รายการพร้อมส่งทำใบตั้งหนี้ (APV)', icon:'file-check-2', selector:'#btn-tab-apv'}
+        ],
+        'app-damage': [
+            {label:'ภาพรวมระบบ', icon:'layout-dashboard', selector:'#desktop-nav [data-tab="DASHBOARD"]'},
+            {label:'รับเข้าสินค้าคืน', icon:'plus-circle', selector:'#desktop-nav [data-tab="ADD_RET"]'},
+            {label:'ยังไม่ตรวจสภาพ', icon:'shield-check', selector:'#desktop-nav [data-tab="QC_RET"]'},
+            {label:'รอตัดรอบ POS', icon:'file-down', selector:'#desktop-nav [data-tab="BATCH_RET"]'},
+            {label:'ติดตามงานลูกค้า', icon:'users', selector:'#desktop-nav [data-tab="TRACK_CUST"]'},
+            {label:'แจ้งเคลมชิ้นใหม่', icon:'triangle-alert', selector:'#desktop-nav [data-tab="ADD_CLM"]'},
+            {label:'คลังรับและตรวจสอบ', icon:'warehouse', selector:'#desktop-nav [data-tab="WH_CLM"]'},
+            {label:'คลังสินค้าชำรุด', icon:'package-open', selector:'#desktop-nav [data-tab="MANAGE_CLM"]'},
+            {label:'ติดตามสถานะเคลม', icon:'clipboard-list', selector:'#desktop-nav [data-tab="TRACK_CLM"]'}
+        ],
+        'app-kpi': [
+            {label:'Workload', icon:'briefcase-business', selector:'#dtab-workload'},
+            {label:'Incident QC', icon:'clipboard-check', selector:'#dtab-error'},
+            {label:'5S Audit', icon:'clipboard-list', selector:'#dtab-audit'},
+            {label:'Live Bill Sync', icon:'file-invoice', selector:'#dtab-billcount'},
+            {label:'Dashboard', icon:'chart-pie', selector:'#dtab-dashboard'},
+            {label:'โปรไฟล์ฉัน', icon:'id-card', selector:'#dtab-my-profile'}
+        ],
+        'app-manual': [
+            {label:'คู่มือทั้งหมด', icon:'book-open', selector:'.sidebar [data-view="all"]'},
+            {label:'คู่มือการใช้แอป', icon:'smartphone', selector:'.sidebar [data-view="app"]'},
+            {label:'SOP', icon:'file-text', selector:'.sidebar [data-view="sop"]'},
+            {label:'Workflow', icon:'workflow', selector:'.sidebar [data-view="workflow"]'}
+        ],
+        'app-evaluation': [
+            {label:'ปรับแต่งแบบฟอร์ม', icon:'sliders-horizontal', selector:'#btnOpenEditor'},
+            {label:'พิมพ์แบบฟอร์ม (A4)', icon:'printer', selector:'#btnPrint'}
+        ]
+    });
     function moduleUrl(app, origin) {
         try {
             const url = new URL(app.url);
@@ -34,6 +96,8 @@
         return event.source === source && event.origin === origin && event.data?.channel === 'akra-shell' && event.data.version === 1;
     }
     let host, panel, selector, status, frameHost, appNav, active = null, sequence = 0, readyTimer;
+    const expandedApps = new Set();
+    let pendingWorkflow = null;
     let currentHash = '', suspended = false;
     const api = { moduleUrl, routeId, canLaunch, acceptsMessage, init, open, home, reset, sync, tokenFor, confirmLeave };
 
@@ -302,29 +366,83 @@
         const state = host.state();
         selector.replaceChildren();
         appNav?.replaceChildren();
+        const renderWorkflow = (app, item) => {
+            const button = document.createElement('button');
+            button.type = 'button';
+            button.className = 'shell-workflow-link';
+            button.title = item.label;
+            button.setAttribute('aria-label', `${host.label(app)}: ${item.label}`);
+            const icon = document.createElement('i');
+            icon.setAttribute('data-lucide', item.icon || 'circle');
+            icon.setAttribute('aria-hidden', 'true');
+            const label = document.createElement('span');
+            label.className = 'shell-workflow-link__label';
+            label.textContent = item.label;
+            button.appendChild(icon);
+            button.appendChild(label);
+            button.addEventListener('click', () => activateWorkflow(app.id, item));
+            return button;
+        };
+        const renderAppGroup = app => {
+            const items = WORKFLOW_NAV[app.id] || [];
+            const group = document.createElement('div');
+            group.className = 'shell-app-group';
+            if (active?.id === app.id || expandedApps.has(app.id)) group.classList.add('is-expanded');
+            group.setAttribute('data-app-id', app.id);
+            const row = document.createElement('div');
+            row.className = 'shell-app-row';
+            const item = document.createElement('button');
+            item.type = 'button';
+            item.className = 'shell-app-link';
+            item.title = host.label(app);
+            item.setAttribute('aria-label', 'เปิด ' + host.label(app));
+            if (active?.id === app.id) item.setAttribute('aria-current', 'page');
+            const icon = document.createElement('i');
+            icon.setAttribute('data-lucide', app.icon || 'layout-grid');
+            icon.setAttribute('aria-hidden', 'true');
+            const label = document.createElement('span');
+            label.className = 'shell-app-link__label';
+            label.textContent = host.label(app);
+            item.appendChild(icon);
+            item.appendChild(label);
+            item.addEventListener('click', () => open(app.id));
+            row.appendChild(item);
+            if (items.length) {
+                const toggle = document.createElement('button');
+                toggle.type = 'button';
+                toggle.className = 'shell-app-toggle';
+                toggle.title = 'แสดงเมนูงาน ' + host.label(app);
+                toggle.setAttribute('aria-label', 'แสดงเมนูงาน ' + host.label(app));
+                toggle.setAttribute('aria-expanded', String(active?.id === app.id || expandedApps.has(app.id)));
+                const toggleIcon = document.createElement('i');
+                toggleIcon.setAttribute('data-lucide', 'chevron-down');
+                toggleIcon.setAttribute('aria-hidden', 'true');
+                toggle.appendChild(toggleIcon);
+                toggle.addEventListener('click', event => {
+                    event.stopPropagation();
+                    if (expandedApps.has(app.id)) expandedApps.delete(app.id); else expandedApps.add(app.id);
+                    populate();
+                });
+                row.appendChild(toggle);
+            }
+            group.appendChild(row);
+            if (items.length) {
+                const workflowNav = document.createElement('nav');
+                workflowNav.className = 'shell-workflow-nav';
+                workflowNav.setAttribute('aria-label', 'เมนูงาน ' + host.label(app));
+                workflowNav.hidden = !(active?.id === app.id || expandedApps.has(app.id));
+                items.forEach(workflow => workflowNav.appendChild(renderWorkflow(app, workflow)));
+                group.appendChild(workflowNav);
+            }
+            appNav.appendChild(group);
+        };
         for (const app of state.appConfig || []) {
             if (app.isActive === false || !canLaunch(app.id,state) || !moduleUrl(app,window.location.origin)) continue;
             const option = document.createElement('option');
             option.value = app.id;
             option.textContent = host.label(app);
             selector.appendChild(option);
-            if (appNav) {
-                const item = document.createElement('button');
-                item.type = 'button';
-                item.className = 'shell-app-link';
-                item.title = host.label(app);
-                item.setAttribute('aria-label', 'เปิด ' + host.label(app));
-                if (active?.id === app.id) item.setAttribute('aria-current', 'page');
-                const icon = document.createElement('i');
-                icon.setAttribute('data-lucide', app.icon || 'layout-grid');
-                icon.setAttribute('aria-hidden', 'true');
-                const label = document.createElement('span');
-                label.textContent = host.label(app);
-                item.appendChild(icon);
-                item.appendChild(label);
-                item.addEventListener('click', () => open(app.id));
-                appNav.appendChild(item);
-            }
+            if (appNav) renderAppGroup(app);
         }
         selector.value = active?.id || '';
         document.getElementById('shell-app-title').textContent = active ? host.label(state.appConfig.find(app => app.id === active.id) || {id:active.id}) : 'กำลังเปิดแอป';
@@ -334,6 +452,22 @@
         document.getElementById('shell-admin').hidden = !(state.currentRoles || []).includes('ADMIN');
         if (window.lucide?.createIcons && appNav) window.lucide.createIcons({ root: appNav });
     }
+    function clickWorkflow(item) {
+        if (!active?.frame?.contentDocument) return false;
+        const doc = active.frame.contentDocument;
+        const target = item.selector ? doc.querySelector(item.selector) : null;
+        if (!target) return false;
+        target.click();
+        return true;
+    }
+    function activateWorkflow(appId, item) {
+        if (active?.id !== appId) {
+            pendingWorkflow = {appId, item};
+            if (!open(appId, {workflow:true})) pendingWorkflow = null;
+            return;
+        }
+        if (!clickWorkflow(item)) host.notify('เมนูงานนี้ยังไม่พร้อม กรุณารอให้แอปโหลดเสร็จ');
+    }
     function open(id, options = {}) {
         if (!host) return false;
         const state = host.state();
@@ -342,6 +476,7 @@
         const url = moduleUrl(app,window.location.origin);
         if (!url) { host.notify('แอปนี้ยังไม่ได้ตั้งค่าเส้นทางที่รองรับ กรุณาติดต่อผู้ดูแล'); return false; }
         if (active?.id === id && !options.reload) return true;
+        if (!options.workflow) pendingWorkflow = null;
         if (!options.force && !confirmLeave()) return false;
         removeFrame();
         suspended = false;
@@ -390,6 +525,13 @@
             active.frame.hidden = false;
             status.hidden = true;
             document.getElementById('shell-retry').hidden = true;
+            if (pendingWorkflow?.appId === active.id) {
+                const workflow = pendingWorkflow.item;
+                pendingWorkflow = null;
+                window.setTimeout(() => {
+                    if (!clickWorkflow(workflow)) host.notify('เมนูงานนี้ยังไม่พร้อม กรุณาลองอีกครั้ง');
+                }, 0);
+            }
         } else if (message.type === 'state') {
             active.dirty = message.dirty === true;
             active.busy = message.busy === true;

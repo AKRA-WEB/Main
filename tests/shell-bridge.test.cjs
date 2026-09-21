@@ -4,12 +4,12 @@ const vm = require('node:vm');
 const fs = require('node:fs');
 const path = require('node:path');
 const source = fs.readFileSync(path.join(__dirname,'../js/akra-shell-bridge.js'),'utf8');
-function setup({embedded=true,token='fixture',origin='https://akra-web.github.io',pathname='/Main/',reply={valid:true,user:{id:'fixture-user'}}}={}) {
+function setup({embedded=true,token='fixture',origin='https://akra-web.github.io',pathname='/Main/',reply={valid:true,user:{id:'fixture-user'}},fetchImpl,setTimeoutImpl}={}) {
     const messages=[],listeners={},requests=[];
     const document={readyState:'loading',addEventListener:(name,fn)=>listeners[name]=fn};
     const window={location:{origin,hostname:new URL(origin).hostname,search:''},addEventListener:(name,fn)=>listeners[name]=fn};
     window.parent=embedded?{location:{origin,pathname},AkraShell:{tokenFor:()=>token},postMessage:(message,to)=>messages.push({message,to})}:window;
-    vm.runInNewContext(source,{window,document,URLSearchParams,fetch:async(url,options)=>{requests.push({url,options});return {ok:reply.valid,json:async()=>reply};}});
+    vm.runInNewContext(source,{window,document,URLSearchParams,AbortController,setTimeout:setTimeoutImpl || setTimeout,clearTimeout,fetch:fetchImpl || (async(url,options)=>{requests.push({url,options});return {ok:reply.valid,json:async()=>reply};})});
     return {module:window.AkraModule,messages,listeners,window,requests};
 }
 test('embedded app receives memory-only token and never becomes preview',()=>{
@@ -60,6 +60,19 @@ test('denied or absent session cannot fall back to cache or preview',async()=>{
     await assert.rejects(c.module.verifySession('app-evaluation'),/permission_denied/);
     const absent=setup({token:''});await assert.rejects(absent.module.verifySession('app-evaluation'),/shell_session_unavailable/);
     assert.equal(absent.requests.length,0);
+});
+test('hung Main auth verification fails closed instead of leaving KPI on an endless spinner',async()=>{
+    let request;
+    const c=setup({
+        fetchImpl:async(url,options)=>{request={url,options};return new Promise(()=>{});},
+        setTimeoutImpl:callback=>{callback();return 1;}
+    });
+    const verification=Promise.race([
+        c.module.verifySession('app-kpi'),
+        new Promise((_,reject)=>setTimeout(()=>reject(new Error('missing_session_verify_timeout')),100))
+    ]);
+    await assert.rejects(verification,error=>error?.message === 'session_verify_timeout');
+    assert.equal(request.options.signal.aborted,true);
 });
 test('operation tracking always releases busy on rejection but never clears dirty data implicitly',async()=>{
     const c=setup();c.module.markDirty();let reject;

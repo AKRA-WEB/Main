@@ -7,9 +7,9 @@ const vm=require('node:vm');
 const root=path.resolve(__dirname,'../..');
 const modules=['Main','PO','PR','GR','Returnitem','KPITracker','Picking','TRDAKRA','AKRA','SOP','Evaluation form'];
 const expectedVersions={
- Main:'20260921.03', PO:'20260919.03', PR:'20260921.02', GR:'20260920.03',
- Returnitem:'20260919.02', KPITracker:'20260921.02', Picking:'20260918.03',
- TRDAKRA:'20260920.02', AKRA:'20260919.04', SOP:'20260919.04', 'Evaluation form':'20260918.04'
+ Main:'20260921.04', PO:'20260919.04', PR:'20260921.03', GR:'20260920.04',
+ Returnitem:'20260919.03', KPITracker:'20260921.03', Picking:'20260918.04',
+ TRDAKRA:'20260920.03', AKRA:'20260919.05', SOP:'20260919.05', 'Evaluation form':'20260918.05'
 };
 for(const name of modules)test(`${name}: all entry scripts compile and version files agree`,()=>{
  const dir=path.join(root,name);
