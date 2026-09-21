@@ -50,6 +50,18 @@ test('T1: same login survives fresh OAuth page after logout/login or password ch
   }
 });
 
+test('connect normalizes Main directory URL to the registered LIFF endpoint', async () => {
+  const r = rig();
+  r.ctx.window.liff.isLoggedIn = () => false;
+  let loginRedirectUri = null;
+  r.ctx.window.liff.login = options => { loginRedirectUri = options.redirectUri; };
+
+  await r.subject.connect();
+
+  assert.equal(loginRedirectUri, 'https://example.test/Main/index.html');
+  assert.deepEqual(r.calls, [], 'Unlogged connect must not bind before LINE login completes');
+});
+
 for (const [name,fields] of [
   ['legacy',{userId:undefined,user:'account-a',marker:undefined}],
   ['missing marker',{marker:undefined}],['empty marker',{marker:''}],
