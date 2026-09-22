@@ -28,8 +28,7 @@
         ],
         'app-gr': [
             {label:'รายการบิลรอรับสินค้า', icon:'inbox', selector:'.gr-nav-receiving'},
-            {label:'ประวัติการรับสินค้า', icon:'history', selector:'.gr-nav-product'},
-            {label:'ระบบรับสินค้า (GR)', icon:'trending-up', selector:'.gr-nav-vendor'}
+            {label:'Dashboard GR', icon:'trending-up', selector:'.gr-nav-vendor'}
         ],
         'app-pr': [
             {label:'สร้างคำขอสั่งซื้อสินค้า', icon:'file-plus-2', selector:'#pr-warehouse'}
