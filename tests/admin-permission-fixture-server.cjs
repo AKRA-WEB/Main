@@ -48,7 +48,7 @@ async function start(port=4185){
             const file=path.resolve(root,'.'+decodeURIComponent(url.pathname==='/'?'/index.html':url.pathname));
             if(!file.startsWith(root+path.sep)||!['.html','.js','.css','.json','.svg','.png','.ico'].includes(path.extname(file))||!fs.existsSync(file))return json(res,{error:'not_found'},404);
             let content=fs.readFileSync(file);
-            if(file===path.join(root,'index.html'))content=content.toString().replace('<head>',`<head><script>
+            if(file===path.join(root,'index.html'))content=content.toString().replace(/<meta http-equiv="Content-Security-Policy"[^>]*>\s*/i,'').replace('<head>',`<head><script>
                 const fixtureFetch=window.fetch.bind(window);
                 window.fetch=(input,options={})=>{
                     const url=new URL(typeof input==='string'?input:input.url,location.href);
