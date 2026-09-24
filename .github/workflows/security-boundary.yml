@@ -1,0 +1,20 @@
+name: Main security boundary
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  session-and-access:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - run: node --test --test-isolation=none tests/main-line-account.test.js tests/session-storage-isolation.test.cjs tests/shell-bridge.test.cjs tests/shell-controller.test.cjs
