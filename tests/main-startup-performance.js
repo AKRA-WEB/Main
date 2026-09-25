@@ -18,8 +18,9 @@ const initSource = html.slice(initStart, initEnd);
 assert(initStart >= 0, 'Main must define startup initialization');
 assert(!initSource.includes('await checkAppVersion()'), 'public startup must not wait for version.json');
 assert(initSource.includes('setTimeout(checkAppVersion, 0)'), 'version checking must still run without blocking public startup');
-assert(html.includes('rel="preconnect" href="https://script.google.com"'), 'Main must preconnect its critical API origin');
-assert(html.includes('media="print" onload="this.media=\'all\'"'), 'web fonts must not block Main first paint');
+assert(html.includes('rel="preconnect" href="https://hgxrrskztbpejirrdpbq.supabase.co"'), 'Main must preconnect its critical API origin');
+assert(html.includes('id="main-fonts"') && html.includes('rel="stylesheet" media="print"'), 'web fonts must not block Main first paint');
+assert(html.includes("fontStylesheet.addEventListener?.('load'"), 'Main must activate web fonts without an inline handler');
 assert(/<script[^>]+src="assets\/lucide-0\.468\.0\.min\.js"[^>]+defer/.test(html), 'pinned Lucide must not block HTML parsing');
 
 const inlineScripts = [...html.matchAll(/<script(?:\s[^>]*)?>([\s\S]*?)<\/script>/gi)];

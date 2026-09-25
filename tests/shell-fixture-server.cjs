@@ -5,10 +5,15 @@ const fs = require('node:fs');
 const path = require('node:path');
 const vm = require('node:vm');
 const base = path.resolve(__dirname,'../..');
+let moduleBase = base;
+while (!fs.existsSync(path.join(moduleBase, 'AKRA')) && moduleBase !== path.dirname(moduleBase)) {
+    moduleBase = path.dirname(moduleBase);
+}
+if (!fs.existsSync(path.join(moduleBase, 'AKRA'))) throw new Error('workspace_modules_not_found');
 const port = Number(process.env.SHELL_TEST_PORT || 4173);
 const origin = `http://127.0.0.1:${port}`;
 const roots = {Main:'Main',TrackingPO:'PO',PR:'PR',GR:'GR',Returnitem:'Returnitem',KPITRACKER:'KPITracker',Picking:'Picking',TRDAKRA:'TRDAKRA',AKRA:'AKRA',SOP:'SOP',Evaluation:'Evaluation form'};
-const mainHtml = fs.readFileSync(path.join(base,'Main/index.html'),'utf8');
+const mainHtml = fs.readFileSync(path.resolve(__dirname, '../index.html'),'utf8');
 const configLiteral = mainHtml.match(/const DEFAULT_APP_CONFIG = (\[[\s\S]*?\n        \]);/)[1];
 const apps = vm.runInNewContext(configLiteral).map(app=>({...app,url:app.url.replace('https://akra-web.github.io',origin)}));
 if (!apps.some(app => app.id === 'app-evaluation')) {
@@ -331,7 +336,7 @@ const server = http.createServer(async (req,res)=>{
     const repo = roots[segments.shift()];
     if (!repo) {res.writeHead(404).end();return;}
     const relative = segments.join('/') || 'index.html';
-    const root = path.join(base,repo);
+    const root = repo === 'Main' ? path.resolve(__dirname, '..') : path.join(moduleBase,repo);
     const file = path.resolve(root,relative);
     if (!file.startsWith(root+path.sep) || !/\.(html|js|css|json|svg|woff2|png|jpg)$/.test(file)) {res.writeHead(403).end();return;}
     if (!fs.existsSync(file)) {res.writeHead(404).end();return;}
@@ -341,7 +346,12 @@ const server = http.createServer(async (req,res)=>{
         res.end(fixtureModule(apps.find(app=>new URL(app.url).pathname===url.pathname)));return;
     }
     let content = fs.readFileSync(file);
-    if (file.endsWith('.html')) content = content.toString('utf8').replaceAll('https://akra-web.github.io',origin).replace('<head>','<head>'+injection);
+    if (file.endsWith('.html')) {
+        content = content.toString('utf8').replaceAll('https://akra-web.github.io',origin);
+        // The fixture injects a local API shim; production keeps the script-restricting CSP.
+        if (repo === 'Main') content = content.replace(/<meta http-equiv="Content-Security-Policy"[^>]*>\s*/i, '');
+        content = content.replace('<head>','<head>'+injection);
+    }
     res.end(content);
 });
 Promise.resolve(process.argv.includes('--identity-auth')?initializeIdentityAuth():null).then(()=>{
