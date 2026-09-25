@@ -119,3 +119,24 @@ test('Main sign-out marker overrides an old compatibility token; record-first pe
  g.storage.set('akra_main_session','peer-record-written-before-token');finish({status:'success',token:'old-refresh',user,appConfig:[]});
  assert.equal(await pending,false);assert.equal(g.storage.get('akra_main_session'),'peer-record-written-before-token');
 });
+
+test('User sign-out revokes the current device before clearing shared browser state',async()=>{
+ const f=rig(),actions=[];f.state.sessionToken='signed';f.storage.set('token','signed');
+ f.c.API.postAction=async payload=>{actions.push(payload.action);return {status:'success'};};
+ await f.c.app.signOut();
+ assert.deepEqual(actions,['logoutSession']);
+ assert.equal(f.state.sessionToken,null);
+ assert.equal(f.storage.has('token'),false);
+ assert.equal(f.sections.at(-1),'login-section');
+});
+
+test('A failed revocation keeps the session for retry; an already invalid token clears locally',async()=>{
+ const f=rig();f.state.sessionToken='signed';f.storage.set('token','signed');
+ f.c.API.postAction=async()=>{throw Object.assign(Error('network'),{code:'request_failed'});};
+ await f.c.app.signOut();
+ assert.equal(f.state.sessionToken,'signed');assert.equal(f.storage.get('token'),'signed');
+ assert.match(f.toasts.at(-1)[0],/เพิกถอนเซสชัน/);
+ f.c.API.postAction=async()=>{throw Object.assign(Error('expired'),{code:'invalid_or_expired_token'});};
+ await f.c.app.signOut();
+ assert.equal(f.state.sessionToken,null);assert.equal(f.storage.has('token'),false);
+});
