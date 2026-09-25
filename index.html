@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <!-- Update the inline script hash when changing the script below; tests/main-csp.test.cjs checks it. -->
-    <meta http-equiv="Content-Security-Policy" content="script-src 'self' https://static.line-scdn.net 'sha256-PEBL5E1O0TsiDfsZVok3p3+uKwr4f7HpS+3m1XyG1PM='; object-src 'none'; base-uri 'self'">
+    <meta http-equiv="Content-Security-Policy" content="script-src 'self' https://static.line-scdn.net 'sha256-keubnxdlUbtZaWFHz+cqMXDB62AyCFYigorzodokciU='; object-src 'none'; base-uri 'self'">
     <title>AKRA Portal | Centralized System</title>
     <link rel="stylesheet" href="css/unified-shell.css?v=20260921.07">
     <script src="js/akra-shell-bridge.js?v=20260922.01"></script>
@@ -613,7 +613,7 @@
             STORAGE_USER_DATA: "akra_user_data",
             STORAGE_APP_CONFIG: "akra_app_config"
         };
-        const CURRENT_VERSION = "20260924.01";
+        const CURRENT_VERSION = "20260925.01";
         const fontStylesheet = document.getElementById('main-fonts');
         if (fontStylesheet) {
             if (fontStylesheet.sheet) fontStylesheet.media = 'all';
@@ -2305,9 +2305,9 @@
                     notify: message => UI.showToast(message, 'warning'),
                     home: () => { UI.switchSection('dashboard-section'); App.renderDashboard(); },
                     admin: () => { if (state.currentRoles.includes('ADMIN')) UI.switchSection('admin-section'); },
-                    logout: options => App.handleLogout(options)
+                    logout: options => App.signOut(options)
                 });
-                AppVersionGuard.start({ current: CURRENT_VERSION, readActions: ['log', 'getAdminData', 'login', 'refreshSession', 'getLineAccountStatus'] });
+                AppVersionGuard.start({ current: CURRENT_VERSION, readActions: ['log', 'getAdminData', 'login', 'refreshSession', 'logoutSession', 'getLineAccountStatus'] });
                 setTimeout(checkAppVersion, 0);
 
                 lucide.createIcons();
@@ -2316,7 +2316,7 @@
                 document.getElementById('login-form').addEventListener('submit', App.handleLogin);
                 document.getElementById('logout-btn').addEventListener('click', () => {
                     if (!AdminInteractive.confirmProfileLeave()) return;
-                    if (!AdminInteractive.userPermissionEditor || AdminInteractive.userPermissionEditor.confirmLeave()) App.handleLogout();
+                    if (!AdminInteractive.userPermissionEditor || AdminInteractive.userPermissionEditor.confirmLeave()) App.signOut();
                 });
                 const catTabs = document.getElementById('main-category-tabs');
                 if (catTabs) {
@@ -2583,6 +2583,27 @@
                     }
                 } finally {
                     btn.disabled = false; btnText.innerText = 'บันทึกรหัสผ่านใหม่'; lucide.createIcons();
+                }
+            },
+
+            signOut: async (options = {}) => {
+                if (options.preserveStoredSession === true || !state.sessionToken) return App.handleLogout(options);
+                if (App.logoutPending) return;
+                App.logoutPending = true;
+                try {
+                    try {
+                        await API.postAction({ action: 'logoutSession' });
+                    } catch (error) {
+                        if (error.code !== 'session_upgrade_required') throw error;
+                        if (!await App.refreshSession()) throw error;
+                        await API.postAction({ action: 'logoutSession' });
+                    }
+                    App.handleLogout(options);
+                } catch (error) {
+                    if (error.code === 'invalid_or_expired_token') App.handleLogout(options);
+                    else if (error.code !== 'session_changed') UI.showToast('ยังเพิกถอนเซสชันบนเซิร์ฟเวอร์ไม่ได้ กรุณาลองออกจากระบบอีกครั้ง', 'error');
+                } finally {
+                    App.logoutPending = false;
                 }
             },
 
