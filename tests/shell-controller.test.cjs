@@ -39,6 +39,11 @@ function setup() {
     const message=(type,details={},source=frame()?.contentWindow)=>listeners.message({source,origin:location.origin,data:{channel:'akra-shell',version:1,type,...details}});
     return {shell,state,elements,frame,listeners,location,history,timers,message,allow:val=>allowLeave=val,count:()=>({confirms,homes,logouts})};
 }
+function assertWorkState(actual,expected){
+    assert.equal(actual.dirty,expected.dirty);
+    assert.equal(actual.busy,expected.busy);
+    assert.equal(actual.unknown,expected.unknown);
+}
 test('open keeps only one document and removes background Main from keyboard/accessibility flow',()=>{
     const c=setup();c.shell.open('app-tracking');
     assert.equal(c.elements['dashboard-section'].inert,true);
@@ -88,4 +93,24 @@ test('forged origin/incorrect path cannot request credentials and loading timeou
     [...c.timers.values()].forEach(fn=>fn());
     assert.equal(c.elements['shell-retry'].hidden,false);assert.equal(c.elements['shell-status'].hidden,false);
     c.shell.home();assert.equal(c.elements['unified-shell'].hidden,true);
+});
+test('update work state is unknown until a child reports readiness and state',()=>{
+    const c=setup();
+    assertWorkState(c.shell.getWorkState(),{dirty:false,busy:false,unknown:false});
+    c.shell.open('app-tracking');
+    assertWorkState(c.shell.getWorkState(),{dirty:false,busy:false,unknown:true});
+    c.message('ready');
+    assertWorkState(c.shell.getWorkState(),{dirty:false,busy:false,unknown:false});
+    c.shell.home();
+    assertWorkState(c.shell.getWorkState(),{dirty:false,busy:false,unknown:false});
+});
+test('update work state includes child drafts and saves and fails closed without a state bridge',()=>{
+    const c=setup();c.shell.open('app-tracking');c.message('ready');
+    const module=c.frame().contentWindow.AkraModule;
+    module.setState(true,false);
+    assertWorkState(c.shell.getWorkState(),{dirty:true,busy:false,unknown:false});
+    module.setState(false,true);
+    assertWorkState(c.shell.getWorkState(),{dirty:false,busy:true,unknown:false});
+    delete module.getWorkState;
+    assertWorkState(c.shell.getWorkState(),{dirty:false,busy:false,unknown:true});
 });

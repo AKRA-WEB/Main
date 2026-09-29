@@ -7,7 +7,7 @@ const tick=()=>new Promise(setImmediate);
 function rig(){
  const storage=new Map([['akra_main_session',record()],['akra_session_token','old']]),listeners={},invalid=[],refreshes=[],calls=[];
  const window={location:{origin:'https://fixture.invalid',hostname:'fixture.invalid'},localStorage:{getItem:key=>storage.get(key)??null},addEventListener:(name,fn)=>listeners[name]=fn};window.parent=window;
- const c={window,document:{},URLSearchParams,fetch:async(_url,options)=>{calls.push(JSON.parse(options.body));return{ok:true,json:async()=>({valid:true,user})};}};
+ const c={window,document:{},URLSearchParams,setTimeout,clearTimeout,fetch:async(_url,options)=>{calls.push(JSON.parse(options.body));return{ok:true,json:async()=>({valid:true,user})};}};
  vm.runInNewContext(source,c);
  const bind=()=>window.AkraModule.watchSession({appId:'app-pr',user,token:'old',invalidated:()=>invalid.push(true),refreshed:token=>refreshes.push(token)});
  const change=(raw,key='akra_main_session')=>{if(raw===null)storage.delete(key);else storage.set(key,raw);listeners.storage({key,newValue:raw});};

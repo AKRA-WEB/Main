@@ -33,14 +33,19 @@ let token = [Buffer.from('{"alg":"HS256"}').toString('base64url'),Buffer.from(JS
 const session = {status:'success',token,user:claims,appConfig:apps};
 let identityAuth=null,identityDb=null;
 let mainRefreshMode='normal';
+const fixtureVersionOverrides=new Map();
 const pendingMainRefresh=[];
+let poApproveMode='normal', poApproveStarted=0;
+const pendingPoApprove=[];
+const omitChildBridge=process.env.SHELL_OMIT_CHILD_BRIDGE==='1';
 let purchasingReads=0;
-let w5Reads=0, w5AdjustmentWrites=0, w5AdjustedStock=null;
+let w5Reads=0, w5AdjustmentWrites=0, w5AdjustedStock=null, w5AdjustmentResponseMode='normal';
+const pendingW5AdjustmentReplies=[];
 let returnitemReads=0, returnitemWrites=0;
 let trdReads=0, trdMutationWrites=0, trdSurveyWrites=0;
 let sopReads=0, sopMutationWrites=0, permissionWrites=0, prReads=0, pickReads=0, kpiReads=0;
 async function initializeIdentityAuth(){
-    const {fixture,runtime}=require('../../database/tests/helpers/auth-runtime.cjs');
+    const {fixture,runtime}=require(path.join(moduleBase,'database','tests','helpers','auth-runtime.cjs'));
     identityDb=await fixture({userPermissions:true});identityAuth=runtime(identityDb,{identityRequired:'true'});
     await identityDb.exec('RESET ROLE');
     const password=await vm.runInContext("createPasswordHash('fixture-password','user')",identityAuth.c);
@@ -102,7 +107,33 @@ const server = http.createServer(async (req,res)=>{
         res.setHeader('Content-Type','text/html; charset=utf-8');
         res.end(`<!doctype html><html lang="th"><meta charset="utf-8"><h1>Main session test control</h1><p>Mode: ${mainRefreshMode}</p><form method="post"><button name="mode" value="held">Hold refresh</button><button name="mode" value="normal">Release refresh</button><button name="mode" value="fail">Fail refresh</button></form></html>`);return;
     }
-    if (url.pathname === '/__fixture/status') {res.setHeader('Content-Type','application/json');res.end(JSON.stringify({pickingBills:pickFixtureWrites.size,pickingCalls:pickFixtureCalls,pickingReplays:pickFixtureReplays,problemReports:problemReceipts.size,problemCalls,problemReplays,problemVersion:problemBill.version,kpiWorkloadWrites,kpiWorkloadAttempts,purchasingReads,w5Reads,w5AdjustmentWrites,w5AdjustedStock,returnitemReads,returnitemWrites,trdReads,trdMutationWrites,trdSurveyWrites,sopReads,sopMutationWrites,permissionWrites,prReads,prWrites:prFixtureWrites.size,poWrites,grReviewWrites,grCompletedWrites,workflowStock,pickReads,kpiReads}));return;}
+    if(url.pathname==='/__fixture/w5-adjustment-control'&&req.method==='POST'){
+        if(req.headers.origin!==origin){res.writeHead(403).end();return;}
+        let raw='';for await(const chunk of req){raw+=chunk;if(raw.length>100){res.writeHead(413).end();return;}}
+        const mode=new URLSearchParams(raw).get('mode');
+        if(!['hold-after-commit','normal'].includes(mode)){res.writeHead(400).end();return;}
+        w5AdjustmentResponseMode=mode;
+        if(mode==='normal')pendingW5AdjustmentReplies.splice(0).forEach(resolve=>resolve());
+        res.setHeader('Content-Type','application/json');res.end(JSON.stringify({mode:w5AdjustmentResponseMode,pending:pendingW5AdjustmentReplies.length}));return;
+    }
+    if(url.pathname==='/__fixture/version-control'&&req.method==='POST'){
+        if(req.headers.origin!==origin){res.writeHead(403).end();return;}
+        let raw='';for await(const chunk of req){raw+=chunk;if(raw.length>400){res.writeHead(413).end();return;}}
+        let change;try{change=JSON.parse(raw);}catch(_){res.writeHead(400).end();return;}
+        if(!Object.values(roots).includes(change.repo)||!(change.version===null||typeof change.version==='string'&&/^\d{8}\.\d{2}$/.test(change.version))){res.writeHead(400).end();return;}
+        if(change.version===null)fixtureVersionOverrides.delete(change.repo);else fixtureVersionOverrides.set(change.repo,change.version);
+        res.setHeader('Content-Type','application/json');res.end(JSON.stringify({repo:change.repo,version:fixtureVersionOverrides.get(change.repo)||null}));return;
+    }
+    if(url.pathname==='/__fixture/po-approve-control'&&req.method==='POST'){
+        if(req.headers.origin!==origin){res.writeHead(403).end();return;}
+        let raw='';for await(const chunk of req){raw+=chunk;if(raw.length>100){res.writeHead(413).end();return;}}
+        let change;try{change=JSON.parse(raw);}catch(_){res.writeHead(400).end();return;}
+        if(!['held','normal'].includes(change.mode)){res.writeHead(400).end();return;}
+        poApproveMode=change.mode;
+        if(poApproveMode==='normal')pendingPoApprove.splice(0).forEach(resolve=>resolve());
+        res.setHeader('Content-Type','application/json');res.end(JSON.stringify({mode:poApproveMode,started:poApproveStarted,pending:pendingPoApprove.length}));return;
+    }
+    if (url.pathname === '/__fixture/status') {res.setHeader('Content-Type','application/json');res.end(JSON.stringify({versionOverrides:Object.fromEntries(fixtureVersionOverrides),pickingBills:pickFixtureWrites.size,pickingCalls:pickFixtureCalls,pickingReplays:pickFixtureReplays,problemReports:problemReceipts.size,problemCalls,problemReplays,problemVersion:problemBill.version,kpiWorkloadWrites,kpiWorkloadAttempts,purchasingReads,w5Reads,w5AdjustmentWrites,w5AdjustedStock,w5AdjustmentResponseMode,w5AdjustmentPending:pendingW5AdjustmentReplies.length,returnitemReads,returnitemWrites,trdReads,trdMutationWrites,trdSurveyWrites,sopReads,sopMutationWrites,permissionWrites,prReads,prWrites:prFixtureWrites.size,poWrites,poApproveMode,poApproveStarted,poApprovePending:pendingPoApprove.length,grReviewWrites,grCompletedWrites,workflowStock,pickReads,kpiReads}));return;}
     if (url.pathname === '/__fixture/sop-file.svg') {
         res.setHeader('Content-Type','image/svg+xml');
         res.end('<svg xmlns="http://www.w3.org/2000/svg" width="840" height="1188" viewBox="0 0 840 1188"><rect width="840" height="1188" fill="#f0f4f8"/><rect x="60" y="60" width="720" height="1068" fill="white" stroke="#22384c"/><text x="110" y="150" font-family="sans-serif" font-size="40" fill="#22384c">SOP FIXTURE</text><text x="110" y="230" font-family="sans-serif" font-size="24">Synthetic reader page - no private data</text><path d="M110 310h600M110 410h600M110 510h600" stroke="#cbd5e1" stroke-width="8"/></svg>');return;
@@ -212,6 +243,12 @@ const server = http.createServer(async (req,res)=>{
                 }
                 w5AdjustmentWrites++;
                 w5AdjustedStock=body.newStock;
+                if(w5AdjustmentResponseMode==='hold-after-commit'){
+                    res.writeHead(200,{'Content-Type':'application/json','Content-Length':'128'});
+                    res.write('{"success":');
+                    await new Promise(resolve=>pendingW5AdjustmentReplies.push(resolve));
+                    res.destroy();return;
+                }
                 res.end(JSON.stringify({success:true,productId:body.productId,newStock:body.newStock}));return;
             }
             if(body.action!=='getData') {res.writeHead(403).end(JSON.stringify({success:false,error:'fixture_action_not_configured'}));return;}
@@ -227,6 +264,8 @@ const server = http.createServer(async (req,res)=>{
                 res.end(JSON.stringify({success:true,products:[purchasingWorkflowProduct],pendingPOs:rows.filter(row=>row.status!=='GR Completed'),grCompleted:rows.filter(row=>row.status==='GR Completed'),prList:purchasingWorkflowPr.status==='Pending'?[purchasingWorkflowPr]:[],apvList:[],vendors:['Vendor Fixture']}));return;
             }
             if(body.action==='approvePR') {
+                poApproveStarted++;
+                if(poApproveMode==='held')await new Promise(resolve=>pendingPoApprove.push(resolve));
                 const data=body.data||{}; const item=(data.items||[])[0]||{};
                 const row={uid:'PO-FIXTURE-UID-0001',refPrUid:data.prUid||purchasingWorkflowPr.uid,rowNumber:1,poDate:'19/09/2026',poNumber:'PO-FIXTURE-0001',vendor:data.vendor||'Vendor Fixture',warehouse:data.warehouse||'W5',expectedDate:data.expectedDate||'',sku:item.sku||purchasingWorkflowPr.sku,product:item.product||purchasingWorkflowPr.product,quantity:String(item.quantity||purchasingWorkflowPr.quantity),unit:item.unit||purchasingWorkflowPr.unit,billRemark:data.remark||'',itemRemark:item.remark||'',poRemark:item.remark||data.remark||'',remark:'',status:'Pending GR',displayStatus:'Pending GR',grQty:'',locIn:'',exp:'',ata:'',receiverName:'',oldStock:'',extraItems:[]};
                 purchasingPoRows.set(row.uid,row); purchasingWorkflowPr={...purchasingWorkflowPr,status:'Approved'}; poWrites++;
@@ -336,18 +375,33 @@ const server = http.createServer(async (req,res)=>{
     const repo = roots[segments.shift()];
     if (!repo) {res.writeHead(404).end();return;}
     const relative = segments.join('/') || 'index.html';
-    const root = repo === 'Main' ? path.resolve(__dirname, '..') : path.join(moduleBase,repo);
+    if (omitChildBridge && repo !== 'Main' && relative === 'js/akra-shell-bridge.js') {res.writeHead(404).end();return;}
+    const root = repo === 'Main'
+        ? path.resolve(__dirname, '..')
+        : repo === 'AKRA' && process.env.SHELL_AKRA_ROOT
+            ? path.resolve(process.env.SHELL_AKRA_ROOT)
+            : path.join(moduleBase,repo);
     const file = path.resolve(root,relative);
-    if (!file.startsWith(root+path.sep) || !/\.(html|js|css|json|svg|woff2|png|jpg)$/.test(file)) {res.writeHead(403).end();return;}
+    if (!file.startsWith(root+path.sep) || !/\.(html|js|css|json|webmanifest|svg|woff2|png|jpg)$/.test(file)) {res.writeHead(403).end();return;}
     if (!fs.existsSync(file)) {res.writeHead(404).end();return;}
-    const type = {'.html':'text/html; charset=utf-8','.js':'text/javascript; charset=utf-8','.css':'text/css; charset=utf-8','.json':'application/json','.svg':'image/svg+xml'}[path.extname(file)]||'application/octet-stream';
+    const type = {'.html':'text/html; charset=utf-8','.js':'text/javascript; charset=utf-8','.css':'text/css; charset=utf-8','.json':'application/json','.webmanifest':'application/manifest+json; charset=utf-8','.svg':'image/svg+xml','.png':'image/png'}[path.extname(file)]||'application/octet-stream';
     res.setHeader('Content-Type',type);
     if (relative === 'index.html' && repo !== 'Main' && !process.argv.includes('--real-modules')) {
         res.end(fixtureModule(apps.find(app=>new URL(app.url).pathname===url.pathname)));return;
     }
     let content = fs.readFileSync(file);
+    if(relative==='version.json'&&fixtureVersionOverrides.has(repo)){
+        const config=JSON.parse(content.toString('utf8'));
+        config.version=fixtureVersionOverrides.get(repo);
+        content=Buffer.from(JSON.stringify(config));
+    }
     if (file.endsWith('.html')) {
-        content = content.toString('utf8').replaceAll('https://akra-web.github.io',origin);
+        content = content.toString('utf8');
+        if(fixtureVersionOverrides.has(repo)&&url.searchParams.has('update')){
+            const version=fixtureVersionOverrides.get(repo);
+            content=content.replace(/(const\s+CURRENT_VERSION\s*=\s*["'])[^"']+(["']\s*;?)/,`$1${version}$2`);
+        }
+        content=content.replaceAll('https://akra-web.github.io',origin);
         // The fixture injects a local API shim; production keeps the script-restricting CSP.
         if (repo === 'Main') content = content.replace(/<meta http-equiv="Content-Security-Policy"[^>]*>\s*/i, '');
         content = content.replace('<head>','<head>'+injection);

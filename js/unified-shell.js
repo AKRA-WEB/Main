@@ -98,7 +98,7 @@
     const expandedApps = new Set();
     let pendingWorkflow = null;
     let currentHash = '', suspended = false;
-    const api = { moduleUrl, routeId, canLaunch, acceptsMessage, init, open, home, reset, sync, tokenFor, confirmLeave };
+    const api = { moduleUrl, routeId, canLaunch, acceptsMessage, init, open, home, reset, sync, tokenFor, getWorkState, confirmLeave };
 
     const EMBEDDED_HEADER_RULES = Object.freeze([
         { header: '#trd-topbar', action: '.trd-topbar__actions' },
@@ -296,6 +296,23 @@
         });
         window.addEventListener('focus', sync);
         sync();
+    }
+    function getWorkState() {
+        if (!active) return {dirty:false,busy:false,unknown:false};
+        try {
+            const module = active.frame.contentWindow.AkraModule;
+            if (!active.ready || typeof module?.getWorkState !== 'function') {
+                return {dirty:active.dirty,busy:active.busy,unknown:true};
+            }
+            const current = module.getWorkState();
+            return {
+                dirty:active.dirty || current?.dirty === true,
+                busy:active.busy || current?.busy === true,
+                unknown:!current || current.unknown === true
+            };
+        } catch (_) {
+            return {dirty:active.dirty,busy:active.busy,unknown:true};
+        }
     }
     function hasPendingWork() {
         if (!active) return false;

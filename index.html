@@ -4,13 +4,16 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <!-- Update the inline script hash when changing the script below; tests/main-csp.test.cjs checks it. -->
-    <meta http-equiv="Content-Security-Policy" content="script-src 'self' https://static.line-scdn.net 'sha256-keubnxdlUbtZaWFHz+cqMXDB62AyCFYigorzodokciU='; object-src 'none'; base-uri 'self'">
+    <meta http-equiv="Content-Security-Policy" content="script-src 'self' https://static.line-scdn.net 'sha256-rOQvIDmgMj3ea66eQ9t+DBaS3iKAzPqp9TDncm6bSII='; object-src 'none'; base-uri 'self'">
+    <link rel="manifest" href="manifest.webmanifest">
+    <meta name="theme-color" content="#2563eb">
     <title>AKRA Portal | Centralized System</title>
     <link rel="stylesheet" href="css/unified-shell.css?v=20260921.07">
     <script src="js/akra-shell-bridge.js?v=20260922.01"></script>
-    <script src="js/unified-shell.js?v=20260922.01"></script>
+    <script src="js/unified-shell.js?v=20260928.01"></script>
     <script src="js/permission-catalog.js?v=20260918.02"></script>
     <script src="js/user-permission-editor.js?v=20260917.03"></script>
+    <script src="js/main-pwa.js?v=20260928.02" defer></script>
     <link rel="preconnect" href="https://hgxrrskztbpejirrdpbq.supabase.co">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -110,8 +113,19 @@
         .main-dashboard-intro h1 { margin: 0; color: var(--main-ink); font-size: 26px; font-weight: 700; line-height: 1.5; }
         .main-dashboard-intro h1 span { color: #1e3a8a; }
         .main-dashboard-intro p { margin: 6px 0 0; color: var(--main-muted); font-size: 14px; line-height: 1.7; }
+        .main-pwa-install { display: inline-flex; align-items: center; justify-content: center; gap: 7px; min-height: 40px; margin-top: 16px; padding: 0 14px; border: 1px solid var(--main-line); border-radius: 10px; background: #fff; color: var(--main-ink); font: inherit; font-size: 13px; font-weight: 700; cursor: pointer; }
+        .main-pwa-install:hover { border-color: #2563eb; color: #1d4ed8; }
+        .main-pwa-install:focus-visible { outline: 3px solid #e35205; outline-offset: 3px; }
+        .main-pwa-install[hidden] { display: none; }
+        .main-pwa-install-help { margin: 0 0 16px; color: var(--main-muted); font-size: 13px; line-height: 1.7; }
+        .main-pwa-install-help summary { width: max-content; max-width: 100%; color: #234784; font-weight: 600; cursor: pointer; text-underline-offset: 3px; }
+        .main-pwa-install-help summary:focus-visible { outline: 3px solid #e35205; outline-offset: 3px; border-radius: 3px; }
+        .main-pwa-install-help__body { display: grid; gap: 7px; max-width: 72ch; margin-top: 8px; padding: 12px 14px; border: 1px solid var(--main-line); border-radius: 10px; background: #f8fafc; }
+        .main-pwa-install-help__body p { margin: 0; }
+        .main-pwa-install-help__note { color: var(--main-muted); }
         .main-launcher-head { display: flex; align-items: center; justify-content: space-between; gap: 16px; margin-bottom: 18px; padding-bottom: 16px; border-bottom: 1px solid var(--main-line); }
         .main-launcher-head h2 { margin: 0; color: var(--main-ink); font-size: 16px; font-weight: 700; }
+        .main-launcher-actions { display: flex; align-items: center; gap: 12px; }
         .main-section-count { padding: 4px 10px; border-radius: 6px; background: #eaf0fb; color: #234784; font-size: 12px; font-weight: 600; white-space: nowrap; font-variant-numeric: tabular-nums; }
         #app-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 18px; }
         .main-app-card { position: relative; min-height: 172px; display: flex; flex-direction: column; gap: 18px; padding: 22px; text-align: left; border: 1px solid var(--main-line); border-radius: 12px; background: #fff; color: inherit; cursor: pointer; transition: border-color .18s ease, background .18s ease; }
@@ -169,6 +183,7 @@
             .account-actions-menu .main-dashboard-action { width: 100%; justify-content: flex-start; border-color: transparent; }
             .main-dashboard-content { width: 100%; padding: 24px 16px 0; }
             .main-dashboard-intro { margin-bottom: 24px; }
+            .main-launcher-actions { flex-wrap: wrap; justify-content: flex-end; }
             .main-dashboard-intro h1 { font-size: 22px; line-height: 1.55; }
             .main-dashboard-intro p { font-size: 13px; }
             .main-launcher-head { margin-bottom: 14px; padding-bottom: 12px; }
@@ -286,8 +301,20 @@
             <section class="main-launcher">
                 <div class="main-launcher-head">
                     <h2>แอปพลิเคชันของคุณ</h2>
-                    <span class="main-section-count"><span id="app-grid-count">10</span> ระบบ</span>
+                    <div class="main-launcher-actions">
+                        <span class="main-section-count"><span id="app-grid-count">10</span> ระบบ</span>
+                        <button id="main-pwa-install" class="main-pwa-install" type="button" hidden>ติดตั้ง AKRA</button>
+                    </div>
                 </div>
+                <details id="main-pwa-install-help" class="main-pwa-install-help">
+                    <summary>วิธีติดตั้ง AKRA</summary>
+                    <div class="main-pwa-install-help__body">
+                        <p><strong>Windows · Chrome:</strong> เมนู ⋮ &gt; Cast, save, and share &gt; Install page as app…</p>
+                        <p><strong>Windows · Edge:</strong> เมนู ⋯ &gt; More tools &gt; Apps &gt; Install this site as an app</p>
+                        <p><strong>Android · Chrome:</strong> เมนู ⋮ &gt; Install and create shortcut &gt; Install</p>
+                        <p class="main-pwa-install-help__note">ชื่อเมนูอาจต่างกันตามเวอร์ชันหรือข้อกำหนดของอุปกรณ์ หากไม่พบตัวเลือกติดตั้ง ให้ใช้ AKRA ในเบราว์เซอร์ตามปกติหรือติดต่อผู้ดูแลระบบ</p>
+                    </div>
+                </details>
                 <section id="app-grid" aria-label="แอปพลิเคชันที่เปิดใช้งานได้"></section>
             </section>
 
@@ -613,28 +640,31 @@
             STORAGE_USER_DATA: "akra_user_data",
             STORAGE_APP_CONFIG: "akra_app_config"
         };
-        const CURRENT_VERSION = "20260925.01";
+        const CURRENT_VERSION = "20260928.02";
         const fontStylesheet = document.getElementById('main-fonts');
         if (fontStylesheet) {
             if (fontStylesheet.sheet) fontStylesheet.media = 'all';
             else fontStylesheet.addEventListener?.('load', () => { fontStylesheet.media = 'all'; }, { once: true });
         }
-        async function checkAppVersion() {
-            try {
-                const res = await fetch('version.json?t=' + Date.now());
-                if (!res.ok) return true;
-                const config = await res.json();
-                if (config && config.version && config.version !== CURRENT_VERSION) {
-                    alert('พบเวอร์ชันใหม่ กำลังอัปเดตระบบ...');
-                    const url = new URL(window.location.href);
-                    url.searchParams.set('update', Date.now());
-                    window.location.replace(url.toString());
-                    return false;
-                }
-            } catch (e) {
-                console.warn('Version check skipped:', e);
+        function mainHasUnsavedCredentials() {
+            const login = document.getElementById('login-section');
+            if (login && !login.classList.contains('hidden')) {
+                const username = document.getElementById('username-input').value || '';
+                const password = document.getElementById('password-input').value || '';
+                const rememberedId = safeStorage.getItem('akra_remember_id') || '';
+                const rememberId = document.getElementById('remember-id-checkbox');
+                if (username !== rememberedId || password !== ''
+                    || (!!rememberId && rememberId.checked !== !!rememberedId)) return true;
             }
-            return true;
+            const passwordModal = document.getElementById('change-password-modal');
+            if (!passwordModal || passwordModal.classList.contains('hidden')) return false;
+            return ['curr-pwd-input', 'new-pwd-input', 'confirm-pwd-input'].some(id => {
+                const input = document.getElementById(id);
+                return !!input && input.value !== '';
+            });
+        }
+        async function checkAppVersion() {
+            return AppVersionGuard.check();
         }
 
         /* ===== AKRA Global Version Guard (shared inline, Conductor plan 20260611-003) =====
@@ -642,14 +672,22 @@
            shows a non-blocking reload banner; a blocking modal + abort only fires before a
            mutation via blockIfStale(). Reads listed in readActions stay allowed. */
         const AppVersionGuard = (function () {
-            var cfg = { current: '', readActions: [] };
+            var cfg = { current: '', readActions: [], workState: null, notify: null };
             var stale = false, started = false;
             var POLL_MS = 5 * 60 * 1000;
 
             function reload() {
+                var work = {dirty:false,busy:false,unknown:true};
+                try { if (typeof cfg.workState === 'function') work = cfg.workState(); } catch (_) {}
+                if (!work || work.unknown || work.busy) {
+                    if (cfg.notify) cfg.notify('ระบบกำลังตรวจสอบหรือบันทึกรายการ กรุณารอแล้วลองอัปเดตอีกครั้ง');
+                    return false;
+                }
+                if (work.dirty && !window.confirm('มีข้อมูลที่ยังไม่ได้บันทึก การอัปเดตจะทิ้งร่างนี้ ต้องการดำเนินการต่อหรือไม่?')) return false;
                 var url = new URL(window.location.href);
                 url.searchParams.set('update', Date.now());
                 window.location.replace(url.toString());
+                return true;
             }
             function injectStyles() {
                 if (document.getElementById('avg-style')) return;
@@ -666,10 +704,10 @@
                 bar.setAttribute('role', 'status');
                 bar.setAttribute('aria-live', 'polite');
                 var msg = document.createElement('span');
-                msg.textContent = 'มีเวอร์ชันใหม่ของระบบ กรุณารีโหลดเพื่ออัปเดต';
+                msg.textContent = 'มีเวอร์ชันใหม่ เลือกอัปเดตเมื่อพร้อม';
                 var btn = document.createElement('button');
                 btn.type = 'button';
-                btn.textContent = 'รีโหลด';
+                btn.textContent = 'อัปเดต';
                 btn.addEventListener('click', reload);
                 bar.appendChild(msg);
                 bar.appendChild(btn);
@@ -734,6 +772,8 @@
             function start(options) {
                 cfg.current = options.current;
                 cfg.readActions = options.readActions || [];
+                cfg.workState = options.workState || null;
+                cfg.notify = options.notify || null;
                 if (started) return;
                 started = true;
                 setInterval(check, POLL_MS);
@@ -1020,6 +1060,7 @@
             permRows: [],
             authorizationLoaded: false,
             authorizationSaving: false,
+            pendingApiRequests: 0,
             authorizationDirty: false,
             authorizationRevision: null,
             authorizationAppConfig: null,
@@ -1081,7 +1122,8 @@
                 assertCurrent();
                 const controller = new AbortController();
                 const timeoutId = setTimeout(() => controller.abort(), 30000);
-                let response;
+                let response, data;
+                state.pendingApiRequests += 1;
                 try {
                     response = await fetch(CONFIG.API_URL, {
                         method: 'POST',
@@ -1090,14 +1132,15 @@
                         signal: controller.signal
                     });
                     assertCurrent();
+                    data = await response.json();
+                    assertCurrent();
                 } catch (error) {
                     assertCurrent();
                     throw error;
                 } finally {
                     clearTimeout(timeoutId);
+                    state.pendingApiRequests = Math.max(0, state.pendingApiRequests - 1);
                 }
-                const data = await response.json();
-                assertCurrent();
                 if (!response.ok || data.status !== 'success') {
                     const error = new Error(data.reason || data.message || 'request_failed');
                     error.code = data.reason || data.message || 'request_failed';
@@ -2307,7 +2350,24 @@
                     admin: () => { if (state.currentRoles.includes('ADMIN')) UI.switchSection('admin-section'); },
                     logout: options => App.signOut(options)
                 });
-                AppVersionGuard.start({ current: CURRENT_VERSION, readActions: ['log', 'getAdminData', 'login', 'refreshSession', 'logoutSession', 'getLineAccountStatus'] });
+                AppVersionGuard.start({
+                    current: CURRENT_VERSION,
+                    readActions: ['log', 'getAdminData', 'login', 'refreshSession', 'logoutSession', 'getLineAccountStatus'],
+                    notify: message => UI.showToast(message, 'warning'),
+                    workState: () => {
+                        const child = window.AkraShell?.getWorkState?.();
+                        if (!child || child.unknown) return {dirty:false,busy:false,unknown:true};
+                        const credentialsDirty = mainHasUnsavedCredentials();
+                        let dirty = child.dirty || credentialsDirty || state.authorizationDirty || state.userPermissionsDirty;
+                        let busy = child.busy || state.pendingApiRequests > 0 || state.authorizationSaving || AdminInteractive.profileSaving || state.sessionRefreshPending;
+                        let unknown = state.sessionRefreshFailed && !!state.currentUser;
+                        try {
+                            dirty = dirty || AdminInteractive.profileDirty() || !!AdminInteractive.userPermissionEditor?.pending();
+                            unknown = unknown || AdminInteractive.profileUncertain;
+                        } catch (_) { unknown = true; }
+                        return {dirty,busy,unknown};
+                    }
+                });
                 setTimeout(checkAppVersion, 0);
 
                 lucide.createIcons();
