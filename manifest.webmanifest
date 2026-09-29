@@ -8,8 +8,8 @@
   "background_color": "#ffffff",
   "theme_color": "#2563eb",
   "icons": [
-    { "src": "assets/icons/akra-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
-    { "src": "assets/icons/akra-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
-    { "src": "assets/icons/akra-512-maskable.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+    { "src": "assets/icons/akra-192-v20260929-01.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "assets/icons/akra-512-v20260929-01.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "assets/icons/akra-512-maskable-v20260929-01.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
   ]
 }

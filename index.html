@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <!-- Update the inline script hash when changing the script below; tests/main-csp.test.cjs checks it. -->
-    <meta http-equiv="Content-Security-Policy" content="script-src 'self' https://static.line-scdn.net 'sha256-rOQvIDmgMj3ea66eQ9t+DBaS3iKAzPqp9TDncm6bSII='; object-src 'none'; base-uri 'self'">
+    <meta http-equiv="Content-Security-Policy" content="script-src 'self' https://static.line-scdn.net 'sha256-nbOgj0N3jL7aTstGd5KYsPhxBTry9FnmPh+LP5wvhf8='; object-src 'none'; base-uri 'self'">
     <link rel="manifest" href="manifest.webmanifest">
     <meta name="theme-color" content="#2563eb">
     <title>AKRA Portal | Centralized System</title>
@@ -13,7 +13,7 @@
     <script src="js/unified-shell.js?v=20260928.01"></script>
     <script src="js/permission-catalog.js?v=20260918.02"></script>
     <script src="js/user-permission-editor.js?v=20260917.03"></script>
-    <script src="js/main-pwa.js?v=20260928.02" defer></script>
+    <script src="js/main-pwa.js?v=20260929.01" defer></script>
     <link rel="preconnect" href="https://hgxrrskztbpejirrdpbq.supabase.co">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -640,7 +640,7 @@
             STORAGE_USER_DATA: "akra_user_data",
             STORAGE_APP_CONFIG: "akra_app_config"
         };
-        const CURRENT_VERSION = "20260928.02";
+        const CURRENT_VERSION = "20260929.01";
         const fontStylesheet = document.getElementById('main-fonts');
         if (fontStylesheet) {
             if (fontStylesheet.sheet) fontStylesheet.media = 'all';

@@ -1471,7 +1471,7 @@ async function main() {
       await waitFor(() => cdp.evaluate('(() => { const frame = document.getElementById("shell-module-frame"); return !!frame && !frame.hidden && new URL(frame.src).pathname === "/AKRA/"; })()'), 20000, 'version update seed module');
       const initialVersion = await cdp.evaluate('CURRENT_VERSION');
       const originalHash = await cdp.evaluate('window.location.hash');
-      assert.equal(initialVersion, '20260928.02', 'candidate version changed unexpectedly');
+      assert.equal(initialVersion, '20260929.01', 'candidate version changed unexpectedly');
       const cleanState = await cdp.evaluate('window.AkraShell.getWorkState()');
       assert.deepEqual(cleanState, { dirty: false, busy: false, unknown: false }, 'version update did not start from a clean child state');
 
