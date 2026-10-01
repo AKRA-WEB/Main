@@ -9,11 +9,11 @@
     <meta name="theme-color" content="#2563eb">
     <title>AKRA Portal | Centralized System</title>
     <link rel="stylesheet" href="css/unified-shell.css?v=20260921.07">
-    <script src="js/akra-shell-bridge.js?v=20261001.02"></script>
-    <script src="js/unified-shell.js?v=20261001.02"></script>
-    <script src="js/permission-catalog.js?v=20261001.02"></script>
+    <script src="js/akra-shell-bridge.js?v=20261001.03"></script>
+    <script src="js/unified-shell.js?v=20261001.03"></script>
+    <script src="js/permission-catalog.js?v=20261001.03"></script>
     <script src="js/user-permission-editor.js?v=20260917.03"></script>
-    <script src="js/main-pwa.js?v=20261001.02" defer></script>
+    <script src="js/main-pwa.js?v=20261001.03" defer></script>
     <link rel="preconnect" href="https://hgxrrskztbpejirrdpbq.supabase.co">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -640,7 +640,7 @@
             STORAGE_USER_DATA: "akra_user_data",
             STORAGE_APP_CONFIG: "akra_app_config"
         };
-        const CURRENT_VERSION = "20261001.02";
+        const CURRENT_VERSION = "20261001.03";
         const fontStylesheet = document.getElementById('main-fonts');
         if (fontStylesheet) {
             if (fontStylesheet.sheet) fontStylesheet.media = 'all';
@@ -1121,18 +1121,27 @@
 
                 assertCurrent();
                 const controller = new AbortController();
-                const timeoutId = setTimeout(() => controller.abort(), 30000);
+                let timeoutId;
+                const deadline = new Promise((_, reject) => {
+                    timeoutId = setTimeout(() => {
+                        controller.abort();
+                        reject(Object.assign(new Error('request_timeout'), {code:'request_timeout'}));
+                    }, 30000);
+                });
                 let response, data;
                 state.pendingApiRequests += 1;
                 try {
-                    response = await fetch(CONFIG.API_URL, {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-                        body,
-                        signal: controller.signal
-                    });
-                    assertCurrent();
-                    data = await response.json();
+                    const request = (async () => {
+                        const nextResponse = await fetch(CONFIG.API_URL, {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+                            body,
+                            signal: controller.signal
+                        });
+                        assertCurrent();
+                        return {response:nextResponse, data:await nextResponse.json()};
+                    })();
+                    ({response, data} = await Promise.race([request, deadline]));
                     assertCurrent();
                 } catch (error) {
                     assertCurrent();

@@ -42,6 +42,18 @@ test('Main superseded warm-boot refresh leaves validation screen without adoptin
  assert.deepEqual(f.views,[]);assert.equal(f.storage.get('token'),'new-peer');
  assert.equal(f.sections.at(-1),'login-section');assert.equal(f.state.sessionRefreshPending,false);
 });
+
+test('Main boot timeout returns to login even when the response body does not settle after abort',async()=>{
+ const f=rig();f.storage.set('token','old');let deadline,finishBody;
+ f.c.setTimeout=callback=>{deadline=callback;return 1;};
+ f.c.fetch=async()=>({ok:true,json:()=>new Promise(resolve=>finishBody=resolve)});
+ f.run(section('        const API = {','        const AdminInteractive = {')+'\nthis.api=API;');
+ f.c.API.postAction=f.c.api.postAction;
+ let settled=false;const pending=f.c.startup().then(()=>{settled=true;});await tick();deadline();await tick();
+ assert.equal(settled,true);assert.equal(f.sections.at(-1),'login-section');assert.deepEqual(f.views,[]);
+ finishBody({status:'success',token:'late',user,appConfig:[]});await pending;await tick();
+ assert.equal(f.storage.get('token'),'old');assert.deepEqual(f.views,[]);
+});
 test('Main saves verified UUID/session/revision metadata additively',()=>{
  const f=rig();f.c.app.saveSession({token:'verified',user,appConfig:[]});const cached=JSON.parse(f.storage.get('user'));
  for(const key of ['identityId','sessionVersion','authorizationRevision'])assert.equal(cached[key],user[key]);
