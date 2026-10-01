@@ -435,7 +435,7 @@
             if (!Object.values(WORKFLOW_NAV).some(items => items.some(item => item.selector === selector))) return false;
             const target = document.querySelector(selector);
             if (!target) return false;
-            target.click();
+            window.postMessage({channel:'akra-workflow',version:1,selector}, window.location.origin);
             return true;
         },
         watchSession: options => {
@@ -507,6 +507,13 @@
         logout: fallback => { if (shell) send('logout'); else window.location.assign(fallback); }
     });
     if (!shell) return;
+    window.addEventListener('message', event => {
+        const data = event.data;
+        if (event.origin !== window.location.origin || (event.source !== window.parent && event.source !== window)) return;
+        if (data?.channel !== 'akra-workflow' || data.version !== 1 || !shell.tokenFor(window)) return;
+        if (!Object.values(WORKFLOW_NAV).some(items => items.some(item => item.selector === data.selector))) return;
+        document.querySelector(data.selector)?.click();
+    });
     installEmbeddedNavigationStyle(document);
     // Conservative guard: filters/search do not count; saving is cleared only by
     // an explicit successful module save, never by a generic network response.

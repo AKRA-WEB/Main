@@ -7,7 +7,7 @@ const source = fs.readFileSync(path.join(__dirname,'../js/akra-shell-bridge.js')
 function setup({embedded=true,token='fixture',origin='https://akra-web.github.io',pathname='/Main/',reply={valid:true,user:{id:'fixture-user'}},fetchImpl,setTimeoutImpl,targets={}}={}) {
     const messages=[],listeners={},requests=[];
     const document={readyState:'loading',addEventListener:(name,fn)=>listeners[name]=fn,querySelector:selector=>targets[selector]};
-    const window={location:{origin,hostname:new URL(origin).hostname,search:''},addEventListener:(name,fn)=>listeners[name]=fn};
+    const window={location:{origin,hostname:new URL(origin).hostname,search:''},addEventListener:(name,fn)=>listeners[name]=fn,postMessage:(message,to)=>messages.push({message,to})};
     window.parent=embedded?{location:{origin,pathname},AkraShell:{tokenFor:()=>token},postMessage:(message,to)=>messages.push({message,to})}:window;
     vm.runInNewContext(source,{window,document,URLSearchParams,AbortController,setTimeout:setTimeoutImpl || setTimeout,clearTimeout,fetch:fetchImpl || (async(url,options)=>{requests.push({url,options});return {ok:reply.valid,json:async()=>reply};})});
     return {module:window.AkraModule,messages,listeners,window,requests};
@@ -15,7 +15,11 @@ function setup({embedded=true,token='fixture',origin='https://akra-web.github.io
 
 test('workflow activation stays in the child realm and permits only known routes in an active Main session',()=>{
     let clicks=0;const targets={'#dtab-duties':{click(){clicks++;}},'#delete':{click(){throw Error('unknown route');}}};
-    assert.equal(setup({targets}).module.activateWorkflow('#dtab-duties'),true);assert.equal(clicks,1);
+    const f=setup({targets});assert.equal(f.module.activateWorkflow('#dtab-duties'),true);assert.equal(clicks,0);
+    const data=f.messages[0].message;
+    f.listeners.message({origin:'https://invalid.example',source:f.window.parent,data});assert.equal(clicks,0);
+    f.listeners.message({origin:f.window.location.origin,source:{},data});assert.equal(clicks,0);
+    f.listeners.message({origin:f.window.location.origin,source:f.window.parent,data});assert.equal(clicks,1);
     assert.equal(setup({targets}).module.activateWorkflow('#delete'),false);
     assert.equal(setup({targets,token:''}).module.activateWorkflow('#dtab-duties'),false);
     assert.equal(setup({targets,embedded:false}).module.activateWorkflow('#dtab-duties'),false);assert.equal(clicks,1);
