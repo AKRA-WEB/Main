@@ -56,7 +56,11 @@
             manageSkills:['จัดการ Skill Matrix','เพิ่ม ลบ และแก้ไข skill catalog/skill ของพนักงานตามสิทธิ์ผู้ดูแลเดิม'],
             manageKpiProfile:['จัดการ Profile และ LINE','แก้ไข avatar หรือผูก/ยกเลิก LINE ของตนเอง ผู้ดูแลยังจัดการคนอื่นได้ตามกติกาเดิม'],
             manageKpiConfig:['จัดการตั้งค่า KPI','บันทึก workload duties และ system config ใช้สิทธิ์ผู้ดูแล KPI เดิม'],
-            dispatchWorkload:['ส่งแจ้งเตือน Workload','ส่ง Flex แจ้งเตือน workload ใช้สิทธิ์ผู้ดูแล KPI เดิม']
+            dispatchWorkload:['ส่งแจ้งเตือน Workload','ส่ง Flex แจ้งเตือน workload ใช้สิทธิ์ผู้ดูแล KPI เดิม'],
+            manageTeamTasks:['จัดการงานทีม (Kanban)','สร้าง มอบหมาย และจัดการงานทีม'],
+            updateOwnTasks:['อัปเดตงานของตนเอง','อัปเดตสถานะ เช็คลิสต์ และความคิดเห็นของงานตนเอง'],
+            manageDutyAllocations:['จัดการตารางงานและทักษะขับขี่','ปรับหน้าที่ปัจจุบันและข้อมูลทักษะขับขี่ของพนักงาน'],
+            manageDutyCatalog:['จัดการประเภทหน้าที่','เพิ่ม แก้ไข และปิดประเภทหน้าที่']
         },
         'app-ret':{
             ADD_RET:['เพิ่มรายการสินค้าคืน','การระบุผล QC พร้อมบันทึกต้องมี QC_RET เพิ่มด้วย'],

@@ -63,7 +63,8 @@
         'app-kpi': [
             {label:'Workload', icon:'briefcase', selector:'#dtab-workload'},
             {label:'Incident QC', icon:'check', selector:'#dtab-error'},
-            {label:'5S Audit', icon:'clipboard', selector:'#dtab-audit'},
+            {label:'บอร์ดงาน (Kanban)', icon:'clipboard', selector:'#dtab-kanban'},
+            {label:'ตารางงาน', icon:'users', selector:'#dtab-duties'},
             {label:'Live Bill Sync', icon:'file', selector:'#dtab-billcount'},
             {label:'Dashboard', icon:'dashboard', selector:'#dtab-dashboard'},
             {label:'โปรไฟล์ฉัน', icon:'user', selector:'#dtab-my-profile'}
