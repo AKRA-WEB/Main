@@ -430,6 +430,14 @@
         embedded: !!shell,
         sessionStamp,
         isMainSignedOut,
+        activateWorkflow: selector => {
+            if (!shell || !shell.tokenFor(window)) return false;
+            if (!Object.values(WORKFLOW_NAV).some(items => items.some(item => item.selector === selector))) return false;
+            const target = document.querySelector(selector);
+            if (!target) return false;
+            target.click();
+            return true;
+        },
         watchSession: options => {
             if (shell) return; // Main owns embedded document retirement.
             standaloneAppId = typeof options?.appId === 'string' ? options.appId : '';

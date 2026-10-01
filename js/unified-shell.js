@@ -471,6 +471,8 @@
     }
     function clickWorkflow(item) {
         if (!active?.frame?.contentDocument) return false;
+        const adapter = active.frame.contentWindow?.AkraModule;
+        if (typeof adapter?.activateWorkflow === 'function') return adapter.activateWorkflow(item.selector);
         const doc = active.frame.contentDocument;
         const target = item.selector ? doc.querySelector(item.selector) : null;
         if (!target) return false;
