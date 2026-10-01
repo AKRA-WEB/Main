@@ -37,7 +37,7 @@
             const choice = await prompt.userChoice;
             if (choice?.outcome === 'accepted') installed = true;
         } catch (error) {
-            console.warn('AKRA app installation prompt was unavailable:', error);
+            console.warn('BUYMORETH app installation prompt was unavailable:', error);
         } finally {
             sync();
         }

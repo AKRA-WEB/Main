@@ -20,7 +20,7 @@
         bridge?.stopWatchingSession();
         content.hidden = true;
         button.disabled = false;
-        status.textContent = 'เซสชันหรือสิทธิ์เปลี่ยนแล้ว กรุณากลับ Main เพื่อเข้าสู่ระบบอีกครั้ง';
+        status.textContent = 'เซสชันหรือสิทธิ์เปลี่ยนแล้ว กรุณากลับ BUYMORETH เพื่อเข้าสู่ระบบอีกครั้ง';
     }
 
     async function checkAccess() {
@@ -28,7 +28,7 @@
         bridge?.stopWatchingSession();
         content.hidden = true;
         button.disabled = true;
-        status.textContent = 'กำลังตรวจสอบสิทธิ์จาก Main…';
+        status.textContent = 'กำลังตรวจสอบสิทธิ์จาก BUYMORETH…';
         try {
             let token;
             try { token = window.localStorage.getItem('akra_session_token'); } catch (_) { /* Fail closed. */ }
@@ -41,14 +41,14 @@
             }});
             if (current !== generation) return;
             content.hidden = false;
-            status.textContent = 'ยืนยันสิทธิ์แล้ว — หน้านี้ยังไม่เชื่อมต่อข้อมูลสรุปจริง โปรดดูข้อมูลล่าสุดในแอปต้นทางผ่าน Main';
+            status.textContent = 'ยืนยันสิทธิ์แล้ว — หน้านี้ยังไม่เชื่อมต่อข้อมูลสรุปจริง โปรดดูข้อมูลล่าสุดในแอปต้นทางผ่าน BUYMORETH';
         } catch (error) {
             if (current !== generation) return;
             status.textContent = error.message === 'no_token'
-                ? 'กรุณาเข้าสู่ระบบผ่าน Main ก่อนเปิดหน้านี้'
+                ? 'กรุณาเข้าสู่ระบบผ่าน BUYMORETH ก่อนเปิดหน้านี้'
                 : error.message === 'executive_forbidden'
-                    ? 'บัญชีนี้ไม่มีสิทธิ์เข้า Executive หรือยังต้องเปลี่ยนรหัสผ่าน กรุณากลับ Main'
-                    : 'ตรวจสอบสิทธิ์ไม่สำเร็จ กรุณาลองอีกครั้ง หรือกลับ Main เพื่อเข้าสู่ระบบ';
+                    ? 'บัญชีนี้ไม่มีสิทธิ์เข้า Executive หรือยังต้องเปลี่ยนรหัสผ่าน กรุณากลับ BUYMORETH'
+                    : 'ตรวจสอบสิทธิ์ไม่สำเร็จ กรุณาลองอีกครั้ง หรือกลับ BUYMORETH เพื่อเข้าสู่ระบบ';
         } finally {
             if (current === generation) button.disabled = false;
         }

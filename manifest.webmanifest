@@ -1,15 +1,15 @@
 {
   "id": "/Main/",
-  "name": "AKRA",
-  "short_name": "AKRA",
+  "name": "BUYMORETH",
+  "short_name": "BM",
   "start_url": "/Main/",
   "scope": "/Main/",
   "display": "standalone",
   "background_color": "#ffffff",
   "theme_color": "#2563eb",
   "icons": [
-    { "src": "assets/icons/akra-192-v20260929-01.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
-    { "src": "assets/icons/akra-512-v20260929-01.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
-    { "src": "assets/icons/akra-512-maskable-v20260929-01.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+    { "src": "assets/icons/bm-192-v20261001-07.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "assets/icons/bm-512-v20261001-07.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "assets/icons/bm-512-maskable-v20261001-07.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
   ]
 }

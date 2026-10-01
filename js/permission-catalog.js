@@ -84,7 +84,7 @@
     function appNote(appId){
         if(appId==='app-manual') return 'ยังไม่มีสวิตช์แยกการแก้ไข: อ่านเอกสารตามสิทธิ์เข้าแอป แต่จัดการเอกสารต้องเป็น ADMIN';
         if(appId==='app-evaluation') return 'แบบประเมินบันทึกในเบราว์เซอร์แยกตามผู้ใช้ ยังไม่มีการส่งข้อมูลเข้าเซิร์ฟเวอร์';
-        return 'ยังไม่มีสวิตช์แยกการทำงานใน Main สิทธิ์เข้าแอปและกติกาใน backend ยังมีผล';
+        return 'ยังไม่มีสวิตช์แยกการทำงานใน BUYMORETH สิทธิ์เข้าแอปและกติกาใน backend ยังมีผล';
     }
     return Object.freeze({describe,appNote});
 }));
