@@ -33,6 +33,15 @@ test('Main failed warm boot remains public; a token alone can be reverified with
  await f.c.startup();assert.deepEqual(f.views,[]);assert.equal(f.sections.at(-1),'login-section');assert.equal(f.storage.get('token'),'old');
  const g=rig();g.storage.set('token','old');await g.c.startup();assert.deepEqual(g.views,['Verified']);
 });
+
+test('Main superseded warm-boot refresh leaves validation screen without adopting obsolete identity',async()=>{
+ const f=rig();f.storage.set('token','old');let finish;
+ f.c.API.postAction=()=>new Promise(resolve=>finish=resolve);
+ const pending=f.c.startup();await tick();f.storage.set('token','new-peer');
+ finish({status:'success',token:'old-refresh',user,appConfig:[]});await pending;
+ assert.deepEqual(f.views,[]);assert.equal(f.storage.get('token'),'new-peer');
+ assert.equal(f.sections.at(-1),'login-section');assert.equal(f.state.sessionRefreshPending,false);
+});
 test('Main saves verified UUID/session/revision metadata additively',()=>{
  const f=rig();f.c.app.saveSession({token:'verified',user,appConfig:[]});const cached=JSON.parse(f.storage.get('user'));
  for(const key of ['identityId','sessionVersion','authorizationRevision'])assert.equal(cached[key],user[key]);
