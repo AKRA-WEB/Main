@@ -18,6 +18,13 @@ test('IDs only in routes; reject arbitrary URLs, malformed encodings and path tr
   assert.equal(routeId('#/'), '');
   for (const value of ['#/app/https://evil.test', '#/app/%', '#/app/../Main', '#/app/app-tracking?sso=x']) assert.equal(routeId(value),null);
 });
+
+test('performance opt-in forwards only a fixed flag and preserves trusted-path validation', () => {
+  assert.equal(moduleUrl(app, origin, true), origin + '/TrackingPO/?shell=1&akra_perf=1');
+  for (const value of [false, '1', 'token', {}]) assert.equal(moduleUrl(app, origin, value), origin + '/TrackingPO/?shell=1');
+  assert.equal(moduleUrl({...app,url:origin+'/TrackingPO/?akra_perf=1'}, origin, true), '');
+  assert.equal(moduleUrl({...app,url:'https://evil.test/TrackingPO/'}, origin, true), '');
+});
 test('app access fails closed for stale/mandatory/absent session and removed assignment, including ADMIN', () => {
   assert.equal(canLaunch(app.id,session),true);
   for (const override of [{sessionToken:''},{sessionRefreshPending:true},{sessionRefreshFailed:true},{mustChangePassword:true},{currentRoles:['ADMIN']},{appConfig:[]}]) {

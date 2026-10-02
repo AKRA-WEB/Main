@@ -44,6 +44,16 @@ function assertWorkState(actual,expected){
     assert.equal(actual.busy,expected.busy);
     assert.equal(actual.unknown,expected.unknown);
 }
+
+test('Main opts child diagnostics in only for exact akra_perf=1 without forwarding other query values',()=>{
+    const c=setup();c.location.search='?akra_perf=1&private_value=fixture-secret';c.shell.open('app-tracking');
+    assert.equal(c.frame().src,'https://akra-web.github.io/TrackingPO/?shell=1&akra_perf=1');
+    assert.equal(c.shell.tokenFor(c.frame().contentWindow),'session-one');
+    for(const search of ['', '?akra_perf=true', '?private_value=fixture-secret']){
+        const f=setup();f.location.search=search;f.shell.open('app-tracking');
+        assert.equal(f.frame().src,'https://akra-web.github.io/TrackingPO/?shell=1');
+    }
+});
 test('open keeps only one document and removes background Main from keyboard/accessibility flow',()=>{
     const c=setup();c.shell.open('app-tracking');
     assert.equal(c.elements['dashboard-section'].inert,true);

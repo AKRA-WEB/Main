@@ -74,12 +74,13 @@
             {label:'พิมพ์แบบฟอร์ม (A4)', icon:'printer', selector:'#btnPrint'}
         ]
     });
-    function moduleUrl(app, origin) {
+    function moduleUrl(app, origin, perfEnabled = false) {
         try {
             const url = new URL(app.url);
             if (url.origin !== origin || url.pathname !== MODULE_PATHS[app.id] || url.search || url.hash || url.username || url.password) return '';
             if (url.protocol !== 'https:' && !(url.protocol === 'http:' && ['localhost','127.0.0.1'].includes(url.hostname))) return '';
             url.searchParams.set('shell', '1');
+            if (perfEnabled === true) url.searchParams.set('akra_perf', '1');
             return url.href;
         } catch (_) { return ''; }
     }
@@ -492,7 +493,8 @@
         const state = host.state();
         if (!canLaunch(id,state)) { host.notify('ไม่มีสิทธิ์เข้าแอปนี้ หรือยังตรวจสอบเซสชันไม่สำเร็จ'); return false; }
         const app = state.appConfig.find(item => item.id === id);
-        const url = moduleUrl(app,window.location.origin);
+        const perfEnabled = new URL(window.location.pathname + window.location.search, window.location.origin).searchParams.get('akra_perf') === '1';
+        const url = moduleUrl(app,window.location.origin,perfEnabled);
         if (!url) { host.notify('แอปนี้ยังไม่ได้ตั้งค่าเส้นทางที่รองรับ กรุณาติดต่อผู้ดูแล'); return false; }
         if (active?.id === id && !options.reload) return true;
         if (!options.workflow) pendingWorkflow = null;
