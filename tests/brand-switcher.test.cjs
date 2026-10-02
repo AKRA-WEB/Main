@@ -22,13 +22,13 @@ const cached = [
 test('signed app assignments keep canonical labels despite a pre-rename server/cache catalog', () => {
   const result = entries({ roles: ['AKRA'], apps: ['app-kpi', 'app-gr'] }, cached);
   assert.equal(result.length, 1);
-  assert.equal(result[0].label, 'งานและทีม');
+  assert.equal(result[0].label, 'BM Work • งานและทีม');
   assert.equal(result[0].path, '/KPITRACKER/');
 });
 test('legacy role catalog keeps canonical labels and still denies unassigned or inactive modules', () => {
   assert.deepEqual(entries({ roles: ['TRD'] }, cached), []);
   const result = entries({ roles: ['AKRA'] }, cached);
   assert.equal(result.length, 1);
-  assert.equal(result[0].label, 'งานและทีม');
+  assert.equal(result[0].label, 'BM Work • งานและทีม');
   assert.equal(result[0].id, 'app-kpi');
 });

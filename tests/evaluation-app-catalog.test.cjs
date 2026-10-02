@@ -30,7 +30,7 @@ function keysFor(constName, text=source){
 test('Main fallback catalog includes the selected Evaluation Pages target',()=>{
   const match=source.match(/\{ id: "app-evaluation",[\s\S]*?\n\s*\}/);
   assert.ok(match,'Evaluation must remain available when the authoritative snapshot is temporarily unavailable');
-  assert.match(match[0],/name: "แบบประเมินพนักงาน"/);
+  assert.match(match[0],/name: "EVAL • แบบประเมินพนักงาน"/);
   assert.match(match[0],/url: "https:\/\/akra-web\.github\.io\/Evaluation\/"/);
   assert.match(match[0],/roles: \["ADMIN", "SUPERVISOR"\]/);
 });

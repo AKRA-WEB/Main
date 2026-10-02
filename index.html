@@ -4,18 +4,18 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <!-- Update the inline script hash when changing the script below; tests/main-csp.test.cjs checks it. -->
-    <meta http-equiv="Content-Security-Policy" content="script-src 'self' https://static.line-scdn.net 'sha256-2KtXCtf7Jb2cTrPrJCEELamaN1nIbqzZ1FfLToPFygc='; object-src 'none'; base-uri 'self'">
+    <meta http-equiv="Content-Security-Policy" content="script-src 'self' https://static.line-scdn.net 'sha256-aAFKQDY9c2C3keni6G+61AjSAQzoMLc/QckVfEf3kIc='; object-src 'none'; base-uri 'self'">
     <link rel="icon" href="assets/icons/bm.svg" type="image/svg+xml">
     <link rel="apple-touch-icon" href="assets/icons/bm-192-v20261001-07.png">
     <link rel="manifest" href="manifest.webmanifest">
     <meta name="theme-color" content="#2563eb">
     <title>BUYMORETH | ศูนย์รวมระบบงาน</title>
     <link rel="stylesheet" href="css/unified-shell.css?v=20260921.07">
-    <script src="js/akra-shell-bridge.js?v=20261001.07"></script>
-    <script src="js/unified-shell.js?v=20261001.07"></script>
-    <script src="js/permission-catalog.js?v=20261001.07"></script>
+    <script src="js/akra-shell-bridge.js?v=20261002.01"></script>
+    <script src="js/unified-shell.js?v=20261002.01"></script>
+    <script src="js/permission-catalog.js?v=20261002.01"></script>
     <script src="js/user-permission-editor.js?v=20260917.03"></script>
-    <script src="js/main-pwa.js?v=20261001.07" defer></script>
+    <script src="js/main-pwa.js?v=20261002.01" defer></script>
     <link rel="preconnect" href="https://hgxrrskztbpejirrdpbq.supabase.co">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -642,7 +642,7 @@
             STORAGE_USER_DATA: "akra_user_data",
             STORAGE_APP_CONFIG: "akra_app_config"
         };
-        const CURRENT_VERSION = "20261001.07";
+        const CURRENT_VERSION = "20261002.01";
         const fontStylesheet = document.getElementById('main-fonts');
         if (fontStylesheet) {
             if (fontStylesheet.sheet) fontStylesheet.media = 'all';
@@ -832,29 +832,29 @@
         })();
 
         const DEFAULT_APP_CONFIG = [
-            { id: "app-w5", name: "เบิกย้ายสินค้า (AKRA)", icon: "package-minus", url: "https://akra-web.github.io/AKRA/", roles: ["ADMIN", "AKRA", "WAREHOUSE", "Cashier"] },
-            { id: "app-trd", name: "เบิกย้ายสินค้าสต๊อก (AKRA → TRD)", icon: "arrow-right-left", url: "https://akra-web.github.io/TRDAKRA/", roles: ["ADMIN", "AKRA", "TRD", "WAREHOUSE", "Cashier"] },
-            { id: "app-gr", name: "รับสินค้า", icon: "clipboard-list", url: "https://akra-web.github.io/GR/", roles: ["ADMIN", "AKRA", "WAREHOUSE", "Cashier"] },
-            { id: "app-pr", name: "ขอซื้อสินค้า", icon: "file-plus-2", url: "https://akra-web.github.io/PR/", roles: ["ADMIN", "AKRA", "WAREHOUSE", "Cashier"] },
-            { id: "app-pick", name: "เบิกสินค้า", icon: "package-check", url: "https://akra-web.github.io/Picking/", roles: ["ADMIN", "SUPERVISOR", "AKRA", "WAREHOUSE"] },
-            { id: "app-tracking", name: "จัดซื้อสินค้า", icon: "truck", url: "https://akra-web.github.io/TrackingPO/", roles: ["ADMIN", "AKRA", "TRD", "WAREHOUSE", "Cashier"] },
-            { id: "app-damage", name: "รับคืนสินค้าและเคลม", icon: "package-x", url: "https://akra-web.github.io/Returnitem/", roles: ["ADMIN", "AKRA", "TRD", "WAREHOUSE", "Cashier"] },
-            { id: "app-kpi", name: "งานและทีม", icon: "bar-chart-2", url: "https://akra-web.github.io/KPITRACKER/", roles: ["ADMIN", "AKRA", "TRD", "WAREHOUSE", "Cashier"] },
-            { id: "app-manual", name:"คู่มือการทำงาน", icon: "book-open", url: "https://akra-web.github.io/SOP/", roles: ["ADMIN", "AKRA", "TRD", "WAREHOUSE", "Cashier"] },
-            { id: "app-evaluation", name: "แบบประเมินพนักงาน", icon: "clipboard-check", url: "https://akra-web.github.io/Evaluation/", roles: ["ADMIN", "SUPERVISOR"] }
+            { id: "app-w5", name: "W5 • เบิกย้ายสินค้า AKRA", icon: "package-minus", url: "https://akra-web.github.io/AKRA/", roles: ["ADMIN", "AKRA", "WAREHOUSE", "Cashier"] },
+            { id: "app-trd", name: "TRD • เบิกย้ายสต๊อก AKRA → TRD", icon: "arrow-right-left", url: "https://akra-web.github.io/TRDAKRA/", roles: ["ADMIN", "AKRA", "TRD", "WAREHOUSE", "Cashier"] },
+            { id: "app-gr", name: "GR • รับเข้าสินค้า", icon: "clipboard-list", url: "https://akra-web.github.io/GR/", roles: ["ADMIN", "AKRA", "WAREHOUSE", "Cashier"] },
+            { id: "app-pr", name: "PR • ขอซื้อสินค้า", icon: "file-plus-2", url: "https://akra-web.github.io/PR/", roles: ["ADMIN", "AKRA", "WAREHOUSE", "Cashier"] },
+            { id: "app-pick", name: "PICK • เบิกสินค้า", icon: "package-check", url: "https://akra-web.github.io/Picking/", roles: ["ADMIN", "SUPERVISOR", "AKRA", "WAREHOUSE"] },
+            { id: "app-tracking", name: "PO • จัดซื้อสินค้า", icon: "truck", url: "https://akra-web.github.io/TrackingPO/", roles: ["ADMIN", "AKRA", "TRD", "WAREHOUSE", "Cashier"] },
+            { id: "app-damage", name: "RETURN • รับคืนสินค้าและเคลม", icon: "package-x", url: "https://akra-web.github.io/Returnitem/", roles: ["ADMIN", "AKRA", "TRD", "WAREHOUSE", "Cashier"] },
+            { id: "app-kpi", name: "BM Work • งานและทีม", icon: "bar-chart-2", url: "https://akra-web.github.io/KPITRACKER/", roles: ["ADMIN", "AKRA", "TRD", "WAREHOUSE", "Cashier"] },
+            { id: "app-manual", name:"SOP • คู่มือการทำงาน", icon: "book-open", url: "https://akra-web.github.io/SOP/", roles: ["ADMIN", "AKRA", "TRD", "WAREHOUSE", "Cashier"] },
+            { id: "app-evaluation", name: "EVAL • แบบประเมินพนักงาน", icon: "clipboard-check", url: "https://akra-web.github.io/Evaluation/", roles: ["ADMIN", "SUPERVISOR"] }
         ];
 
         const MAIN_APP_LABELS = {
-            "app-w5": "เบิกย้ายสินค้า (AKRA)",
-            "app-trd": "เบิกย้ายสินค้าสต๊อก (AKRA → TRD)",
-            "app-gr": "รับสินค้า",
-            "app-pr": "ขอซื้อสินค้า",
-            "app-pick": "เบิกสินค้า",
-            "app-tracking": "จัดซื้อสินค้า",
-            "app-damage": "รับคืนสินค้าและเคลม",
-            "app-kpi": "งานและทีม",
-            "app-manual": "คู่มือการทำงาน",
-            "app-evaluation": "แบบประเมินพนักงาน"
+            "app-w5": "W5 • เบิกย้ายสินค้า AKRA",
+            "app-trd": "TRD • เบิกย้ายสต๊อก AKRA → TRD",
+            "app-gr": "GR • รับเข้าสินค้า",
+            "app-pr": "PR • ขอซื้อสินค้า",
+            "app-pick": "PICK • เบิกสินค้า",
+            "app-tracking": "PO • จัดซื้อสินค้า",
+            "app-damage": "RETURN • รับคืนสินค้าและเคลม",
+            "app-kpi": "BM Work • งานและทีม",
+            "app-manual": "SOP • คู่มือการทำงาน",
+            "app-evaluation": "EVAL • แบบประเมินพนักงาน"
         };
 
         const MAIN_APP_TYPES = {
