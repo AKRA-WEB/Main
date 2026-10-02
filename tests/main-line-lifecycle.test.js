@@ -7,24 +7,27 @@ const html = fs.readFileSync(path.join(__dirname, '../index.html'), 'utf8');
 const start = html.indexOf('const LineAccount = {');
 const source = html.slice(start, html.indexOf('window.LineAccount = LineAccount;', start)) + '\nglobalThis.subject = LineAccount;';
 const deferred = () => { let resolve, reject; const promise = new Promise((a,b) => { resolve=a; reject=b; }); return {promise,resolve,reject}; };
-function rig(storage = new Map()) {
+const sessionToken = id => 'fixture.' + Buffer.from(JSON.stringify({sessionId:id})).toString('base64url') + '.fixture';
+function rig(storage = new Map(), shared = new Map()) {
   const calls = [], elements = new Map();
   for (const id of ['line-modal-loading','line-state-linked','line-state-unlinked','line-modal-error','line-modal-error-msg','line-linked-name']) {
     const classes = new Set();
     elements.set(id,{textContent:'',classList:{toggle:(name,force)=>force?classes.add(name):classes.delete(name),contains:name=>classes.has(name)}});
   }
   const ctx = {
-    state:{currentUserId:'account-a',identityId:'10000000-0000-4000-8000-000000000011',sessionVersion:1,sessionAuthorizationRevision:'revision-one',sessionToken:'synthetic',sessionEpoch:1,lifecycleMarker:'login-a'},
+    state:{currentUserId:'account-a',identityId:'10000000-0000-4000-8000-000000000011',sessionVersion:1,sessionAuthorizationRevision:'revision-one',sessionToken:sessionToken('10000000-0000-4000-8000-000000000021'),sessionEpoch:1,lifecycleMarker:'login-a'},
     document:{getElementById:id=>elements.get(id)||null,title:'Main'},
     window:{location:new URL('https://example.test/Main/'),liff:{init:async()=>{},isLoggedIn:()=>true,getAccessToken:()=>'synthetic-line'}},
     CONFIG:{LINE_LIFF_ID:'synthetic'},
     API:{postAction:async p=>{calls.push(p.action);return {status:'success',linked:p.action!=='unbindLineAccount',lineDisplayName:'Test LINE'};}},
     UI:{showToast(){}}, console:{error(){},warn(){}}, URL, confirm:()=>true,
+    atob:value=>Buffer.from(value,'base64').toString('binary'), crypto:require('node:crypto').webcrypto,
+    safeStorage:{getItem:k=>shared.get(k)||null,setItem:(k,v)=>shared.set(k,v),removeItem:k=>shared.delete(k)},
     sessionStorage:{getItem:k=>storage.get(k)||null,setItem:(k,v)=>storage.set(k,v),removeItem:k=>storage.delete(k)}
   };
   ctx.window.history={replaceState:(_s,_t,url)=>{ctx.window.location=new URL(url,ctx.window.location);}};
   vm.createContext(ctx); vm.runInContext(source,ctx,{filename:'Main-LineAccount.js'});
-  return {ctx,storage,calls,elements,subject:ctx.subject};
+  return {ctx,storage,shared,calls,elements,subject:ctx.subject};
 }
 const putIntent = (r, fields={}) => {
   r.ctx.window.location=new URL('https://example.test/Main/?code=synthetic&state=synthetic');
@@ -37,7 +40,7 @@ test('T1: same login survives fresh OAuth page after logout/login or password ch
     before.ctx.window.liff.isLoggedIn=()=>false;
     before.ctx.window.liff.login=()=>{};
     await before.subject.connect();
-    const after=rig(before.storage);
+    const after=rig(before.storage,before.shared);
     after.ctx.window.location=new URL('https://example.test/Main/?code=synthetic&state=synthetic');
     let initUrl;
     after.ctx.window.liff.init=async()=>{initUrl=after.ctx.window.location.search;};
@@ -58,7 +61,9 @@ test('connect normalizes Main directory URL to the registered LIFF endpoint', as
 
   await r.subject.connect();
 
-  assert.equal(loginRedirectUri, 'https://example.test/Main/index.html');
+  const redirect = new URL(loginRedirectUri);
+  assert.equal(redirect.origin + redirect.pathname, 'https://example.test/Main/index.html');
+  assert.ok(redirect.searchParams.get('line_link'), 'redirect must correlate a new-window return');
   assert.deepEqual(r.calls, [], 'Unlogged connect must not bind before LINE login completes');
 });
 
@@ -173,4 +178,110 @@ for(const method of ['refreshStatus','unbind'])test(`late ${method} response can
  r.subject.state={loading:false,linked:false,displayName:null,error:null};
  reply.resolve({status:'success',linked:true,lineDisplayName:'Old LINE'});await pending;
  assert.equal(r.subject.state.linked,false);assert.equal(r.subject.state.displayName,null);
+});
+
+test('explicit click records intent before SDK initialization can navigate',async()=>{
+ const r=rig();let observed;
+ r.ctx.window.liff.init=async()=>{observed=JSON.parse(r.storage.get('akra_line_link_intent')||'null');};
+ await r.subject.connect();
+ assert.equal(observed?.userId,'account-a');assert.ok(observed?.nonce);
+ assert.equal(r.storage.has('akra_line_link_intent'),false,'completed bind consumes intent');
+ assert.equal(r.shared.has('akra_line_link_intent'),false);
+});
+
+test('primary LIFF navigation keeps intent for clean secondary redirect and binds once',async()=>{
+ const before=rig();putIntent(before);let entered;
+ const initializing=new Promise(resolve=>entered=resolve);
+ before.ctx.window.liff.init=()=>{entered();return new Promise(()=>{});};
+ before.subject.checkCallbackIntent();await initializing;
+ assert.ok(before.storage.has('akra_line_link_intent'),'intent must survive a navigating init');
+ const after=rig(before.storage,before.shared);
+ after.ctx.window.location=new URL('https://example.test/Main/index.html');
+ await after.subject.checkCallbackIntent();await after.subject.checkCallbackIntent();
+ assert.deepEqual(after.calls,['bindLineAccount']);
+});
+
+async function startRedirect(){
+ const r=rig();r.ctx.window.liff.isLoggedIn=()=>false;let redirect;
+ r.ctx.window.liff.login=options=>{redirect=options.redirectUri;};await r.subject.connect();
+ return {r,redirect};
+}
+
+test('PWA return in new tab resumes only the same verified device session and URL nonce',async()=>{
+ const {r,redirect}=await startRedirect();const after=rig(new Map(),r.shared);
+ after.ctx.state.lifecycleMarker='new-tab';after.ctx.window.location=new URL(redirect);
+ await after.subject.checkCallbackIntent();await after.subject.checkCallbackIntent();
+ assert.deepEqual(after.calls,['bindLineAccount']);
+ assert.equal(r.shared.has('akra_line_link_intent'),false);
+ // Original PWA must not bind again after the other window completed.
+ r.ctx.window.liff.isLoggedIn=()=>true;await r.subject.checkCallbackIntent();assert.deepEqual(r.calls,[]);
+});
+
+for(const mode of ['new-device-session','missing-nonce','wrong-nonce','wrong-identity','expired'])test(`new-tab ${mode} return cannot bind`,async()=>{
+ const {r,redirect}=await startRedirect();const after=rig(new Map(),r.shared);
+ after.ctx.state.lifecycleMarker='new-tab';after.ctx.window.location=new URL(redirect);
+ if(mode==='new-device-session')after.ctx.state.sessionToken=sessionToken('10000000-0000-4000-8000-000000000022');
+ if(mode==='missing-nonce')after.ctx.window.location.search='?code=fixture';
+ if(mode==='wrong-nonce')after.ctx.window.location.search='?line_link=wrong';
+ if(mode==='wrong-identity')after.ctx.state.identityId='10000000-0000-4000-8000-000000000012';
+ if(mode==='expired'){const intent=JSON.parse(r.shared.get('akra_line_link_intent'));intent.timestamp-=660000;r.shared.set('akra_line_link_intent',JSON.stringify(intent));}
+ await after.subject.checkCallbackIntent();assert.deepEqual(after.calls,[]);
+});
+
+test('cancelled callback clears intent and never starts another LINE login',async()=>{
+ const r=rig();putIntent(r);r.ctx.window.liff.isLoggedIn=()=>false;let logins=0;
+ r.ctx.window.liff.login=()=>{logins++;};await r.subject.checkCallbackIntent();
+ assert.equal(logins,0);assert.deepEqual(r.calls,[]);assert.equal(r.storage.has('akra_line_link_intent'),false);
+ assert.ok(r.subject.state.error);
+});
+
+test('same-tab redirect works when shared storage is unavailable',async()=>{
+ const r=rig();r.ctx.safeStorage.setItem=()=>{};r.ctx.window.liff.isLoggedIn=()=>false;
+ let redirect;r.ctx.window.liff.login=options=>{redirect=options.redirectUri;};await r.subject.connect();
+ r.ctx.window.location=new URL(redirect);r.ctx.window.liff.isLoggedIn=()=>true;
+ await r.subject.checkCallbackIntent();assert.deepEqual(r.calls,['bindLineAccount']);
+});
+
+test('another window consumes request during SDK init: no second binding',async()=>{
+ const {r,redirect}=await startRedirect();const after=rig(new Map(),r.shared),ready=deferred(),init=deferred();
+ after.ctx.window.location=new URL(redirect);after.ctx.state.lifecycleMarker='new-tab';
+ after.ctx.window.liff.init=()=>{ready.resolve();return init.promise;};const pending=after.subject.checkCallbackIntent();await ready.promise;
+ r.ctx.window.liff.isLoggedIn=()=>true;await r.subject.checkCallbackIntent();init.resolve();await pending;
+ assert.deepEqual(r.calls,['bindLineAccount']);assert.deepEqual(after.calls,[]);
+});
+
+test('return refreshes status; successful binding signals the original window',async()=>{
+ const r=rig();await r.subject.connect();assert.ok(r.shared.get('akra_line_account_changed'));
+ r.calls.length=0;r.subject.onReturn();await new Promise(setImmediate);
+ assert.deepEqual(r.calls,['getLineAccountStatus']);
+ r.ctx.document.hidden=true;r.subject.onReturn();assert.equal(r.calls.length,1);
+});
+
+test('device session changes during SDK work cannot bind and old errors do not clear a new intent',async()=>{
+ const r=rig(),ready=deferred(),init=deferred();r.ctx.window.liff.init=()=>{ready.resolve();return init.promise;};
+ const pending=r.subject.connect();await ready.promise;
+ r.ctx.state.sessionToken=sessionToken('10000000-0000-4000-8000-000000000022');
+ const next={nonce:'new-request',marker:'new-login'};r.shared.set('akra_line_link_intent',JSON.stringify(next));
+ init.resolve();await pending;assert.deepEqual(r.calls,[]);assert.equal(JSON.parse(r.shared.get('akra_line_link_intent')).nonce,'new-request');
+});
+
+test('new-tab callback still reads shared request if tab storage fails',async()=>{
+ const {r,redirect}=await startRedirect();const after=rig(new Map(),r.shared);
+ after.ctx.window.location=new URL(redirect);after.ctx.state.lifecycleMarker='new-tab';
+ after.ctx.sessionStorage.getItem=()=>{throw Error('blocked tab storage');};
+ await after.subject.checkCallbackIntent();assert.deepEqual(after.calls,['bindLineAccount']);
+});
+
+test('liff.state carries the correlation nonce into a fresh tab',async()=>{
+ const {r,redirect}=await startRedirect();const after=rig(new Map(),r.shared);
+ after.ctx.window.location=new URL('https://example.test/Main/index.html?liff.state='+encodeURIComponent(new URL(redirect).search));
+ after.ctx.state.lifecycleMarker='new-tab';let params;
+ after.ctx.window.liff.init=async()=>{params=after.ctx.window.location.search;};
+ await after.subject.checkCallbackIntent();assert.deepEqual(after.calls,['bindLineAccount']);assert.ok(params.includes('liff.state='));
+});
+
+test('unavailable storage aborts before SDK navigation',async()=>{
+ const r=rig();r.ctx.safeStorage.setItem=()=>{};r.ctx.sessionStorage.setItem=()=>{throw Error('blocked');};
+ let sdk=0;r.ctx.window.liff.init=async()=>{sdk++;};await r.subject.connect();
+ assert.equal(sdk,0);assert.deepEqual(r.calls,[]);assert.ok(r.subject.state.error);
 });

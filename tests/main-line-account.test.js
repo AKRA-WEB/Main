@@ -137,6 +137,7 @@ test('Functional: LineAccount lifecycle, UI rendering, intent validation and act
     confirm: () => true,
     alert: () => {},
     URL: globalThis.URL,
+    crypto: require('node:crypto').webcrypto,
     lucide: { createIcons: () => {} },
     fetch: async () => ({ ok: true, json: async () => ({ version: '20260907.01' }) }),
     console: { log: () => {}, warn: () => {}, error: () => {} },
