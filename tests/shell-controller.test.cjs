@@ -5,7 +5,8 @@ const vm = require('node:vm');
 const fs = require('node:fs');
 const path = require('node:path');
 function setup() {
-    const elements = {}, listeners = {}, history = [], timers = new Map();
+    const elements = {}, listeners = {}, history = [], timers = new Map(), notices = [];
+    let now = 0;
     let timer = 0, confirms = 0, allowLeave = true, homes = 0, logouts = 0;
     function element(tag='div') {
         return {tag, hidden:false, inert:false, children:[], attrs:{}, listeners:{},
@@ -26,18 +27,26 @@ function setup() {
                 hasPendingWork:()=>dirty||busy,getWorkState:()=>({dirty,busy}),
                 setState:(d,b=false)=>{dirty=d;busy=b;},prepareLeave:()=>{el.leaving=true;}
             }};
+            const targets = new Map();
+            el.contentDocument = {querySelector:selector=>targets.get(selector) || null};
+            el.targets = targets;
+            Object.defineProperty(el,'src',{get:()=>el.url,set:value=>{el.url=value;el.contentWindow.location.pathname=new URL(value).pathname;}});
         }return el;
     }};
     for (const id of ['dashboard-section','login-section','admin-section']) document.getElementById(id);
     const window={location,addEventListener:(name,fn)=>listeners[name]=fn,confirm:()=>{confirms++;return allowLeave;},history:{}};
     for(const method of ['pushState','replaceState'])window.history[method]=(s,title,url)=>{location.hash=url.slice(url.indexOf('#'));history.push({method,url});};
-    const context=vm.createContext({window,document,URL,setTimeout:fn=>{timers.set(++timer,fn);return timer;},clearTimeout:id=>timers.delete(id)});
+    const later=fn=>{timers.set(++timer,fn);return timer;};
+    window.setTimeout=later;
+    const context=vm.createContext({window,document,URL,Date:{now:()=>now},setTimeout:later,clearTimeout:id=>timers.delete(id)});
     new vm.Script(fs.readFileSync(path.join(__dirname,'../js/unified-shell.js'),'utf8')).runInContext(context);
     const shell=window.AkraShell;
-    shell.init({state:()=>state,label:app=>app.name,notify:()=>{},home:()=>homes++,admin:()=>{},logout:()=>logouts++});
+    shell.init({state:()=>state,label:app=>app.name,notify:message=>notices.push(message),home:()=>homes++,admin:()=>{},logout:()=>logouts++});
     const frame=()=>elements['shell-frame-host'].children[0];
     const message=(type,details={},source=frame()?.contentWindow)=>listeners.message({source,origin:location.origin,data:{channel:'akra-shell',version:1,type,...details}});
-    return {shell,state,elements,frame,listeners,location,history,timers,message,allow:val=>allowLeave=val,count:()=>({confirms,homes,logouts})};
+    const workflow=(id,index=0)=>elements['shell-app-nav'].children.find(group=>group.attrs['data-app-id']===id).children[1].children[index].listeners.click();
+    const advance=(ms=100)=>{now+=ms;const pending=[...timers];timers.clear();pending.forEach(([,fn])=>fn());};
+    return {shell,state,elements,frame,listeners,location,history,timers,message,workflow,advance,notices,allow:val=>allowLeave=val,count:()=>({confirms,homes,logouts})};
 }
 function assertWorkState(actual,expected){
     assert.equal(actual.dirty,expected.dirty);
@@ -123,4 +132,53 @@ test('update work state includes child drafts and saves and fails closed without
     assertWorkState(c.shell.getWorkState(),{dirty:false,busy:true,unknown:false});
     delete module.getWorkState;
     assertWorkState(c.shell.getWorkState(),{dirty:false,busy:false,unknown:true});
+});
+
+test('focus and unchanged synchronization preserve sidebar buttons and select options',()=>{
+    const c=setup();c.shell.open('app-tracking');c.message('ready');
+    const group=c.elements['shell-app-nav'].children[0], option=c.elements['shell-module-select'].children[0];
+    c.listeners.focus();c.shell.sync();
+    assert.equal(c.elements['shell-app-nav'].children[0],group);
+    assert.equal(c.elements['shell-module-select'].children[0],option);
+    c.state.appConfig[0].name='Renamed PO';c.shell.sync();
+    assert.notEqual(c.elements['shell-app-nav'].children[0],group);
+    c.state.appConfig=[];c.shell.sync();assert.equal(c.elements['shell-app-nav'].children.length,0);
+});
+
+test('one same-app workflow click waits for ready and controls, latest selection runs once',()=>{
+    const c=setup();c.shell.open('app-tracking');let first=0,latest=0;
+    c.workflow('app-tracking',0);c.workflow('app-tracking',1);
+    c.message('ready');
+    c.frame().targets.set('#btn-tab-pr',{click:()=>first++});
+    c.frame().targets.set('#btn-tab-po',{click:()=>latest++});
+    c.advance();c.shell.sync();c.advance();
+    assert.equal(first,0);assert.equal(latest,1);assert.equal(c.notices.length,0);
+});
+
+test('cross-app workflow resumes when ready overlaps session refresh',()=>{
+    const c=setup();c.shell.open('app-tracking');let clicks=0;
+    c.workflow('app-gr',1);c.frame().targets.set('.gr-nav-vendor',{click:()=>clicks++});
+    c.state.sessionRefreshPending=true;c.message('ready');assert.equal(clicks,0);
+    c.state.sessionRefreshPending=false;c.shell.sync();c.advance();
+    assert.equal(clicks,1);
+});
+
+test('pending workflow is cancelled by home and cannot reach a reopened app',()=>{
+    const c=setup();let clicks=0;c.shell.open('app-tracking');c.workflow('app-gr',1);
+    c.message('ready');const old=[...c.timers.values()];c.shell.home();
+    c.shell.open('app-gr');c.frame().targets.set('.gr-nav-vendor',{click:()=>clicks++});c.message('ready');
+    old.forEach(fn=>fn());c.advance();assert.equal(clicks,0);
+});
+
+test('workflow retries stop on revoked identity and reject disabled controls',()=>{
+    const c=setup();let clicks=0;c.shell.open('app-tracking');c.message('ready');
+    c.frame().targets.set('#btn-tab-po',{disabled:true,click:()=>clicks++});c.workflow('app-tracking',1);
+    c.advance();assert.equal(clicks,0);
+    c.frame().targets.get('#btn-tab-po').disabled=false;c.state.sessionEpoch++;c.advance();
+    assert.equal(clicks,0);
+});
+
+test('unavailable workflow expires with one notification instead of retrying forever',()=>{
+    const c=setup();c.shell.open('app-tracking');c.message('ready');c.workflow('app-tracking',1);
+    c.advance(20001);c.advance(20001);assert.equal(c.notices.length,1);
 });

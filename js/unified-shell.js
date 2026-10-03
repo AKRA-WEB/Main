@@ -99,6 +99,7 @@
     let host, panel, selector, status, frameHost, appNav, active = null, sequence = 0, readyTimer;
     const expandedApps = new Set();
     let pendingWorkflow = null;
+    let workflowTimer, navigationKey = '';
     let currentHash = '', suspended = false;
     const api = { moduleUrl, routeId, canLaunch, acceptsMessage, init, open, home, reset, sync, tokenFor, getWorkState, confirmLeave };
 
@@ -348,6 +349,7 @@
     function removeFrame() {
         sequence += 1;
         clearTimeout(readyTimer);
+        clearPendingWorkflow();
         // The parent already confirmed navigation, or revoked this session.
         active?.headerObserver?.disconnect();
         try { active?.frame.contentWindow.AkraModule?.prepareLeave?.(); } catch (_) {}
@@ -382,8 +384,8 @@
     }
     function populate() {
         const state = host.state();
-        selector.replaceChildren();
-        appNav?.replaceChildren();
+        const apps = (state.appConfig || []).filter(app => app.isActive !== false && canLaunch(app.id,state) && moduleUrl(app,window.location.origin));
+        const nextKey = JSON.stringify([active?.id, [...expandedApps].sort(), apps.map(app => [app.id, host.label(app), app.icon])]);
         const renderWorkflow = (app, item) => {
             const button = document.createElement('button');
             button.type = 'button';
@@ -454,13 +456,20 @@
             }
             appNav.appendChild(group);
         };
-        for (const app of state.appConfig || []) {
-            if (app.isActive === false || !canLaunch(app.id,state) || !moduleUrl(app,window.location.origin)) continue;
-            const option = document.createElement('option');
-            option.value = app.id;
-            option.textContent = host.label(app);
-            selector.appendChild(option);
-            if (appNav) renderAppGroup(app);
+        // A focus return can occur between pointerdown and click. Keep those
+        // exact controls attached when the navigation content has not changed.
+        if (nextKey !== navigationKey) {
+            navigationKey = nextKey;
+            selector.replaceChildren();
+            appNav?.replaceChildren();
+            for (const app of apps) {
+                const option = document.createElement('option');
+                option.value = app.id;
+                option.textContent = host.label(app);
+                selector.appendChild(option);
+                if (appNav) renderAppGroup(app);
+            }
+            if (window.lucide?.createIcons && appNav) window.lucide.createIcons({ root: appNav });
         }
         selector.value = active?.id || '';
         document.getElementById('shell-app-title').textContent = active ? host.label(state.appConfig.find(app => app.id === active.id) || {id:active.id}) : 'กำลังเปิดแอป';
@@ -468,25 +477,48 @@
         const sidebarUser = document.getElementById('shell-sidebar-user');
         if (sidebarUser) sidebarUser.textContent = state.currentUser || '';
         document.getElementById('shell-admin').hidden = !(state.currentRoles || []).includes('ADMIN');
-        if (window.lucide?.createIcons && appNav) window.lucide.createIcons({ root: appNav });
     }
     function clickWorkflow(item) {
         if (!active?.frame?.contentDocument) return false;
-        const adapter = active.frame.contentWindow?.AkraModule;
-        if (typeof adapter?.activateWorkflow === 'function') return adapter.activateWorkflow(item.selector);
         const doc = active.frame.contentDocument;
         const target = item.selector ? doc.querySelector(item.selector) : null;
-        if (!target) return false;
+        if (!target || target.disabled) return false;
+        const adapter = active.frame.contentWindow?.AkraModule;
+        if (typeof adapter?.activateWorkflow === 'function') return adapter.activateWorkflow(item.selector);
         target.click();
         return true;
     }
-    function activateWorkflow(appId, item) {
-        if (active?.id !== appId) {
-            pendingWorkflow = {appId, item};
-            if (!open(appId, {workflow:true})) pendingWorkflow = null;
+    function clearPendingWorkflow() {
+        clearTimeout(workflowTimer);
+        pendingWorkflow = null;
+    }
+    function runPendingWorkflow() {
+        clearTimeout(workflowTimer);
+        const pending = pendingWorkflow;
+        if (!pending) return;
+        const state = host.state();
+        if (!active || pending.frame !== active.frame || suspended || active.epoch !== state.sessionEpoch || active.user !== state.currentUserId) {
+            clearPendingWorkflow();
             return;
         }
-        if (!clickWorkflow(item)) host.notify('เมนูงานนี้ยังไม่พร้อม กรุณารอให้แอปโหลดเสร็จ');
+        if (Date.now() >= pending.expiresAt) {
+            clearPendingWorkflow();
+            host.notify('เมนูงานนี้ยังไม่พร้อม กรุณาลองอีกครั้ง');
+            return;
+        }
+        if (!state.sessionRefreshPending && active.ready) {
+            if (!tokenFor(active.frame.contentWindow)) { clearPendingWorkflow(); return; }
+            if (clickWorkflow(pending.item)) { clearPendingWorkflow(); return; }
+        }
+        workflowTimer = setTimeout(() => {
+            if (pendingWorkflow === pending) runPendingWorkflow();
+        }, 100);
+    }
+    function activateWorkflow(appId, item) {
+        if (active?.id !== appId && !open(appId)) return;
+        clearPendingWorkflow();
+        pendingWorkflow = {frame:active.frame, item, expiresAt:Date.now() + 20000};
+        runPendingWorkflow();
     }
     function open(id, options = {}) {
         if (!host) return false;
@@ -496,8 +528,7 @@
         const perfEnabled = new URL(window.location.pathname + window.location.search, window.location.origin).searchParams.get('akra_perf') === '1';
         const url = moduleUrl(app,window.location.origin,perfEnabled);
         if (!url) { host.notify('แอปนี้ยังไม่ได้ตั้งค่าเส้นทางที่รองรับ กรุณาติดต่อผู้ดูแล'); return false; }
-        if (active?.id === id && !options.reload) return true;
-        if (!options.workflow) pendingWorkflow = null;
+        if (active?.id === id && !options.reload) { clearPendingWorkflow(); return true; }
         if (!options.force && !confirmLeave()) return false;
         removeFrame();
         suspended = false;
@@ -546,13 +577,7 @@
             active.frame.hidden = false;
             status.hidden = true;
             document.getElementById('shell-retry').hidden = true;
-            if (pendingWorkflow?.appId === active.id) {
-                const workflow = pendingWorkflow.item;
-                pendingWorkflow = null;
-                window.setTimeout(() => {
-                    if (!clickWorkflow(workflow)) host.notify('เมนูงานนี้ยังไม่พร้อม กรุณาลองอีกครั้ง');
-                }, 0);
-            }
+            runPendingWorkflow();
         } else if (message.type === 'state') {
             active.dirty = message.dirty === true;
             active.busy = message.busy === true;
@@ -594,6 +619,7 @@
         if (active && !suspended) {
             active.frame.inert = false;
             if (active.ready) { clearTimeout(readyTimer); active.frame.hidden = false; status.hidden = true; }
+            runPendingWorkflow();
         }
         if (!active && !suspended && state.sessionToken && !state.sessionRefreshPending && !state.sessionRefreshFailed && !state.mustChangePassword) onRoute();
     }
