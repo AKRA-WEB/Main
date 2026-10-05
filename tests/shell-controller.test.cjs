@@ -54,6 +54,33 @@ function assertWorkState(actual,expected){
     assert.equal(actual.unknown,expected.unknown);
 }
 
+test('push receiving workflow resolves the existing allowlist and waits for the authorized frame controls',()=>{
+    const c=setup();
+    assert.equal(c.shell.openWorkflow('app-gr','.gr-nav-receiving'),true);
+    assert.equal(c.location.hash,'#/app/app-gr');
+    let clicks=0;
+    c.message('ready');
+    c.frame().targets.set('.gr-nav-receiving',{click(){clicks++;}});
+    c.advance();
+    assert.equal(clicks,1);
+    assert.equal(c.shell.openWorkflow('app-gr','.untrusted-selector'),false);
+    assert.equal(c.shell.openWorkflow('https://evil.test/','.gr-nav-receiving'),false);
+    assert.equal(clicks,1);
+});
+test('push workflow preserves cancelled dirty navigation and discards delayed intent after signout or role loss',()=>{
+    const c=setup();c.shell.open('app-tracking');const old=c.frame();
+    old.contentWindow.AkraModule.setState(true);c.allow(false);
+    assert.equal(c.shell.openWorkflow('app-gr','.gr-nav-receiving'),false);
+    assert.equal(c.frame(),old);assert.equal(c.location.hash,'#/app/app-tracking');
+    for(const revoke of [state=>{state.sessionToken='';state.sessionEpoch++;},state=>{state.currentRoles=['STAFF'];}]){
+        const f=setup();assert.equal(f.shell.openWorkflow('app-gr','.gr-nav-receiving'),true);let clicks=0;
+        f.message('ready');revoke(f.state);f.shell.sync();
+        f.frame()?.targets.set('.gr-nav-receiving',{click(){clicks++;}});f.advance();assert.equal(clicks,0);
+    }
+    const f=setup();f.shell.open('app-gr');f.frame().contentWindow.AkraModule.setState(true);f.allow(false);
+    assert.equal(f.shell.openWorkflow('app-gr','.gr-nav-receiving'),false);
+});
+
 test('Main opts child diagnostics in only for exact akra_perf=1 without forwarding other query values',()=>{
     const c=setup();c.location.search='?akra_perf=1&private_value=fixture-secret';c.shell.open('app-tracking');
     assert.equal(c.frame().src,'https://akra-web.github.io/TrackingPO/?shell=1&akra_perf=1');

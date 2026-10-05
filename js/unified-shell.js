@@ -101,7 +101,7 @@
     let pendingWorkflow = null;
     let workflowTimer, navigationKey = '';
     let currentHash = '', suspended = false;
-    const api = { moduleUrl, routeId, canLaunch, acceptsMessage, init, open, home, reset, sync, tokenFor, getWorkState, confirmLeave };
+    const api = { moduleUrl, routeId, canLaunch, acceptsMessage, init, open, openWorkflow, home, reset, sync, tokenFor, getWorkState, confirmLeave };
 
     const EMBEDDED_HEADER_RULES = Object.freeze([
         { header: '#trd-topbar', action: '.trd-topbar__actions' },
@@ -515,10 +515,17 @@
         }, 100);
     }
     function activateWorkflow(appId, item) {
-        if (active?.id !== appId && !open(appId)) return;
+        if (active?.id !== appId && !open(appId)) return false;
         clearPendingWorkflow();
         pendingWorkflow = {frame:active.frame, item, expiresAt:Date.now() + 20000};
         runPendingWorkflow();
+        return true;
+    }
+    function openWorkflow(appId, selector) {
+        const item = WORKFLOW_NAV[appId]?.find(item => item.selector === selector);
+        if (!host || !item || !canLaunch(appId, host.state())) return false;
+        if (active?.id === appId && !confirmLeave()) return false;
+        return activateWorkflow(appId, item);
     }
     function open(id, options = {}) {
         if (!host) return false;
