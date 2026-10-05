@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <!-- Update the inline script hash when changing the script below; tests/main-csp.test.cjs checks it. -->
-    <meta http-equiv="Content-Security-Policy" content="script-src 'self' https://static.line-scdn.net 'sha256-9MUzDRgbFkbOSU7Vxw97XnNDvJa1TW0AHnD8+z8vBF8='; object-src 'none'; base-uri 'self'">
+    <meta http-equiv="Content-Security-Policy" content="script-src 'self' https://static.line-scdn.net 'sha256-iE/x1AHAvTkhK02lu3PsJxuWUFl59zWJzXPS8j6kV+c='; object-src 'none'; base-uri 'self'">
     <link rel="icon" href="assets/icons/bm.svg" type="image/svg+xml">
     <link rel="apple-touch-icon" href="assets/icons/bm-192-v20261001-07.png">
     <link rel="manifest" href="manifest.webmanifest">
@@ -12,7 +12,8 @@
     <title>BUYMORETH | ศูนย์รวมระบบงาน</title>
     <link rel="stylesheet" href="css/unified-shell.css?v=20260921.07">
     <script src="js/akra-shell-bridge.js?v=20261002.02"></script>
-    <script src="js/unified-shell.js?v=20261003.01"></script>
+    <script src="js/unified-shell.js?v=20261005.01"></script>
+    <script src="js/main-push.js?v=20261005.01"></script>
     <script src="js/permission-catalog.js?v=20261002.02"></script>
     <script src="js/user-permission-editor.js?v=20260917.03"></script>
     <script src="js/main-pwa.js?v=20261002.02" defer></script>
@@ -125,6 +126,11 @@
         .main-pwa-install-help__body { display: grid; gap: 7px; max-width: 72ch; margin-top: 8px; padding: 12px 14px; border: 1px solid var(--main-line); border-radius: 10px; background: #f8fafc; }
         .main-pwa-install-help__body p { margin: 0; }
         .main-pwa-install-help__note { color: var(--main-muted); }
+        .main-gr-push { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 16px; margin-bottom: 18px; padding: 12px 14px; border: 1px solid var(--main-line); border-radius: 10px; background: #f8fafc; }
+        .main-gr-push[hidden] { display: none; }
+        .main-gr-push .main-pwa-install { margin-top: 0; flex-shrink: 0; }
+        .main-gr-push .main-pwa-install:disabled { cursor: default; opacity: .6; }
+        .main-gr-push p { margin: 0; flex: 1 1 240px; color: var(--main-muted); font-size: 13px; line-height: 1.7; }
         .main-launcher-head { display: flex; align-items: center; justify-content: space-between; gap: 16px; margin-bottom: 18px; padding-bottom: 16px; border-bottom: 1px solid var(--main-line); }
         .main-launcher-head h2 { margin: 0; color: var(--main-ink); font-size: 16px; font-weight: 700; }
         .main-launcher-actions { display: flex; align-items: center; gap: 12px; }
@@ -317,6 +323,10 @@
                         <p class="main-pwa-install-help__note">ชื่อเมนูอาจต่างกันตามเวอร์ชันหรือข้อกำหนดของอุปกรณ์ หากไม่พบตัวเลือกติดตั้ง ให้ใช้ BUYMORETH ในเบราว์เซอร์ตามปกติหรือติดต่อผู้ดูแลระบบ</p>
                     </div>
                 </details>
+                <section id="main-gr-push" class="main-gr-push" aria-label="แจ้งเตือนการรับสินค้า" hidden>
+                    <button id="main-gr-push-toggle" class="main-pwa-install" type="button" aria-pressed="false" aria-describedby="main-gr-push-status" disabled>เปิดแจ้งเตือนรับสินค้า</button>
+                    <p id="main-gr-push-status" role="status" aria-live="polite"></p>
+                </section>
                 <section id="app-grid" aria-label="แอปพลิเคชันที่เปิดใช้งานได้"></section>
             </section>
 
@@ -642,7 +652,7 @@
             STORAGE_USER_DATA: "akra_user_data",
             STORAGE_APP_CONFIG: "akra_app_config"
         };
-        const CURRENT_VERSION = "20261003.01";
+        const CURRENT_VERSION = "20261005.01";
         const fontStylesheet = document.getElementById('main-fonts');
         if (fontStylesheet) {
             if (fontStylesheet.sheet) fontStylesheet.media = 'all';
@@ -2316,8 +2326,9 @@
                 safeStorage.setItem(CONFIG.STORAGE_APP_CONFIG, JSON.stringify(state.appConfig));
                 window.AkraModule?.watchSession({appId:'', user:data.user, token:state.sessionToken,
                     invalidated:() => App.handleLogout({preserveStoredSession:true}),
-                    refreshed:token => { state.sessionToken = token; window.AkraShell?.sync(); }
+                    refreshed:token => { state.sessionToken = token; window.AkraShell?.sync(); window.AkraPush?.sync(); }
                 });
+                window.AkraPush?.sync();
             },
 
             refreshSession: async (options = {}) => {
@@ -2351,6 +2362,7 @@
             handleSessionRefreshFailure: (message) => {
                 state.sessionRefreshPending = false;
                 state.sessionRefreshFailed = true;
+                window.AkraPush?.reset();
                 App.closePendingNavigation();
                 UI.showToast(message, 'warning');
             },
@@ -2427,6 +2439,7 @@
                     admin: () => { if (state.currentRoles.includes('ADMIN')) UI.switchSection('admin-section'); },
                     logout: options => App.signOut(options)
                 });
+                window.AkraPush?.init({state:() => state, apiUrl:CONFIG.API_URL.replace(/auth-api$/, 'push-api')});
                 AppVersionGuard.start({
                     current: CURRENT_VERSION,
                     readActions: ['log', 'getAdminData', 'login', 'refreshSession', 'logoutSession', 'getLineAccountStatus'],
@@ -2436,7 +2449,7 @@
                         if (!child || child.unknown) return {dirty:false,busy:false,unknown:true};
                         const credentialsDirty = mainHasUnsavedCredentials();
                         let dirty = child.dirty || credentialsDirty || state.authorizationDirty || state.userPermissionsDirty;
-                        let busy = child.busy || state.pendingApiRequests > 0 || state.authorizationSaving || AdminInteractive.profileSaving || state.sessionRefreshPending;
+                        let busy = child.busy || state.pendingApiRequests > 0 || state.authorizationSaving || AdminInteractive.profileSaving || state.sessionRefreshPending || !!window.AkraPush?.getWorkState().busy;
                         let unknown = state.sessionRefreshFailed && !!state.currentUser;
                         try {
                             dirty = dirty || AdminInteractive.profileDirty() || !!AdminInteractive.userPermissionEditor?.pending();
@@ -2753,6 +2766,7 @@
 
             handleLogout: (options = {}) => {
                 window.AkraModule?.stopWatchingSession();
+                window.AkraPush?.reset();
                 window.AkraShell?.reset();
                 state.sessionEpoch += 1;
                 AdminInteractive.userPermissionEditor?.reset();
@@ -2810,6 +2824,7 @@
 
             renderDashboard: () => {
                 window.AkraShell?.sync();
+                window.AkraPush?.sync();
                 const userDisplay = document.getElementById('user-name-display');
                 userDisplay.replaceChildren();
                 userDisplay.append(document.createTextNode(String(state.currentUser || '')));

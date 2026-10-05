@@ -10,6 +10,7 @@ const MAIN_ROOT = path.resolve(__dirname, '..');
 const WORKTREE_ROOT = path.resolve(MAIN_ROOT, '..');
 const WORKSPACE_ROOT = path.resolve(WORKTREE_ROOT, '..', '..');
 const FIXTURE_SERVER = path.join(MAIN_ROOT, 'tests', 'shell-fixture-server.cjs');
+const CANDIDATE_VERSION = JSON.parse(fs.readFileSync(path.join(MAIN_ROOT, 'version.json'), 'utf8')).version;
 const CHROME = 'C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe';
 const BROWSER = process.env.SHELL_BROWSER_EXECUTABLE || process.argv[2] || CHROME;
 const MODULES = [
@@ -1104,6 +1105,10 @@ async function main() {
       ata.value = '2026-09-19';
       receiver.value = 'ผู้รับทดสอบ';
       qty.value = '2';
+      const expiry = child.querySelector('.po-item-row .po-exp');
+      const oldStock = child.querySelector('.po-item-row .po-old-stock');
+      if (expiry) expiry.value = '31/12/2026';
+      if (oldStock) oldStock.value = '0';
       floor.value = [...floor.options].find(option => option.value)?.value || '';
       child.getElementById('btn-review').click();
       return { ok: true, path: new URL(frame.src).pathname };
@@ -1471,7 +1476,7 @@ async function main() {
       await waitFor(() => cdp.evaluate('(() => { const frame = document.getElementById("shell-module-frame"); return !!frame && !frame.hidden && new URL(frame.src).pathname === "/AKRA/"; })()'), 20000, 'version update seed module');
       const initialVersion = await cdp.evaluate('CURRENT_VERSION');
       const originalHash = await cdp.evaluate('window.location.hash');
-      assert.equal(initialVersion, '20260929.01', 'candidate version changed unexpectedly');
+      assert.equal(initialVersion, CANDIDATE_VERSION, 'candidate version changed unexpectedly');
       const cleanState = await cdp.evaluate('window.AkraShell.getWorkState()');
       assert.deepEqual(cleanState, { dirty: false, busy: false, unknown: false }, 'version update did not start from a clean child state');
 
@@ -1503,7 +1508,8 @@ async function main() {
       await waitFor(() => cdp.evaluate('JSON.stringify(window.AkraShell.getWorkState()) === JSON.stringify({dirty:false,busy:false,unknown:false})'), 5000, 'clean W5 draft baseline');
       const dirtyDraft = await cdp.evaluate('(() => { const frame = document.getElementById("shell-module-frame"); const child = frame?.contentDocument; const input = child && [...child.querySelectorAll("input[type=number]")].find(node => node.offsetParent !== null); if (!input) return null; input.focus(); input.value = "16"; input.dispatchEvent(new Event("input", { bubbles: true })); return { value: input.value, visible: input.offsetParent !== null, reportedDirty: window.AkraShell.getWorkState().dirty }; })()');
       assert.deepEqual(dirtyDraft, { value: '16', visible: true, reportedDirty: true }, 'real W5 form input was not reported as dirty to the Main update guard');
-      const firstVersion = '20260929.03';
+      const [versionDate, versionSequence] = CANDIDATE_VERSION.split('.');
+      const firstVersion = versionDate + '.' + String(Number(versionSequence) + 1).padStart(2, '0');
       const firstOverride = await setMainVersion(firstVersion);
       assert.equal(firstOverride.status, 200);
       assert.equal(firstOverride.body.version, firstVersion);
@@ -1529,7 +1535,7 @@ async function main() {
       assert.equal(firstReload.route, '/AKRA/');
       assert.equal(firstReload.sessionToken, true, 'first update lost the current session token');
 
-      const recoveryVersion = '20260929.04';
+      const recoveryVersion = versionDate + '.' + String(Number(versionSequence) + 2).padStart(2, '0');
       const recoveryOverride = await setMainVersion(recoveryVersion);
       assert.equal(recoveryOverride.status, 200);
       assert.equal(recoveryOverride.body.version, recoveryVersion);
@@ -1592,7 +1598,15 @@ async function main() {
     cdp?.close();
     terminateProcessTree(chrome);
     terminateProcessTree(fixture);
-    try { if (profile) fs.rmSync(profile, { recursive: true, force: true }); } catch (_) {}
+    try {
+      if (profile) {
+        const cleanupTarget = fs.realpathSync.native(profile);
+        const tempRoot = fs.realpathSync.native(os.tmpdir());
+        if (cleanupTarget.startsWith(tempRoot + path.sep) && path.basename(cleanupTarget).startsWith('akra-shell-cdp-')) {
+          fs.rmSync(cleanupTarget, { recursive: true, force: true });
+        }
+      }
+    } catch (_) {}
   }
 }
 

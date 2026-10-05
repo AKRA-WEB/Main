@@ -24,6 +24,13 @@ const claims = {id:'fixture-user',name:'ผู้ใช้ทดสอบ Shell'
 claims.perms['app-trd']=['viewInventory','manageInventory','receiveInventory','manageLocations','saveSurvey','sendSummary'];
 claims.perms['app-manual']=['readDocuments','manageDocuments'];
 claims.identityId = '10000000-0000-4000-8000-000000000011';
+const pushFixture = process.argv.includes('--push-fixture');
+let fixturePushEndpoint = '';
+if (pushFixture) {
+    claims.sessionId = '10000000-0000-4000-8000-000000000021';
+    claims.sessionStartedAt = 1780000000;
+    if (process.env.PUSH_TEST_ROLE === 'STAFF') claims.roles = ['WAREHOUSE'];
+}
 claims.permissionCatalog = {'app-pick':['viewRequisitions','createRequisition','retryLine']};
 claims.permissionCatalog['app-kpi']=['adminDashboard','recordWorkload','manageWorkload'];
 const readOnlyProfile = process.env.SHELL_READ_ONLY_PROFILE === '1';
@@ -165,6 +172,20 @@ const server = http.createServer(async (req,res)=>{
         let body={},target,authorization;
         try {const envelope=JSON.parse(raw);body=JSON.parse(envelope.body);authorization=envelope.authorization;target=new URL(envelope.url||origin);if(!body.action)body.action=target.searchParams.get('action');}catch(_){}
         res.setHeader('Content-Type','application/json');
+        if (pushFixture && target?.pathname.endsWith('/push-api')) {
+            if (body.token !== token) {res.writeHead(401).end(JSON.stringify({success:false,reason:'invalid_or_expired_token'}));return;}
+            if (!claims.roles.some(role => role === 'ADMIN' || role === 'SUPERVISOR')) {res.writeHead(403).end(JSON.stringify({success:false,reason:'permission_denied'}));return;}
+            const configured = process.env.PUSH_TEST_CONFIGURED === '1';
+            if (body.action === 'status') {
+                res.end(JSON.stringify({success:true,data:{eligible:true,configured,publicKey:configured
+                    ? Buffer.from([4,...Array(64).fill(1)]).toString('base64url') : '',
+                    subscribed:!!body.endpoint && body.endpoint === fixturePushEndpoint}}));return;
+            }
+            if (body.action === 'subscribe' && configured) {fixturePushEndpoint=body.subscription?.endpoint || '';res.end(JSON.stringify({success:true,data:{subscribed:!!fixturePushEndpoint}}));return;}
+            if (body.action === 'unsubscribe') {if(body.endpoint===fixturePushEndpoint)fixturePushEndpoint='';res.end(JSON.stringify({success:true,data:{subscribed:false}}));return;}
+            res.writeHead(503).end(JSON.stringify({success:false,reason:'push_not_configured'}));return;
+        }
+        if (pushFixture && body.action === 'logoutSession') {fixturePushEndpoint='';res.end(JSON.stringify({status:'success'}));return;}
         if(identityAuth&&['login','refreshSession','verifyToken','changePassword','getAdminData','saveUserPermissions'].includes(body.action)){
             if(body.action==='refreshSession'){
                 if(mainRefreshMode==='held')await new Promise(resolve=>pendingMainRefresh.push(resolve));
