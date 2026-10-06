@@ -10,7 +10,8 @@
         'app-pr': '/PR/', 'app-pick': '/Picking/', 'app-tracking': '/TrackingPO/',
         'app-damage': '/Returnitem/', 'app-kpi': '/KPITRACKER/', 'app-manual': '/SOP/',
         // Reserved candidate path; live enablement requires an actual hosted target.
-        'app-evaluation': '/Evaluation/'
+        'app-evaluation': '/Evaluation/',
+        'app-master-data': '/MasterData/'
     });
     const WORKFLOW_NAV = Object.freeze({
         'app-w5': [
@@ -72,6 +73,11 @@
         'app-evaluation': [
             {label:'ปรับแต่งแบบฟอร์ม', icon:'sliders-horizontal', selector:'#btnOpenEditor'},
             {label:'พิมพ์แบบฟอร์ม (A4)', icon:'printer', selector:'#btnPrint'}
+        ],
+        'app-master-data': [
+            {label:'สินค้า', icon:'package', selector:'#tab-products'},
+            {label:'Vendor', icon:'truck', selector:'#tab-vendors'},
+            {label:'สมาชิกและลูกค้า', icon:'users', selector:'#tab-members'}
         ]
     });
     function moduleUrl(app, origin, perfEnabled = false) {
@@ -91,7 +97,8 @@
     }
     function canLaunch(id, state) {
         if (!state.sessionToken || state.sessionRefreshPending || state.sessionRefreshFailed || state.mustChangePassword) return false;
-        return (state.appConfig || []).some(app => app.id === id && Array.isArray(app.roles) && app.roles.some(role => (state.currentRoles || []).includes(role)));
+        if (id === 'app-master-data' && (!Array.isArray(state.currentRoles) || !state.currentRoles.includes('ADMIN'))) return false;
+        return (state.appConfig || []).some(app => app.id === id && app.isActive !== false && Array.isArray(app.roles) && app.roles.some(role => (state.currentRoles || []).includes(role)));
     }
     function acceptsMessage(event, source, origin) {
         return event.source === source && event.origin === origin && event.data?.channel === 'akra-shell' && event.data.version === 1;

@@ -16,7 +16,8 @@
         {id:'app-damage', label:'RETURN • รับคืนสินค้าและเคลม', path:'/Returnitem/', icon:'package-x'},
         {id:'app-kpi', label:'BM Work • งานและทีม', path:'/KPITRACKER/', icon:'chart-no-axes-combined'},
         {id:'app-manual', label:'SOP • คู่มือการทำงาน', path:'/SOP/', icon:'book-open'},
-        {id:'app-evaluation', label:'EVAL • แบบประเมินพนักงาน', path:'/Evaluation/', icon:'clipboard-list'}
+        {id:'app-evaluation', label:'EVAL • แบบประเมินพนักงาน', path:'/Evaluation/', icon:'clipboard-list'},
+        {id:'app-master-data', label:'DATA • ข้อมูลกลาง', path:'/MasterData/', icon:'database', requireConfiguredUrl:true, requireAdmin:true}
     ]);
     const WORKFLOW_NAV = Object.freeze({
         'app-w5': [
@@ -78,6 +79,11 @@
         'app-evaluation': [
             {label:'ปรับแต่งแบบฟอร์ม', icon:'sliders', selector:'#btnOpenEditor'},
             {label:'พิมพ์แบบฟอร์ม (A4)', icon:'printer', selector:'#btnPrint'}
+        ],
+        'app-master-data': [
+            {label:'สินค้า', icon:'package', selector:'#tab-products'},
+            {label:'Vendor', icon:'truck', selector:'#tab-vendors'},
+            {label:'สมาชิกและลูกค้า', icon:'users', selector:'#tab-members'}
         ]
     });
     const APP_SWITCHER_ICON_PATHS = Object.freeze({
@@ -154,28 +160,40 @@
     function switcherStorageJson(key) {
         try { return JSON.parse(stored(key)); } catch (_) { return null; }
     }
+    function configuredSwitcherTarget(app, configured) {
+        if (!app.requireConfiguredUrl) return true;
+        if (!configured || configured.isActive === false) return false;
+        try {
+            const url = new URL(configured.url);
+            return url.origin === window.location.origin && url.pathname === app.path
+                && !url.search && !url.hash && !url.username && !url.password;
+        } catch (_) { return false; }
+    }
     function switcherEntries() {
         const cached = switcherStorageJson('akra_app_config');
         const user = switcherStorageJson('akra_user_data') || standaloneUser;
         const roles = Array.isArray(user?.roles) ? user.roles : [];
+        const catalog = APP_SWITCHER_CATALOG.filter(app => !app.requireAdmin || roles.includes('ADMIN'));
         const authorizedApps = Array.isArray(user?.apps) ? new Set(user.apps.map(String)) : null;
         if (authorizedApps?.size) {
-            return APP_SWITCHER_CATALOG.flatMap(app => {
+            return catalog.flatMap(app => {
                 if (!authorizedApps.has(app.id)) return [];
                 const configured = Array.isArray(cached) ? cached.find(item => item?.id === app.id) : null;
                 if (configured?.isActive === false) return [];
+                if (!configuredSwitcherTarget(app, configured)) return [];
                 return [{...app}];
             });
         }
         if (!Array.isArray(cached) || !roles.length) {
-            const current = APP_SWITCHER_CATALOG.find(app => app.id === standaloneAppId);
-            return current ? [current] : [];
+            const current = catalog.find(app => app.id === standaloneAppId);
+            return current && !current.requireConfiguredUrl ? [current] : [];
         }
         const roleSet = new Set(roles);
-        return APP_SWITCHER_CATALOG.flatMap(app => {
+        return catalog.flatMap(app => {
             const configured = cached.find(item => item?.id === app.id);
             if (!configured || configured.isActive === false || !Array.isArray(configured.roles)
                 || !configured.roles.some(role => roleSet.has(role))) return [];
+            if (!configuredSwitcherTarget(app, configured)) return [];
             return [{...app}];
         });
     }

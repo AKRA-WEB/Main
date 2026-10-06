@@ -54,6 +54,52 @@ function assertWorkState(actual,expected){
     assert.equal(actual.unknown,expected.unknown);
 }
 
+test('Master Data stays closed until an active configured target is supplied',()=>{
+    const c=setup();
+    c.state.appConfig.push({id:'app-master-data',url:'',roles:['ADMIN'],isActive:false,name:'Data'});
+    assert.equal(c.shell.open('app-master-data'),false);
+    assert.equal(c.frame(),undefined);
+    c.state.appConfig.at(-1).isActive=true;
+    assert.equal(c.shell.open('app-master-data'),false);
+    assert.equal(c.frame(),undefined);
+    c.state.appConfig.at(-1).url=c.location.origin+'/MasterData/';
+    assert.equal(c.shell.open('app-master-data'),true);
+    assert.equal(c.frame().src,c.location.origin+'/MasterData/?shell=1');
+    assert.equal(c.shell.tokenFor(c.frame().contentWindow),'session-one');
+});
+
+test('Master Data dataset selection waits for its authorized child and preserves draft cancellation',()=>{
+    const c=setup();
+    c.state.appConfig.push({id:'app-master-data',url:c.location.origin+'/MasterData/',roles:['ADMIN'],name:'Data'});
+    assert.equal(c.shell.openWorkflow('app-master-data','#tab-members'),true);
+    let clicks=0;c.frame().targets.set('#tab-members',{click(){clicks++;}});
+    c.advance();assert.equal(clicks,0);c.message('ready');c.advance();assert.equal(clicks,1);
+    assert.equal(c.shell.openWorkflow('app-master-data','#arbitrary-action'),false);
+    c.frame().contentWindow.AkraModule.setState(true);c.allow(false);
+    assert.equal(c.shell.openWorkflow('app-master-data','#tab-products'),false);
+    assert.equal(clicks,1);
+    c.state.appConfig.at(-1).isActive=false;c.shell.sync();
+    assert.equal(c.frame(),undefined);
+});
+
+test('Master Data hides workflows and denies forced launch without ADMIN despite app grants',()=>{
+    const c=setup();
+    c.state.appConfig.push({id:'app-master-data',url:c.location.origin+'/MasterData/',roles:['ADMIN','SUPERVISOR'],name:'Data'});
+    c.state.currentRoles=['SUPERVISOR'];
+    c.shell.sync();
+    assert.equal(c.elements['shell-app-nav'].children.some(group=>group.attrs['data-app-id']==='app-master-data'),false);
+    assert.equal(c.shell.open('app-master-data'),false);
+    assert.equal(c.shell.openWorkflow('app-master-data','#tab-products'),false);
+    assert.equal(c.frame(),undefined);
+    c.state.currentRoles=['ADMIN','SUPERVISOR'];c.shell.sync();
+    assert.equal(c.shell.open('app-master-data'),true);
+    const child=c.frame().contentWindow;
+    assert.equal(c.shell.tokenFor(child),'session-one');
+    c.state.currentRoles=['SUPERVISOR'];
+    assert.equal(c.shell.tokenFor(child),'');c.shell.sync();
+    assert.equal(c.frame(),undefined);
+});
+
 test('push receiving workflow resolves the existing allowlist and waits for the authorized frame controls',()=>{
     const c=setup();
     assert.equal(c.shell.openWorkflow('app-gr','.gr-nav-receiving'),true);

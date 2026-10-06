@@ -4,17 +4,17 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <!-- Update the inline script hash when changing the script below; tests/main-csp.test.cjs checks it. -->
-    <meta http-equiv="Content-Security-Policy" content="script-src 'self' https://static.line-scdn.net 'sha256-iE/x1AHAvTkhK02lu3PsJxuWUFl59zWJzXPS8j6kV+c='; object-src 'none'; base-uri 'self'">
+    <meta http-equiv="Content-Security-Policy" content="script-src 'self' https://static.line-scdn.net 'sha256-s07tvdOTDoH8WN3xIXAVHeWYO+6gIPbUjUHUkM/nRlY='; object-src 'none'; base-uri 'self'">
     <link rel="icon" href="assets/icons/bm.svg" type="image/svg+xml">
     <link rel="apple-touch-icon" href="assets/icons/bm-192-v20261001-07.png">
     <link rel="manifest" href="manifest.webmanifest">
     <meta name="theme-color" content="#2563eb">
     <title>BUYMORETH | ศูนย์รวมระบบงาน</title>
     <link rel="stylesheet" href="css/unified-shell.css?v=20260921.07">
-    <script src="js/akra-shell-bridge.js?v=20261002.02"></script>
-    <script src="js/unified-shell.js?v=20261005.01"></script>
+    <script src="js/akra-shell-bridge.js?v=20261006.02"></script>
+    <script src="js/unified-shell.js?v=20261006.02"></script>
     <script src="js/main-push.js?v=20261005.01"></script>
-    <script src="js/permission-catalog.js?v=20261002.02"></script>
+    <script src="js/permission-catalog.js?v=20261006.02"></script>
     <script src="js/user-permission-editor.js?v=20260917.03"></script>
     <script src="js/main-pwa.js?v=20261002.02" defer></script>
     <link rel="preconnect" href="https://hgxrrskztbpejirrdpbq.supabase.co">
@@ -652,7 +652,7 @@
             STORAGE_USER_DATA: "akra_user_data",
             STORAGE_APP_CONFIG: "akra_app_config"
         };
-        const CURRENT_VERSION = "20261005.01";
+        const CURRENT_VERSION = "20261006.02";
         const fontStylesheet = document.getElementById('main-fonts');
         if (fontStylesheet) {
             if (fontStylesheet.sheet) fontStylesheet.media = 'all';
@@ -851,7 +851,9 @@
             { id: "app-damage", name: "RETURN • รับคืนสินค้าและเคลม", icon: "package-x", url: "https://akra-web.github.io/Returnitem/", roles: ["ADMIN", "AKRA", "TRD", "WAREHOUSE", "Cashier"] },
             { id: "app-kpi", name: "BM Work • งานและทีม", icon: "bar-chart-2", url: "https://akra-web.github.io/KPITRACKER/", roles: ["ADMIN", "AKRA", "TRD", "WAREHOUSE", "Cashier"] },
             { id: "app-manual", name:"SOP • คู่มือการทำงาน", icon: "book-open", url: "https://akra-web.github.io/SOP/", roles: ["ADMIN", "AKRA", "TRD", "WAREHOUSE", "Cashier"] },
-            { id: "app-evaluation", name: "EVAL • แบบประเมินพนักงาน", icon: "clipboard-check", url: "https://akra-web.github.io/Evaluation/", roles: ["ADMIN", "SUPERVISOR"] }
+            { id: "app-evaluation", name: "EVAL • แบบประเมินพนักงาน", icon: "clipboard-check", url: "https://akra-web.github.io/Evaluation/", roles: ["ADMIN", "SUPERVISOR"] },
+            // Enable only after the backend and an explicit hosted URL are verified.
+            { id: "app-master-data", name: "DATA • ข้อมูลกลาง", icon: "database", url: "", roles: [], isActive: false }
         ];
 
         const MAIN_APP_LABELS = {
@@ -864,7 +866,8 @@
             "app-damage": "RETURN • รับคืนสินค้าและเคลม",
             "app-kpi": "BM Work • งานและทีม",
             "app-manual": "SOP • คู่มือการทำงาน",
-            "app-evaluation": "EVAL • แบบประเมินพนักงาน"
+            "app-evaluation": "EVAL • แบบประเมินพนักงาน",
+            "app-master-data": "DATA • ข้อมูลกลาง"
         };
 
         const MAIN_APP_TYPES = {
@@ -877,7 +880,8 @@
             "app-damage": "Returns and claims",
             "app-kpi": "Operations intelligence",
             "app-manual": "Frontline handbook",
-            "app-evaluation": "People evaluation"
+            "app-evaluation": "People evaluation",
+            "app-master-data": "Product, Vendor and member directory"
         };
         const MAIN_APP_CATEGORIES = {
             "app-w5": "warehouse",
@@ -889,7 +893,8 @@
             "app-damage": "procurement",
             "app-kpi": "analytics",
             "app-manual": "analytics",
-            "app-evaluation": "analytics"
+            "app-evaluation": "analytics",
+            "app-master-data": "procurement"
         };
 
         const MAIN_APP_COLORS = {
@@ -902,7 +907,8 @@
             "app-damage": "#c026d3",
             "app-kpi": "#0d9488",
             "app-manual": "#475569",
-            "app-evaluation": "#ea580c"
+            "app-evaluation": "#ea580c",
+            "app-master-data": "#171C8F"
         };
 
         const MAIN_APP_LOGOS = {
@@ -915,7 +921,8 @@
             "app-damage": '<svg viewBox="0 0 80 80" fill="none" stroke="currentColor" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M19 28l21-12 21 12v25L40 65 19 53z"></path><path d="M19 28l21 13 21-13M40 41v24M29 22l22 13M26 21H15v11M15 21l9-8"></path></svg>',
             "app-kpi": '<svg viewBox="0 0 80 80" fill="none" stroke="currentColor" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M16 63V45M32 63V33M48 63V23M64 63V14M14 31l15-11 16 7 19-16"></path><circle cx="14" cy="31" r="3"></circle><circle cx="29" cy="20" r="3"></circle><circle cx="45" cy="27" r="3"></circle><circle cx="64" cy="13" r="3"></circle></svg>',
             "app-manual": '<svg viewBox="0 0 80 80" fill="none" stroke="currentColor" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 18c10-4 19-2 26 4v43c-7-6-16-8-26-4zM66 18c-10-4-19-2-26 4v43c7-6 16-8 26-4zM40 22v43"></path></svg>',
-            "app-evaluation": '<svg viewBox="0 0 80 80" fill="none" stroke="currentColor" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="18" y="12" width="44" height="56" rx="7"></rect><path d="M29 28h22M29 40h12M29 52h8l5 5 10-12"></path></svg>'
+            "app-evaluation": '<svg viewBox="0 0 80 80" fill="none" stroke="currentColor" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="18" y="12" width="44" height="56" rx="7"></rect><path d="M29 28h22M29 40h12M29 52h8l5 5 10-12"></path></svg>',
+            "app-master-data": '<svg viewBox="0 0 80 80" fill="none" stroke="currentColor" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><ellipse cx="40" cy="20" rx="23" ry="9"></ellipse><path d="M17 20v40c0 12 46 12 46 0V20M17 40c0 12 46 12 46 0"></path></svg>'
         };
 
         const PERMISSION_APP_DEPENDENCIES = {
@@ -2406,6 +2413,7 @@
 
                 const app = state.appConfig.find(item => (
                     item.id === pending.appId &&
+                    (item.id !== 'app-master-data' || state.currentRoles.includes('ADMIN')) &&
                     item.roles.some(role => state.currentRoles.includes(role))
                 ));
                 if (!app) {
@@ -2841,7 +2849,7 @@
 
                 const grid = document.getElementById('app-grid');
                 grid.innerHTML = ''; 
-                const allowedApps = state.appConfig.filter(app => app.roles.some(role => state.currentRoles.includes(role)));
+                const allowedApps = state.appConfig.filter(app => (app.id !== 'app-master-data' || state.currentRoles.includes('ADMIN')) && app.roles.some(role => state.currentRoles.includes(role)));
                 
                 const activeCat = state.appActiveCategory || 'all';
 
@@ -2927,7 +2935,7 @@
                     UI.showToast('ไม่สามารถเปิดแอปนี้ได้ เนื่องจาก URL ไม่ถูกต้อง', 'error');
                     return;
                 }
-                const allowedApp = state.appConfig.find(app => app.id === appId && app.url === url && app.roles.some(role => state.currentRoles.includes(role)));
+                const allowedApp = state.appConfig.find(app => app.id === appId && app.url === url && (app.id !== 'app-master-data' || state.currentRoles.includes('ADMIN')) && app.roles.some(role => state.currentRoles.includes(role)));
                 if (!allowedApp) {
                     UI.showToast('คุณไม่มีสิทธิ์เข้าแอปนี้', 'warning');
                     return;
