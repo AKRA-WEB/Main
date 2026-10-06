@@ -398,15 +398,26 @@
         if (shell || !watched) return;
         if (event.key === null) { invalidateWatched(); return; }
         if (![MAIN_SESSION,MAIN_TOKEN].includes(event.key)) return;
-        const raw = stored(MAIN_SESSION), legacy = stored(MAIN_TOKEN);
+        let raw, legacy;
+        try {
+            raw = window.localStorage.getItem(MAIN_SESSION);
+            legacy = window.localStorage.getItem(MAIN_TOKEN);
+        } catch (_) { invalidateWatched(); return; }
+        // Peer notifications may be queued before this watcher was bound.
+        // Ignore them only when both native session keys are still unchanged.
+        if (raw === watched.raw && legacy === watched.nativeToken) return;
         let next;
         try { next = JSON.parse(raw); } catch (_) { /* Corrupt notifications cannot authorize anything. */ }
         if (event.key === MAIN_TOKEN && legacy !== watched.token && legacy !== next?.token) { invalidateWatched(); return; }
-        if (raw === watched.raw) return;
+        if (raw === watched.raw) {
+            if (legacy === watched.token || legacy === next?.token) watched.nativeToken = legacy;
+            return;
+        }
         if (!next || next.version !== 1 || typeof next.token !== 'string' || !next.token
             || !watched.fingerprint || fingerprint(next) !== watched.fingerprint) { invalidateWatched(); return; }
         const owner = watched, generation = ++watchGeneration;
         owner.raw = raw;
+        if (legacy === owner.token || legacy === next.token) owner.nativeToken = legacy;
         try {
             // Storage metadata only requests verification. It never grants access.
             const user = await window.AkraModule.verifySession(owner.appId, next.token);
@@ -460,7 +471,7 @@
             if (shell) return; // Main owns embedded document retirement.
             standaloneAppId = typeof options?.appId === 'string' ? options.appId : '';
             standaloneUser = options?.user || null;
-            watched = {...options, fingerprint:fingerprint(options.user), raw:stored(MAIN_SESSION)};
+            watched = {...options, fingerprint:fingerprint(options.user), raw:stored(MAIN_SESSION), nativeToken:stored(MAIN_TOKEN)};
             ++watchGeneration;
             let current;
             try { current = JSON.parse(watched.raw); } catch (_) {}
