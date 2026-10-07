@@ -4,14 +4,14 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <!-- Update the inline script hash when changing the script below; tests/main-csp.test.cjs checks it. -->
-    <meta http-equiv="Content-Security-Policy" content="script-src 'self' https://static.line-scdn.net 'sha256-s07tvdOTDoH8WN3xIXAVHeWYO+6gIPbUjUHUkM/nRlY='; object-src 'none'; base-uri 'self'">
+    <meta http-equiv="Content-Security-Policy" content="script-src 'self' https://static.line-scdn.net 'sha256-XVb6HK5oV+w1G+1OwffS0T4YEzy54xrTYkwPRV87S6I='; object-src 'none'; base-uri 'self'">
     <link rel="icon" href="assets/icons/bm.svg" type="image/svg+xml">
     <link rel="apple-touch-icon" href="assets/icons/bm-192-v20261001-07.png">
     <link rel="manifest" href="manifest.webmanifest">
     <meta name="theme-color" content="#2563eb">
     <title>BUYMORETH | ศูนย์รวมระบบงาน</title>
     <link rel="stylesheet" href="css/unified-shell.css?v=20260921.07">
-    <script src="js/akra-shell-bridge.js?v=20261006.02"></script>
+    <script src="js/akra-shell-bridge.js?v=20261006.03"></script>
     <script src="js/unified-shell.js?v=20261006.02"></script>
     <script src="js/main-push.js?v=20261005.01"></script>
     <script src="js/permission-catalog.js?v=20261006.02"></script>
@@ -652,7 +652,7 @@
             STORAGE_USER_DATA: "akra_user_data",
             STORAGE_APP_CONFIG: "akra_app_config"
         };
-        const CURRENT_VERSION = "20261006.02";
+        const CURRENT_VERSION = "20261006.03";
         const fontStylesheet = document.getElementById('main-fonts');
         if (fontStylesheet) {
             if (fontStylesheet.sheet) fontStylesheet.media = 'all';
@@ -801,42 +801,69 @@
 
         // ระบบจัดการข้อมูลสำรองเมื่อเบราว์เซอร์บล็อก localStorage (เช่น โหมดส่วนตัว / iframe)
         const safeStorage = (function() {
-            let inMemoryDb = {};
-            const isSupported = (function() {
-                try {
-                    const testKey = "__storage_test__";
-                    localStorage.setItem(testKey, testKey);
-                    localStorage.removeItem(testKey);
-                    return true;
-                } catch (e) {
-                    return false;
+            const inMemoryDb = new Map();
+            const readNative = key => {
+                try { return localStorage.getItem(key); } catch (_) { return undefined; }
+            };
+            window.addEventListener('storage', event => {
+                if (event.key === null) inMemoryDb.clear();
+                else {
+                    const fallback = inMemoryDb.get(event.key);
+                    if (!fallback) return;
+                    const nativeValue = readNative(event.key);
+                    if ((nativeValue === undefined ? event.newValue : nativeValue) !== fallback.nativeValue) inMemoryDb.delete(event.key);
                 }
-            })();
+            });
 
             return {
                 getItem: function(key) {
-                    if (isSupported) {
-                        try { return localStorage.getItem(key); } catch (e) {}
+                    const nativeValue = readNative(key);
+                    const fallback = inMemoryDb.get(key);
+                    if (fallback) {
+                        // A failed write owns this value only until another tab
+                        // changes the persistent value, even before its event.
+                        if (nativeValue === undefined || nativeValue === fallback.nativeValue) return fallback.value;
+                        inMemoryDb.delete(key);
                     }
-                    return inMemoryDb[key] || null;
+                    return nativeValue ?? null;
                 },
                 setItem: function(key, value) {
-                    if (isSupported) {
-                        try { localStorage.setItem(key, value); return; } catch (e) {}
+                    const text = String(value);
+                    try {
+                        localStorage.setItem(key, text);
+                        inMemoryDb.delete(key);
+                        return;
+                    } catch (error) {
+                        if (error.name === 'QuotaExceededError' && (key === 'akra_main_session' || key === CONFIG.STORAGE_SESSION)) {
+                            // Replace only this Main session key. A stale native
+                            // record must not reject a freshly verified login.
+                            try {
+                                localStorage.removeItem(key);
+                                localStorage.setItem(key, text);
+                                inMemoryDb.delete(key);
+                                return;
+                            } catch (_) {}
+                        }
                     }
-                    inMemoryDb[key] = String(value);
+                    inMemoryDb.set(key, {value:text, nativeValue:readNative(key)});
                 },
                 removeItem: function(key) {
-                    if (isSupported) {
-                        try { localStorage.removeItem(key); return; } catch (e) {}
-                    }
-                    delete inMemoryDb[key];
+                    try {
+                        localStorage.removeItem(key);
+                        inMemoryDb.delete(key);
+                        return;
+                    } catch (_) {}
+                    inMemoryDb.set(key, {value:null, nativeValue:readNative(key)});
                 },
                 clear: function() {
-                    if (isSupported) {
-                        try { localStorage.clear(); return; } catch (e) {}
-                    }
-                    inMemoryDb = {};
+                    const keys = new Set(inMemoryDb.keys());
+                    try {
+                        for (let i = 0; i < localStorage.length; i++) keys.add(localStorage.key(i));
+                        localStorage.clear();
+                        inMemoryDb.clear();
+                        return;
+                    } catch (_) {}
+                    for (const key of keys) inMemoryDb.set(key, {value:null, nativeValue:readNative(key)});
                 }
             };
         })();
