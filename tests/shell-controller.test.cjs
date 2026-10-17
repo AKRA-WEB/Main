@@ -7,20 +7,23 @@ const path = require('node:path');
 function setup() {
     const elements = {}, listeners = {}, history = [], timers = new Map(), notices = [];
     let now = 0;
-    let timer = 0, confirms = 0, allowLeave = true, homes = 0, logouts = 0;
+    let timer = 0, confirms = 0, nativeConfirms = 0, homes = 0, logouts = 0, admins = 0;
     function element(tag='div') {
-        return {tag, hidden:false, inert:false, children:[], attrs:{}, listeners:{},
+        return {tag, hidden:false, inert:false, open:false, children:[], attrs:{}, listeners:{}, style:{}, isConnected:true,
             classList:{add(){},remove(){}},
             addEventListener(name,fn){this.listeners[name]=fn;},
-            appendChild(child){this.children.push(child);}, replaceChildren(){this.children=[];},
+            appendChild(child){this.children.push(child);child.parent=this;}, replaceChildren(){this.children=[];},
+            remove(){this.isConnected=false;if(this.parent)this.parent.children=this.parent.children.filter(child=>child!==this);},
             setAttribute(k,v){this.attrs[k]=v;},removeAttribute(k){delete this.attrs[k];},
-            querySelector(){return null;},focus(){this.focused=true;}};
+            querySelector(selector){return selector === '[aria-current="page"]' ? this.children.find(child=>child.attrs['aria-current']==='page') || null : null;},
+            showModal(){this.open=true;},close(){this.open=false;this.listeners.close?.();},focus(){this.focused=true;document.activeElement=this;},blur(){document.activeElement=null;}};
     }
     const location = {origin:'https://akra-web.github.io',pathname:'/Main/',search:'',hash:''};
     const state = {sessionToken:'session-one',sessionEpoch:1,currentUserId:'one',currentUser:'Fixture',currentRoles:['ADMIN'],appConfig:[
         {id:'app-tracking',url:location.origin+'/TrackingPO/',roles:['ADMIN'],name:'PO'},
         {id:'app-gr',url:location.origin+'/GR/',roles:['ADMIN'],name:'GR'}]};
-    const document = {body:element(),getElementById:id=>elements[id]||(elements[id]=element()),createElement:tag=>{
+    const document = {body:element(),activeElement:null,getElementById:id=>elements[id]||(elements[id]=element()),createElement:tag=>{
+        if(tag==='dialog')confirms++;
         const el=element(tag);if(tag==='iframe'){
             let dirty=false,busy=false;
             el.contentWindow={location:{origin:location.origin,pathname:'/TrackingPO/'},AkraModule:{
@@ -34,20 +37,25 @@ function setup() {
         }return el;
     }};
     for (const id of ['dashboard-section','login-section','admin-section']) document.getElementById(id);
-    const window={location,addEventListener:(name,fn)=>listeners[name]=fn,confirm:()=>{confirms++;return allowLeave;},history:{}};
+    const window={location,addEventListener:(name,fn)=>listeners[name]=fn,confirm:()=>{nativeConfirms++;return false;},history:{}};
     for(const method of ['pushState','replaceState'])window.history[method]=(s,title,url)=>{location.hash=url.slice(url.indexOf('#'));history.push({method,url});};
     const later=fn=>{timers.set(++timer,fn);return timer;};
     window.setTimeout=later;
     const context=vm.createContext({window,document,URL,Date:{now:()=>now},setTimeout:later,clearTimeout:id=>timers.delete(id)});
+    const dialogSource=path.join(__dirname,'../js/bm-dialog.js');
+    if(fs.existsSync(dialogSource))new vm.Script(fs.readFileSync(dialogSource,'utf8')).runInContext(context);
     new vm.Script(fs.readFileSync(path.join(__dirname,'../js/unified-shell.js'),'utf8')).runInContext(context);
     const shell=window.AkraShell;
-    shell.init({state:()=>state,label:app=>app.name,notify:message=>notices.push(message),home:()=>homes++,admin:()=>{},logout:()=>logouts++});
+    shell.init({state:()=>state,label:app=>app.name,notify:message=>notices.push(message),home:()=>homes++,admin:()=>admins++,logout:()=>logouts++});
     const frame=()=>elements['shell-frame-host'].children[0];
     const message=(type,details={},source=frame()?.contentWindow)=>listeners.message({source,origin:location.origin,data:{channel:'akra-shell',version:1,type,...details}});
     const workflow=(id,index=0)=>elements['shell-app-nav'].children.find(group=>group.attrs['data-app-id']===id).children[1].children[index].listeners.click();
     const advance=(ms=100)=>{now+=ms;const pending=[...timers];timers.clear();pending.forEach(([,fn])=>fn());};
-    return {shell,state,elements,frame,listeners,location,history,timers,message,workflow,advance,notices,allow:val=>allowLeave=val,count:()=>({confirms,homes,logouts})};
+    const dialog=()=>document.body.children.find(child=>child.id==='bm-ui-dialog');
+    const decide=approved=>dialog()?.children.at(-1).children.find(child=>child.textContent===(approved?'ยืนยัน':'ยกเลิก'))?.listeners.click();
+    return {shell,state,window,elements,frame,listeners,location,history,timers,message,workflow,advance,notices,dialog,decide,allow:()=>{},count:()=>({confirms,nativeConfirms,homes,logouts,admins})};
 }
+const tick=()=>new Promise(setImmediate);
 function assertWorkState(actual,expected){
     assert.equal(actual.dirty,expected.dirty);
     assert.equal(actual.busy,expected.busy);
@@ -150,10 +158,11 @@ test('dirty cancelled switch retains exact document and route',()=>{
     assert.equal(c.shell.open('app-gr'),false);assert.equal(c.frame(),old);
     assert.equal(c.location.hash,'#/app/app-tracking');assert.equal(old.leaving,undefined);
 });
-test('back to Main asks once and deliberately releases only the accepted document',()=>{
+test('back to Main asks once and deliberately releases only the accepted document',async()=>{
     const c=setup();c.shell.open('app-tracking');const old=c.frame();
     old.contentWindow.AkraModule.setState(true);c.location.hash='#/';c.listeners.hashchange();
-    assert.equal(c.count().confirms,1);assert.equal(c.count().homes,1);assert.equal(old.leaving,true);
+    assert.equal(c.count().confirms,1);assert.equal(c.count().homes,0);assert.equal(c.frame(),old);
+    c.decide(true);await tick();assert.equal(c.count().homes,1);assert.equal(old.leaving,true);assert.equal(c.count().nativeConfirms,0);
 });
 test('history back normalizes a missing Main hash with replaceState so Forward remains available',()=>{
     const c=setup();c.shell.open('app-tracking');
@@ -254,4 +263,74 @@ test('workflow retries stop on revoked identity and reject disabled controls',()
 test('unavailable workflow expires with one notification instead of retrying forever',()=>{
     const c=setup();c.shell.open('app-tracking');c.message('ready');c.workflow('app-tracking',1);
     c.advance(20001);c.advance(20001);assert.equal(c.notices.length,1);
+});
+
+test('mobile chooser lists permitted apps, preserves cancelled dirty navigation and returns focus on close',async()=>{
+    const c=setup();c.shell.open('app-tracking');c.message('ready');const original=c.frame();
+    c.elements['shell-apps'].listeners.click();
+    const dialog=c.elements['shell-app-dialog'],nav=c.elements['shell-mobile-app-nav'];
+    assert.equal(dialog.open,true);assert.equal(c.elements['shell-apps'].attrs['aria-expanded'],'true');
+    assert.deepEqual(nav.children.map(button=>button.attrs['data-app-id']),['app-tracking','app-gr']);
+    assert.equal(nav.children[0].focused,true);
+    nav.children[0].listeners.click();assert.equal(c.frame(),original);assert.equal(dialog.open,false);
+    c.elements['shell-apps'].listeners.click();assert.equal(dialog.open,true);
+    original.contentWindow.AkraModule.setState(true);c.allow(false);nav.children[1].listeners.click();
+    assert.equal(c.frame(),original);assert.equal(dialog.open,true);
+    c.decide(false);await tick();assert.equal(c.frame(),original);
+    nav.children[1].listeners.click();c.decide(true);await tick();assert.notEqual(c.frame(),original);
+    assert.equal(dialog.open,false);assert.equal(c.elements['shell-apps'].attrs['aria-expanded'],'false');assert.equal(c.elements['shell-apps'].focused,true);
+});
+
+test('mobile chooser blocks busy switches, rechecks stale grants and closes on session retirement',()=>{
+    const c=setup();c.shell.open('app-tracking');c.message('ready');const original=c.frame();
+    c.elements['shell-apps'].listeners.click();const nav=c.elements['shell-mobile-app-nav'],dialog=c.elements['shell-app-dialog'];
+    original.contentWindow.AkraModule.setState(false,true);nav.children[1].listeners.click();
+    assert.equal(c.frame(),original);assert.equal(dialog.open,true);assert.match(c.notices.at(-1),/กำลังบันทึก/);
+    original.contentWindow.AkraModule.setState(false,false);c.state.appConfig[1].isActive=false;nav.children[1].listeners.click();
+    assert.equal(c.frame(),original);assert.equal(dialog.open,true);
+    c.state.sessionToken='';c.state.sessionEpoch++;c.shell.sync();assert.equal(c.frame(),undefined);assert.equal(dialog.open,false);
+    c.elements['shell-apps'].listeners.click();assert.equal(dialog.open,false);
+});
+
+test('sidebar uses short app text while preserving full tooltip and accessible name',()=>{
+    const c=setup();c.state.appConfig[0].name='PO • ระบบจัดซื้อชื่อเต็มทดสอบ';c.shell.sync();
+    const button=c.elements['shell-app-nav'].children[0].children[0].children[0];
+    assert.equal(button.children[1].textContent,'PO จัดซื้อ');assert.equal(button.title,c.state.appConfig[0].name);
+    assert.ok(button.attrs['aria-label'].includes(button.children[1].textContent),'visible short label occurs in accessible name');
+    assert.ok(button.attrs['aria-label'].includes(c.state.appConfig[0].name),'full application name is also retained');
+});
+
+test('approved dirty switch is asynchronous, keeps the boolean API and reports only actual navigation once',async()=>{
+    const c=setup(),opened=[];c.shell.open('app-tracking');const old=c.frame();old.contentWindow.AkraModule.setState(true);
+    assert.equal(c.shell.open('app-gr',{onOpened:()=>opened.push('app-gr')}),false);assert.equal(c.frame(),old);assert.deepEqual(opened,[]);
+    assert.ok(c.dialog(),'the in-page decision appears');c.shell.open('app-gr',{onOpened:()=>opened.push('duplicate')});
+    assert.equal(c.count().confirms,1);c.decide(true);await tick();assert.notEqual(c.frame(),old);assert.equal(c.location.hash,'#/app/app-gr');assert.deepEqual(opened,['app-gr']);assert.equal(c.count().nativeConfirms,0);
+});
+
+test('pending decisions cannot navigate a changed owner, token, frame, epoch or revoked grant',async()=>{
+    for(const change of ['owner','token','epoch','frame','grant','refresh','identity','version','authorization','main-stamp','stored']){
+        const c=setup(),opened=[];c.shell.open('app-tracking');const old=c.frame();old.contentWindow.AkraModule.setState(true);c.shell.open('app-gr',{onOpened:()=>opened.push('app-gr')});
+        if(change==='owner')c.state.currentUserId='replacement';if(change==='token')c.state.sessionToken='replacement';if(change==='epoch')c.state.sessionEpoch++;if(change==='grant')c.state.appConfig[1].isActive=false;if(change==='refresh')c.state.sessionRefreshPending=true;
+        if(change==='identity')c.state.identityId='replacement';if(change==='version')c.state.sessionVersion=2;if(change==='authorization')c.state.sessionAuthorizationRevision='replacement';
+        if(change==='main-stamp')c.window.AkraModule={sessionStamp:()=> 'replacement'};if(change==='stored')c.window.localStorage={getItem:()=> 'replacement'};
+        if(change==='frame')c.shell.open('app-tracking',{reload:true,force:true});
+        c.decide(true);await tick();assert.deepEqual(opened,[],change);assert.notEqual(c.location.hash,'#/app/app-gr',change);assert.equal(c.count().nativeConfirms,0,change);
+    }
+});
+
+test('late busy work blocks approved navigation and canceled dirty leave preserves its exact frame',async()=>{
+    for(const approved of [true,false]){
+        const c=setup();c.shell.open('app-tracking');const old=c.frame();old.contentWindow.AkraModule.setState(true);assert.equal(c.shell.home(),false);
+        if(approved)old.contentWindow.AkraModule.setState(true,true);c.decide(approved);await tick();assert.equal(c.frame(),old);assert.equal(old.leaving,undefined);assert.equal(c.count().homes,0);if(approved)assert.match(c.notices.at(-1),/กำลังบันทึก/);
+    }
+});
+
+test('dirty workflow, admin and child logout wait for their captured in-page decision',async()=>{
+    for(const action of ['workflow','same-workflow','admin','logout']){
+        const c=setup();c.shell.open('app-tracking');const old=c.frame();old.contentWindow.AkraModule.setState(true);
+        if(action==='workflow')c.shell.openWorkflow('app-gr','.gr-nav-receiving');if(action==='same-workflow')c.shell.openWorkflow('app-tracking','#btn-tab-po');if(action==='admin')c.elements['shell-admin'].listeners.click();if(action==='logout')c.message('logout');
+        assert.ok(c.dialog(),action);assert.equal(c.frame(),old);assert.equal(c.count().logouts,0);assert.equal(c.count().admins,0);c.decide(true);await tick();
+        if(action==='workflow'||action==='same-workflow'){let clicks=0;c.frame().targets.set(action==='workflow'?'.gr-nav-receiving':'#btn-tab-po',{click:()=>clicks++});c.message('ready');c.advance();assert.equal(clicks,1,action);}
+        if(action==='admin')assert.equal(c.count().admins,1);if(action==='logout')assert.equal(c.count().logouts,1);
+    }
 });

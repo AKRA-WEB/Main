@@ -30,16 +30,17 @@ test('1. Version Parity & Syntax Verification', () => {
 
 test('2. Strict Invariant: Official App Names NOT Modified', () => {
     const expectedLabels = {
-        "app-w5": "เบิกย้ายสินค้า (AKRA)",
-        "app-trd": "เบิกย้ายสินค้าสต๊อก (AKRA>TRD)",
-        "app-gr": "ตรวจรับเข้าสินค้า (GR)",
-        "app-pr": "ขอสั่งชื้อสินค้า (PR)",
-        "app-pick": "บิลเบิกสินค้า (Picking)",
-        "app-tracking": "จัดการคำสั่งชื้อ (PO)",
-        "app-damage": "รับคืนสินค้าและเคลม",
-        "app-kpi": "KPI Tracker",
-        "app-manual": "คู่มือ",
-        "app-evaluation": "แบบประเมินพนักงาน"
+        "app-w5": "W5 • เบิกย้ายสินค้า AKRA",
+        "app-trd": "TRD • เบิกย้ายสต๊อก AKRA → TRD",
+        "app-gr": "GR • รับเข้าสินค้า",
+        "app-pr": "PR • ขอซื้อสินค้า",
+        "app-pick": "PICK • เบิกสินค้า",
+        "app-tracking": "PO • จัดซื้อสินค้า",
+        "app-damage": "RETURN • รับคืนสินค้าและเคลม",
+        "app-kpi": "BM Work • งานและทีม",
+        "app-manual": "SOP • คู่มือการทำงาน",
+        "app-evaluation": "EVAL • แบบประเมินพนักงาน",
+        "app-master-data": "DATA • ข้อมูลกลาง"
     };
 
     for (const [id, name] of Object.entries(expectedLabels)) {

@@ -4,18 +4,20 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <!-- Update the inline script hash when changing the script below; tests/main-csp.test.cjs checks it. -->
-    <meta http-equiv="Content-Security-Policy" content="script-src 'self' https://static.line-scdn.net 'sha256-XVb6HK5oV+w1G+1OwffS0T4YEzy54xrTYkwPRV87S6I='; object-src 'none'; base-uri 'self'">
+    <meta http-equiv="Content-Security-Policy" content="script-src 'self' https://static.line-scdn.net 'sha256-/ARC75J7OUmetn4A408pN6H0G35AEfLk2NveT5y20P4='; object-src 'none'; base-uri 'self'">
     <link rel="icon" href="assets/icons/bm.svg" type="image/svg+xml">
     <link rel="apple-touch-icon" href="assets/icons/bm-192-v20261001-07.png">
     <link rel="manifest" href="manifest.webmanifest">
     <meta name="theme-color" content="#2563eb">
     <title>BUYMORETH | ศูนย์รวมระบบงาน</title>
-    <link rel="stylesheet" href="css/unified-shell.css?v=20260921.07">
+    <link rel="stylesheet" href="css/bm-tokens.css?v=20261013.02">
+    <link rel="stylesheet" href="css/unified-shell.css?v=20261013.02">
     <script src="js/akra-shell-bridge.js?v=20261006.03"></script>
-    <script src="js/unified-shell.js?v=20261006.02"></script>
+    <script src="js/bm-dialog.js?v=20261014.01"></script>
+    <script src="js/unified-shell.js?v=20261014.01"></script>
     <script src="js/main-push.js?v=20261005.01"></script>
     <script src="js/permission-catalog.js?v=20261006.02"></script>
-    <script src="js/user-permission-editor.js?v=20260917.03"></script>
+    <script src="js/user-permission-editor.js?v=20261013.02"></script>
     <script src="js/main-pwa.js?v=20261002.02" defer></script>
     <link rel="preconnect" href="https://hgxrrskztbpejirrdpbq.supabase.co">
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -34,6 +36,12 @@
     <style>
         .fade-in { animation: fadeIn 0.3s ease-out forwards; }
         .admin-overflow-guard { overflow-x: hidden; }
+        #line-account-modal > section { max-height: 90vh; overflow-y: auto; }
+        #user-count { background-color: #9a3412; }
+        #line-profile-note { color: #b45309; }
+        #line-profile-refresh-btn, #line-profile-login-btn { min-height: 44px; }
+        #line-profile-refresh-btn:hover { background: #e2e8f0; }
+        #line-profile-login-btn { display: inline-flex; align-items: center; justify-content: center; padding: 8px 12px; text-decoration: underline; text-underline-offset: 4px; }
         @media (min-width: 1024px) {
             #tab-content-users > article:first-child { width: calc((100% - 1.5rem) / 3); }
             #tab-content-users > article:last-child { width: calc((100% - 1.5rem) * 2 / 3); }
@@ -76,7 +84,23 @@
         .app-preview-card { transition: all 0.3s ease; filter: grayscale(100%) opacity(40%); }
         .app-preview-card.unlocked { filter: grayscale(0%) opacity(100%); transform: translateY(-2px); border-color: #171C8F; }
 
-        :root { --main-font: 'Inter', 'Noto Sans Thai', system-ui, sans-serif; --main-navy: #0f172a; --main-blue: #2563eb; --main-ink: #17243b; --main-muted: #58677d; --main-line: #e3e8ef; --main-canvas: #f5f7fb; }
+        :root { --main-font: 'Inter', 'Noto Sans Thai', system-ui, sans-serif; --main-navy: #0f172a; --main-blue: var(--bm-primary); --main-ink: #17243b; --main-muted: #58677d; --main-line: #e3e8ef; --main-canvas: #f5f7fb; }
+        #login-btn, #submit-change-pwd-btn { background: var(--bm-primary); color: var(--bm-on-primary); }
+        #login-btn:hover, #submit-change-pwd-btn:hover { background: var(--bm-primary-hover); }
+        .min-h-\[44px\] { min-height: 44px; }
+        #forgot-password-btn { color: var(--bm-primary-hover); }
+        #login-form input::placeholder { color: var(--bm-text-secondary); }
+        #login-form input[aria-invalid="true"] { border-color: var(--bm-error); }
+        #login-error { color: var(--bm-error); background: var(--bm-surface-muted); border: 1px solid var(--bm-border); border-radius: var(--bm-radius-sm); padding: var(--bm-space-3); font-size: var(--bm-text-sm); }
+        #login-error[hidden] { display: none !important; }
+        #login-form :is(input, button):focus-visible { outline: 3px solid var(--bm-focus); outline-offset: 3px; }
+        body.main-admin-active { display: block; padding: 0; background: var(--main-canvas); }
+        body.main-admin-active #admin-section { width: 100%; max-width: none; height: 100vh; max-height: none; padding: 28px 32px 28px 272px; }
+        .main-admin-sidebar .main-portal-controls { display: grid; gap: 8px; }
+        #admin-section > header { border: 1px solid var(--bm-border); box-shadow: none; flex-wrap: wrap; }
+        #admin-section :is(#btn-save-user, #save-role-access-btn, #save-user-permissions-btn, #back-to-dash-btn) { background: var(--bm-primary); color: var(--bm-on-primary); }
+        #admin-section :is(#btn-save-user, #save-role-access-btn, #save-user-permissions-btn, #back-to-dash-btn):hover { background: var(--bm-primary-hover); }
+        @media (max-width: 1024px) { body.main-admin-active .main-admin-sidebar { display: none; } body.main-admin-active #admin-section { padding: 16px; height: auto; min-height: 100vh; } }
         body { font-family: var(--main-font); }
         body.main-dashboard-active { display: block; padding: 0; background: var(--main-canvas); }
         body.main-dashboard-active #dashboard-section { width: 100%; max-width: none; min-height: 100vh; padding: 0 0 32px 240px; position: relative; }
@@ -126,7 +150,7 @@
         .main-pwa-install-help__body { display: grid; gap: 7px; max-width: 72ch; margin-top: 8px; padding: 12px 14px; border: 1px solid var(--main-line); border-radius: 10px; background: #f8fafc; }
         .main-pwa-install-help__body p { margin: 0; }
         .main-pwa-install-help__note { color: var(--main-muted); }
-        .main-gr-push { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 16px; margin-bottom: 18px; padding: 12px 14px; border: 1px solid var(--main-line); border-radius: 10px; background: #f8fafc; }
+        .main-gr-push { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 16px; margin-top: 18px; padding: 12px 14px; border: 1px solid var(--main-line); border-radius: 10px; background: #f8fafc; }
         .main-gr-push[hidden] { display: none; }
         .main-gr-push .main-pwa-install { margin-top: 0; flex-shrink: 0; }
         .main-gr-push .main-pwa-install:disabled { cursor: default; opacity: .6; }
@@ -243,13 +267,13 @@
                         <label for="username-input" class="sr-only">รหัสพนักงาน</label>
                         <input type="text" id="username-input" name="username" placeholder="รหัสพนักงาน (เช่น 250XXX)"
                             class="w-full px-4 py-3.5 rounded-xl bg-slate-50 border border-slate-200 focus:outline-none focus:border-brand-blue focus:ring-2 focus:ring-brand-blue/20 text-center text-base font-semibold text-brand-blue transition-all shadow-inner placeholder:text-slate-400"
-                            required autocomplete="username">
+                            required autocomplete="username" inputmode="numeric" aria-describedby="login-error">
                     </div>
                     <div class="relative">
                         <label for="password-input" class="sr-only">รหัสผ่านหรือ PIN</label>
                         <input type="password" id="password-input" name="password" placeholder="รหัสผ่าน / PIN"
                             class="w-full px-4 py-3.5 rounded-xl bg-slate-50 border border-slate-200 focus:outline-none focus:border-brand-blue focus:ring-2 focus:ring-brand-blue/20 text-center text-lg tracking-widest text-brand-blue transition-all shadow-inner placeholder:text-slate-400 placeholder:tracking-normal"
-                            required autocomplete="current-password">
+                            required autocomplete="current-password" aria-describedby="login-error">
                     </div>
                 </div>
                 <div class="flex justify-between items-center px-1 text-xs select-none">
@@ -257,12 +281,13 @@
                         <input type="checkbox" id="remember-id-checkbox" class="rounded border-slate-300 text-brand-orange focus:ring-brand-orange/20 mr-1.5 w-4 h-4 accent-brand-orange">
                         <span>จำรหัสพนักงาน</span>
                     </label>
-                    <button type="button" id="forgot-password-btn" class="text-brand-orange hover:text-[#c94804] font-bold transition-colors">ลืมรหัสผ่าน?</button>
+                    <button type="button" id="forgot-password-btn" class="font-bold transition-colors">ลืมรหัสผ่าน?</button>
                 </div>
                 <button type="submit" id="login-btn" 
-                    class="w-full bg-brand-orange hover:bg-[#c94804] text-white font-semibold py-3.5 px-4 rounded-xl transition-all transform hover:scale-[1.02] active:scale-95 flex justify-center items-center shadow-lg shadow-brand-orange/30 disabled:opacity-70 disabled:transform-none">
+                    class="w-full text-white font-semibold py-3.5 px-4 rounded-xl transition-all transform hover:scale-[1.02] active:scale-95 flex justify-center items-center shadow-lg disabled:opacity-70 disabled:transform-none">
                     <span id="login-btn-text">เข้าสู่ระบบ</span>
                 </button>
+                <p id="login-error" role="alert" aria-live="assertive" tabindex="-1" hidden></p>
             </form>
         </section>
     </main>
@@ -323,11 +348,11 @@
                         <p class="main-pwa-install-help__note">ชื่อเมนูอาจต่างกันตามเวอร์ชันหรือข้อกำหนดของอุปกรณ์ หากไม่พบตัวเลือกติดตั้ง ให้ใช้ BUYMORETH ในเบราว์เซอร์ตามปกติหรือติดต่อผู้ดูแลระบบ</p>
                     </div>
                 </details>
+                <section id="app-grid" aria-label="แอปพลิเคชันที่เปิดใช้งานได้"></section>
                 <section id="main-gr-push" class="main-gr-push" aria-label="แจ้งเตือนการรับสินค้า" hidden>
                     <button id="main-gr-push-toggle" class="main-pwa-install" type="button" aria-pressed="false" aria-describedby="main-gr-push-status" disabled>เปิดแจ้งเตือนรับสินค้า</button>
                     <p id="main-gr-push-status" role="status" aria-live="polite"></p>
                 </section>
-                <section id="app-grid" aria-label="แอปพลิเคชันที่เปิดใช้งานได้"></section>
             </section>
 
             <footer class="main-dashboard-footer">© 2026 BUYMORETH</footer>
@@ -354,6 +379,7 @@
                     <svg aria-hidden="true" viewBox="0 0 24 24" focusable="false"><path d="m3 10 9-7 9 7"/><path d="M5 9.5V21h14V9.5"/><path d="M9 21v-7h6v7"/></svg>
                     <span>หน้าหลัก</span>
                 </button>
+                <button type="button" id="shell-apps" title="เลือกแอป" aria-label="เลือกแอป" aria-haspopup="dialog" aria-controls="shell-app-dialog" aria-expanded="false"><span>แอป</span></button>
                 <label for="shell-module-select" class="sr-only">เลือกแอป</label>
                 <select id="shell-module-select" hidden aria-hidden="true" tabindex="-1"></select>
                 <div class="shell-app-context" aria-live="polite">
@@ -378,12 +404,21 @@
             <p id="shell-status" role="status" aria-live="polite"></p>
             <button type="button" id="shell-retry" hidden>ลองเปิดอีกครั้ง</button>
             <div id="shell-frame-host"></div>
+            <dialog id="shell-app-dialog" class="shell-app-dialog" aria-labelledby="shell-app-dialog-title">
+                <div class="shell-app-dialog-heading"><h2 id="shell-app-dialog-title">เลือกแอป</h2><button type="button" id="shell-app-dialog-close" aria-label="ปิดรายการแอป">ปิด</button></div>
+                <nav id="shell-mobile-app-nav" aria-label="แอปที่มีสิทธิ์ใช้งาน"></nav>
+            </dialog>
         </div>
     </section>
 
     <!-- 3. ส่วนจัดการผู้ใช้งาน (Admin Section) -->
     <main id="admin-section" class="w-full max-w-7xl hidden fade-in py-6 h-screen max-h-[900px] flex flex-col admin-overflow-guard">
+        <aside class="main-sidebar main-admin-sidebar" aria-label="เมนูจัดการระบบ">
+            <div class="main-brand-lockup"><span class="main-brand-mark" aria-hidden="true">BM</span><div class="main-brand-copy"><strong>BUYMORETH</strong><small>จัดการระบบงาน</small></div></div>
+            <nav class="main-portal-controls"><button type="button" id="admin-sidebar-home" class="main-cat-tab">หน้าหลัก</button><button type="button" id="admin-sidebar-users" class="main-cat-tab" aria-current="page">จัดการพนักงาน</button><button type="button" id="admin-sidebar-permissions" class="main-cat-tab">ตั้งค่าสิทธิ์</button></nav>
+        </aside>
         <header class="flex flex-col sm:flex-row justify-between items-center mb-6 bg-white p-5 rounded-2xl shadow-lg shrink-0 gap-4 min-w-0">
+            <h1 class="text-xl font-bold text-slate-800">จัดการผู้ใช้งานและสิทธิ์</h1>
             <div class="flex items-center gap-4 w-full sm:w-auto min-w-0">
                 <div class="bg-slate-100 p-1.5 rounded-xl flex gap-1 shadow-inner shrink-0 overflow-x-auto w-full sm:w-auto min-w-0">
                     <button id="tab-btn-users" class="px-5 py-2 rounded-lg font-bold bg-white text-brand-blue shadow-sm transition-all flex items-center gap-2 whitespace-nowrap">
@@ -556,7 +591,7 @@
                         <span id="cancel-change-pwd-text">ยกเลิก</span>
                     </button>
                     <button type="submit" id="submit-change-pwd-btn"
-                        class="w-2/3 bg-brand-orange hover:bg-[#c94804] text-white font-semibold py-3 px-4 rounded-xl transition-all transform hover:scale-[1.01] active:scale-95 flex justify-center items-center shadow-lg shadow-brand-orange/20 text-sm">
+                        class="w-2/3 text-white font-semibold py-3 px-4 rounded-xl transition-all transform hover:scale-[1.01] active:scale-95 flex justify-center items-center shadow-lg text-sm">
                         <span id="submit-change-pwd-text">บันทึกรหัสผ่านใหม่</span>
                     </button>
                 </div>
@@ -575,7 +610,7 @@
                     <i data-lucide="message-circle" class="w-8 h-8 text-[#06c755]"></i>
                 </div>
                 <h3 id="line-modal-title" class="text-xl font-bold text-brand-blue">การเชื่อมต่อบัญชี LINE</h3>
-                <p class="text-slate-500 text-xs mt-1">รับการแจ้งเตือนงานและเข้าใช้งานระบบผ่าน LINE</p>
+                <p class="text-slate-500 text-xs mt-1">ผูกบัญชีพนักงานและตรวจความพร้อมรับงานในกลุ่ม LINE</p>
             </div>
 
             <div id="line-modal-loading" class="py-6 text-center text-slate-400 text-sm hidden">
@@ -594,10 +629,21 @@
             <div id="line-state-linked" class="space-y-4 hidden">
                 <div class="bg-emerald-50/70 border border-emerald-200/80 rounded-xl p-4 text-center">
                     <div class="flex items-center justify-center gap-2 text-[#06c755] font-bold text-sm mb-1">
-                        <i data-lucide="check-circle-2" class="w-4 h-4"></i> เชื่อมต่อกับ LINE แล้ว
+                        <i data-lucide="check-circle-2" class="w-4 h-4"></i> ผูกบัญชี LINE แล้ว
                     </div>
                     <p class="text-slate-700 font-semibold text-sm" id="line-linked-name">-</p>
-                    <p class="text-slate-400 text-xs mt-0.5">การแจ้งเตือนจะถูกส่งไปยังบัญชีนี้</p>
+                    <p class="text-slate-500 text-xs mt-1" id="line-profile-verified-at">ยังไม่ได้ตรวจสอบชื่อ LINE ล่าสุด</p>
+                    <p class="text-xs mt-1 hidden" id="line-profile-note" role="status"></p>
+                </div>
+                <div class="bg-slate-50 border border-slate-200 rounded-xl p-3 text-xs" role="status" aria-live="polite">
+                    <p class="font-semibold text-slate-700" id="line-readiness-label">ยังไม่ได้ตรวจความพร้อมในกลุ่มงาน</p>
+                    <p class="text-slate-500 mt-1" id="line-readiness-detail">การผูกบัญชีเพียงอย่างเดียวยังไม่ยืนยันว่าจะส่งงานในกลุ่มได้</p>
+                </div>
+                <button type="button" id="line-profile-refresh-btn"
+                    class="w-full bg-slate-100 text-brand-blue font-semibold py-2.5 px-4 rounded-xl transition-all border border-slate-200 text-sm disabled:opacity-50">อัปเดตชื่อและตรวจกลุ่มงาน</button>
+                <div class="text-center text-xs">
+                    <button type="button" id="line-profile-login-btn" class="text-brand-blue disabled:opacity-50">ยืนยันชื่อบัญชีเดิมผ่าน LINE</button>
+                    <p class="text-slate-500 mt-1">ใช้เมื่อระบบตรวจชื่อผ่านกลุ่มไม่ได้ ขั้นตอนนี้ยืนยันชื่อเท่านั้น</p>
                 </div>
                 <button type="button" id="line-unbind-btn"
                     class="w-full bg-rose-50 hover:bg-rose-100 text-rose-600 font-semibold py-2.5 px-4 rounded-xl transition-all border border-rose-200 flex justify-center items-center gap-2 text-sm">
@@ -652,7 +698,7 @@
             STORAGE_USER_DATA: "akra_user_data",
             STORAGE_APP_CONFIG: "akra_app_config"
         };
-        const CURRENT_VERSION = "20261006.03";
+        const CURRENT_VERSION = "20261016.01";
         const fontStylesheet = document.getElementById('main-fonts');
         if (fontStylesheet) {
             if (fontStylesheet.sheet) fontStylesheet.media = 'all';
@@ -1144,6 +1190,7 @@
                     document.getElementById(sec).classList.toggle('hidden', sec !== sectionId);
                 });
                 document.body.classList.toggle('main-dashboard-active', sectionId === 'dashboard-section');
+                document.body.classList.toggle('main-admin-active', sectionId === 'admin-section');
                 if(sectionId === 'admin-section') {
                     AdminInteractive.fetchAdminData();
                 }
@@ -1478,6 +1525,9 @@
             switchTab: (tabName) => {
                 ['users','apps'].forEach(t => {
                     document.getElementById(`tab-content-${t}`).classList.toggle('hidden', t !== tabName);
+                    const sidebar = document.getElementById(t === 'users' ? 'admin-sidebar-users' : 'admin-sidebar-permissions');
+                    if (t === tabName) sidebar?.setAttribute('aria-current', 'page');
+                    else sidebar?.removeAttribute('aria-current');
                     const btn = document.getElementById(`tab-btn-${t}`);
                     if (!btn) return;
                     if (t === tabName) {
@@ -1743,12 +1793,12 @@
                             if (!permissionAppId || !permKey) return '';
                             const checked = row[AdminInteractive.focusedRole] === true;
                             const permission = window.AkraPermissionCatalog.describe(row.appId, row.permKey);
-                            return `<label class="flex items-center justify-between gap-3 text-xs text-slate-600 py-1">
-                                <span>${escapeHtml(permission.label)} <span class="text-slate-400">(${escapeHtml(row.permKey)})</span><small class="block mt-1 leading-relaxed">${escapeHtml(permission.detail)}</small></span>
+                            return `<label title="${escapeHtml(row.appId + ':' + row.permKey)}" class="flex items-center justify-between gap-3 text-xs text-slate-600 py-2 min-h-[44px]">
+                                <span>${escapeHtml(permission.label)}<small class="block mt-1 leading-relaxed">${escapeHtml(permission.detail)}</small></span>
                                 <input type="checkbox" ${checked ? 'checked' : ''} ${isAdmin || !canEnter ? 'disabled' : ''}
                                     aria-label="${escapeHtml(authorizationControlLabel('permission', { id: row.appId, name: getAppDisplayName(app) }, { key: row.permKey, label: permission.label }, focusedRole))}"
                                     data-permission-app-id="${permissionAppId}" data-permission-key="${permKey}" data-role="${roleVal}"
-                                    class="w-4 h-4 accent-brand-blue disabled:opacity-40">
+                                    class="w-6 h-6 shrink-0 accent-brand-blue disabled:opacity-40">
                             </label>`;
                         }).join('')
                         : `<p class="text-xs text-slate-500">${escapeHtml(window.AkraPermissionCatalog.appNote(app.id))}</p>`;
@@ -1763,12 +1813,12 @@
                         </div>
                         <div class="flex items-center gap-3 shrink-0">
                             <span class="text-xs font-semibold ${canEnter ? 'text-emerald-600' : 'text-slate-500'}">${canEnter ? 'เข้าได้' : 'ปิดอยู่'}</span>
-                            <label class="flex items-center gap-2 text-xs font-semibold text-brand-blue ${isAdmin ? 'opacity-50' : 'cursor-pointer'}">
+                            <label class="flex items-center gap-2 min-h-[44px] text-xs font-semibold text-brand-blue ${isAdmin ? 'opacity-50' : 'cursor-pointer'}">
                                 เห็นแอป
                             <input type="checkbox" ${canEnter ? 'checked' : ''} ${isAdmin ? 'disabled' : ''}
                                 aria-label="${escapeHtml(authorizationControlLabel('app', { ...app, displayName: getAppDisplayName(app) }, null, focusedRole))}"
                                 data-app-id="${appId}" data-role="${roleVal}"
-                                class="w-4 h-4 accent-brand-blue">
+                                class="w-6 h-6 accent-brand-blue">
                             </label>
                         </div>
                     </div>
@@ -1892,6 +1942,10 @@
                 loading: false,
                 linked: false,
                 displayName: null,
+                profileLastVerifiedAt: null,
+                profileState: 'unverified',
+                lastAttemptResult: null,
+                lineReadiness: {state:'not_linked',reason:null,checkedAt:null},
                 error: null
             },
             _statusGen: 0,
@@ -1938,11 +1992,45 @@
             resetOperations: () => {
                 ++LineAccount._statusGen;
                 LineAccount._inFlightOp = null;
-                for (const id of ['line-connect-btn','line-unbind-btn']) {
+                for (const id of ['line-connect-btn','line-unbind-btn','line-profile-refresh-btn','line-profile-login-btn']) {
                     const button = document.getElementById(id);
-                    if (button) { button.disabled = false; button.textContent = id === 'line-connect-btn' ? 'เชื่อมต่อด้วย LINE (1-Tap)' : 'ยกเลิกการเชื่อมต่อ'; }
+                    if (button) { button.disabled = false; button.textContent = {'line-connect-btn':'เชื่อมต่อด้วย LINE (1-Tap)','line-unbind-btn':'ยกเลิกการเชื่อมต่อ','line-profile-refresh-btn':'อัปเดตชื่อและตรวจกลุ่มงาน','line-profile-login-btn':'ยืนยันชื่อบัญชีเดิมผ่าน LINE'}[id]; }
                 }
             },
+
+            applyStatus: res => {
+                const iso = value => typeof value === 'string' && Number.isFinite(Date.parse(value)) ? value : null;
+                const linked = Boolean(res?.linked);
+                const verifiedAt = linked ? iso(res?.profileLastVerifiedAt) : null;
+                const readiness = res?.lineReadiness;
+                const checkedAt = linked ? iso(readiness?.checkedAt) : null;
+                const recentGroupCheck = checkedAt && Date.now() - Date.parse(checkedAt) >= 0 && Date.now() - Date.parse(checkedAt) <= 15 * 60 * 1000;
+                LineAccount.state.linked = linked;
+                LineAccount.state.displayName = linked ? res?.lineDisplayName || null : null;
+                LineAccount.state.profileLastVerifiedAt = verifiedAt;
+                LineAccount.state.profileState = verifiedAt && res?.profileState === 'verified' ? 'verified' : (verifiedAt ? 'stale' : 'unverified');
+                LineAccount.state.lastAttemptResult = linked && typeof res?.lastAttemptResult === 'string' ? res.lastAttemptResult : null;
+                LineAccount.state.lineReadiness = {state:!linked ? 'not_linked' : readiness?.state === 'ready' && recentGroupCheck ? 'ready' : readiness?.state === 'unavailable' ? 'unavailable' : 'unknown',
+                    reason:typeof readiness?.reason === 'string' ? readiness.reason : null,checkedAt};
+                LineAccount.state.error = null;
+            },
+
+            profileMessage: code => ({
+                timeout:'LINE ตอบกลับไม่ทันเวลา กรุณาลองใหม่ภายหลัง',
+                request_timeout:'LINE ตอบกลับไม่ทันเวลา กรุณาลองใหม่ภายหลัง',
+                rate_limited:'LINE จำกัดการตรวจสอบชั่วคราว กรุณาลองใหม่ภายหลัง',
+                unavailable:'LINE ยังตรวจสอบไม่ได้ กรุณาลองใหม่ภายหลัง',
+                not_member:'ยังตรวจสอบบัญชีนี้ในกลุ่มงานไม่ได้ บัญชีที่ผูกไว้ยังคงเดิม',
+                not_configured:'ระบบยังตรวจชื่อผ่านกลุ่มไม่ได้ สามารถยืนยันชื่อบัญชีเดิมผ่าน LINE',
+                identity_mismatch:'บัญชี LINE ที่ยืนยันไม่ตรงกับบัญชีเดิมที่ผูกไว้ กรุณาใช้บัญชีเดิม',
+                invalid_profile:'ยังยืนยันชื่อ LINE ไม่ได้ กรุณาใช้บัญชีเดิมแล้วลองอีกครั้ง',
+                channel_mismatch:'ยังยืนยันการตั้งค่า LINE ไม่ได้ กรุณาติดต่อผู้ดูแลระบบ',
+                token_expired:'การยืนยัน LINE หมดอายุ กรุณากดยืนยันชื่อผ่าน LINE อีกครั้ง',
+                pending:'กำลังตรวจข้อมูล LINE กรุณารอสักครู่',
+                binding_changed:'การผูกบัญชีเปลี่ยนระหว่างตรวจสอบ กรุณาเปิดหน้าต่างนี้ใหม่',
+                session_changed:'เซสชันเปลี่ยน กรุณาเข้าใช้งานใหม่ก่อนตรวจสอบ',
+                client_update_required:'กรุณาโหลดแอปเวอร์ชันล่าสุดแล้วลองอีกครั้ง'
+            })[code] || 'ยังอัปเดตข้อมูล LINE ไม่ได้ ข้อมูลเดิมยังคงอยู่ กรุณาลองใหม่ภายหลัง',
 
             loadSdk: () => {
                 if (window.liff && typeof window.liff.init === 'function') {
@@ -1964,34 +2052,66 @@
                 });
             },
 
-            refreshStatus: async () => {
+            refreshStatus: async (options = {}) => {
                 if (!state.sessionToken || !LineAccount.sameOwner(LineAccount.owner()) || LineAccount._inFlightOp) return;
                 const thisGen = ++LineAccount._statusGen;
                 const reqEpoch = state.sessionEpoch;
                 const reqUserId = state.currentUserId;
                 const reqOwner = LineAccount.owner();
 
-                LineAccount.state.loading = true;
+                LineAccount.state.loading = options.refreshIfStale !== true || !LineAccount.state.linked;
                 LineAccount.updateHeaderButton();
                 try {
-                    const res = await API.postAction({ action: 'getLineAccountStatus' });
+                    const res = await API.postAction({ action: 'getLineAccountStatus', ...(options.refreshIfStale === true ? {refreshIfStale:true} : {}) });
                     // Discard response if newer status was requested, session changed, or user logged out
                     if (thisGen !== LineAccount._statusGen || reqEpoch !== state.sessionEpoch || reqUserId !== state.currentUserId || !LineAccount.sameOwner(reqOwner) || !state.sessionToken) {
                         return;
                     }
                     LineAccount.state.loading = false;
-                    LineAccount.state.linked = Boolean(res?.linked);
-                    LineAccount.state.displayName = res?.lineDisplayName || null;
-                    LineAccount.state.error = null;
+                    LineAccount.applyStatus(res);
                 } catch (err) {
                     if (thisGen !== LineAccount._statusGen || reqEpoch !== state.sessionEpoch || reqUserId !== state.currentUserId || !LineAccount.sameOwner(reqOwner) || !state.sessionToken) {
                         return;
                     }
                     LineAccount.state.loading = false;
-                    LineAccount.state.error = err.code || err.message || 'error_loading_line_status';
+                    LineAccount.state.error = 'ยังโหลดสถานะ LINE ไม่ได้ กรุณาลองอีกครั้ง';
+                    if (LineAccount.state.linked) {
+                        LineAccount.state.profileState = LineAccount.state.profileLastVerifiedAt ? 'stale' : 'unverified';
+                        LineAccount.state.lineReadiness = {state:'unknown',reason:null,checkedAt:null};
+                    }
                 }
                 LineAccount.updateHeaderButton();
                 LineAccount.updateModalView();
+            },
+
+            refreshProfile: async () => {
+                if (LineAccount._inFlightOp || !LineAccount.state.linked || !state.sessionToken || !LineAccount.sameOwner(LineAccount.owner())) return;
+                const operation = {kind:'refresh_profile'};
+                LineAccount._inFlightOp = operation;
+                const opGen = ++LineAccount._statusGen;
+                const epoch = state.sessionEpoch, userId = state.currentUserId, owner = LineAccount.owner();
+                const current = () => opGen === LineAccount._statusGen && epoch === state.sessionEpoch && userId === state.currentUserId && state.sessionToken && LineAccount.sameOwner(owner);
+                const button = document.getElementById('line-profile-refresh-btn');
+                if (button) { button.disabled = true; button.textContent = 'กำลังตรวจสอบ...'; }
+                try {
+                    const res = await API.postAction({action:'refreshLineProfile'});
+                    if (!current()) return;
+                    LineAccount.applyStatus(res);
+                    if (res?.refreshApplied !== false && LineAccount.state.profileState === 'verified') {
+                        UI.showToast('อัปเดตชื่อ LINE แล้ว', 'success');
+                        safeStorage.setItem('akra_line_account_changed', crypto.randomUUID());
+                    }
+                } catch (err) {
+                    if (!current()) return;
+                    LineAccount.state.error = LineAccount.profileMessage(err.code || err.message);
+                    LineAccount.state.profileState = LineAccount.state.profileLastVerifiedAt ? 'stale' : 'unverified';
+                    LineAccount.state.lineReadiness = {state:'unknown',reason:null,checkedAt:null};
+                } finally {
+                    const ownsControl = LineAccount._inFlightOp === operation;
+                    if (ownsControl) LineAccount._inFlightOp = null;
+                    if (current()) { LineAccount.state.loading = false; LineAccount.updateHeaderButton(); LineAccount.updateModalView(); }
+                    if (button && ownsControl) { button.disabled = false; button.textContent = 'อัปเดตชื่อและตรวจกลุ่มงาน'; }
+                }
             },
 
             updateHeaderButton: () => {
@@ -2020,8 +2140,8 @@
 
                 if (LineAccount.state.linked) {
                     btn.className = 'p-2 text-[#06c755] hover:bg-[#06c755]/10 rounded-lg transition-all relative flex items-center gap-1.5';
-                    const name = LineAccount.state.displayName || 'เชื่อมต่อแล้ว';
-                    btn.title = `เชื่อมต่อกับ LINE: ${name}`;
+                    const name = LineAccount.state.displayName || 'ผูกบัญชีแล้ว';
+                    btn.title = `ผูกบัญชี LINE: ${name} (แตะเพื่อตรวจความพร้อมในกลุ่ม)`;
                     if (dot) {
                         dot.className = 'w-2 h-2 rounded-full bg-[#06c755] absolute top-1.5 right-1.5 block';
                     }
@@ -2045,6 +2165,7 @@
                 modal.classList.remove('hidden');
                 LineAccount.updateModalView();
                 lucide.createIcons({ root: modal });
+                LineAccount.refreshStatus({refreshIfStale:true});
             },
 
             closeModal: () => {
@@ -2072,12 +2193,32 @@
                 if (linkedName) {
                     linkedName.textContent = LineAccount.state.displayName || 'บัญชีที่เชื่อมต่อ';
                 }
+                const timeText = value => value && Number.isFinite(Date.parse(value)) ? new Date(value).toLocaleString('th-TH', {timeZone:'Asia/Bangkok'}) : null;
+                const verifiedEl = document.getElementById('line-profile-verified-at');
+                const verifiedTime = timeText(LineAccount.state.profileLastVerifiedAt);
+                if (verifiedEl) verifiedEl.textContent = verifiedTime ? `ตรวจสอบชื่อครั้งล่าสุด: ${verifiedTime}${LineAccount.state.profileState === 'stale' ? ' (ข้อมูลอาจเก่า)' : ''}` : 'ยังไม่ได้ตรวจสอบชื่อ LINE ล่าสุด';
+                const profileNote = document.getElementById('line-profile-note');
+                const attempt = LineAccount.state.lastAttemptResult;
+                if (profileNote) {
+                    const failed = attempt && !['success','verified','not_linked','skipped_fresh'].includes(attempt);
+                    profileNote.classList.toggle('hidden', !failed);
+                    profileNote.textContent = failed ? LineAccount.profileMessage(attempt) : '';
+                }
+                const readiness = LineAccount.state.lineReadiness || {state:'unknown'};
+                const checkedTime = timeText(readiness.checkedAt);
+                const readyNow = readiness.state === 'ready' && checkedTime && Date.now() - Date.parse(readiness.checkedAt) >= 0 && Date.now() - Date.parse(readiness.checkedAt) <= 15 * 60 * 1000;
+                const label = document.getElementById('line-readiness-label'), detail = document.getElementById('line-readiness-detail');
+                if (label) label.textContent = readyNow ? 'ตรวจกลุ่มงานแล้ว พร้อมรับงาน' : readiness.state === 'unavailable' ? 'ยังไม่พร้อมรับงานในกลุ่ม' : 'ยังไม่ได้ยืนยันความพร้อมในกลุ่มงาน';
+                const reasons = {group_unverified:'ยังตรวจสมาชิกหรือ OA ในกลุ่มงานไม่ได้',dispatch_disabled:'การส่งงานในกลุ่มยังไม่เปิดใช้งาน',account_ineligible:'ยังไม่ได้ยืนยันสิทธิ์และสาขาที่รับงานใน BM Work',provider_unverified:'ยังไม่ได้ตรวจการตั้งค่า OA และบัญชี LINE'};
+                if (detail) detail.textContent = readyNow ? `ตรวจสอบล่าสุด: ${checkedTime}` : `${reasons[readiness.reason] || 'การผูกบัญชีและการยืนยันชื่อยังไม่ยืนยันว่าจะส่งงานในกลุ่มได้'}${checkedTime ? ` · ตรวจสอบล่าสุด: ${checkedTime}` : ''}`;
             },
 
             connect: async (options = {}) => {
                 if (LineAccount._inFlightOp) return;
                 if (!LineAccount.sameOwner(LineAccount.owner()) || !state.sessionToken) return;
-                const operation = {kind:'connect'};
+                const refreshProfile = options.refreshProfile === true || options.intent?.purpose === 'refresh';
+                if (refreshProfile && !options.fromCallback && !LineAccount.state.linked) return;
+                const operation = {kind:refreshProfile ? 'refresh_login' : 'connect'};
                 LineAccount._inFlightOp = operation;
                 ++LineAccount._statusGen; // Invalidate any prior in-flight status reads
                 const opGen = LineAccount._statusGen;
@@ -2086,17 +2227,17 @@
                 const startingOwner = LineAccount.owner();
                 let intent = options.intent || null;
 
-                const connectBtn = document.getElementById('line-connect-btn');
+                const connectBtn = document.getElementById(refreshProfile ? 'line-profile-login-btn' : 'line-connect-btn');
                 if (connectBtn) {
                     connectBtn.disabled = true;
-                    connectBtn.innerHTML = '<i data-lucide="loader" class="w-4 h-4 animate-spin"></i> <span>กำลังเชื่อมต่อ...</span>';
+                    connectBtn.innerHTML = `<i data-lucide="loader" class="w-4 h-4 animate-spin"></i> <span>${refreshProfile ? 'กำลังยืนยันชื่อ...' : 'กำลังเชื่อมต่อ...'}</span>`;
                     lucide.createIcons({ root: connectBtn });
                 }
                 try {
                     // LIFF init itself may navigate. Save the explicit click before loading the SDK.
                     if (!options.fromCallback) {
                         intent = {userId:startingUserId, ...startingOwner, marker:state.lifecycleMarker,
-                            nonce:crypto.randomUUID(), timestamp:Date.now()};
+                            nonce:crypto.randomUUID(), timestamp:Date.now(),purpose:refreshProfile ? 'refresh' : 'bind'};
                         intent.shared = false;
                         let stored = false;
                         if (intent.sessionId) {
@@ -2149,7 +2290,7 @@
                     LineAccount.clearIntent(intent);
 
                     const res = await API.postAction({
-                        action: 'bindLineAccount',
+                        action: refreshProfile ? 'refreshLineProfile' : 'bindLineAccount',
                         lineAccessToken: token
                     });
 
@@ -2159,25 +2300,27 @@
                     }
 
                     if (res && res.status === 'success') {
-                        LineAccount.state.linked = true;
-                        LineAccount.state.displayName = res.lineDisplayName || null;
-                        LineAccount.state.error = null;
+                        LineAccount.applyStatus(refreshProfile ? res : {...res,linked:true});
                         LineAccount.updateHeaderButton();
                         LineAccount.updateModalView();
-                        UI.showToast(`เชื่อมต่อกับ LINE (${res.lineDisplayName || 'สำเร็จ'}) เรียบร้อยแล้ว!`, 'success');
+                        if (refreshProfile) UI.showToast(res.refreshApplied === false ? LineAccount.profileMessage(res.lastAttemptResult) : 'ยืนยันชื่อบัญชี LINE เดิมแล้ว กรุณาดูสถานะกลุ่มงานแยกต่างหาก', res.refreshApplied === false ? 'warning' : 'success');
+                        else UI.showToast(`เชื่อมต่อกับ LINE (${res.lineDisplayName || 'สำเร็จ'}) เรียบร้อยแล้ว!`, 'success');
                         safeStorage.setItem('akra_line_account_changed', crypto.randomUUID());
                     }
                 } catch (err) {
                     if (opGen !== LineAccount._statusGen || state.sessionEpoch !== startingEpoch || state.currentUserId !== startingUserId || !LineAccount.sameOwner(startingOwner) || !state.sessionToken) {
                         return;
                     }
-                    console.error('LINE connect error:', err);
                     LineAccount.clearIntent(intent);
-                    let msg = err.code || err.message || 'connect_failed';
+                    let msg = refreshProfile ? LineAccount.profileMessage(err.code || err.message) : err.code || err.message || 'connect_failed';
                     if (msg === 'line_account_already_linked') {
                         msg = 'บัญชี LINE นี้ถูกผูกกับผู้ใช้งานอื่นอยู่แล้ว';
                     }
                     LineAccount.state.error = msg;
+                    if (refreshProfile) {
+                        LineAccount.state.profileState = LineAccount.state.profileLastVerifiedAt ? 'stale' : 'unverified';
+                        LineAccount.state.lineReadiness = {state:'unknown',reason:null,checkedAt:null};
+                    }
                     LineAccount.updateModalView();
                     UI.showToast(msg, 'warning');
                 } finally {
@@ -2192,7 +2335,7 @@
                     }
                     if (connectBtn && ownsControl) {
                         connectBtn.disabled = false;
-                        connectBtn.innerHTML = '<i data-lucide="message-circle" class="w-5 h-5"></i> เชื่อมต่อด้วย LINE (1-Tap)';
+                        connectBtn.innerHTML = refreshProfile ? 'ยืนยันชื่อบัญชีเดิมผ่าน LINE' : '<i data-lucide="message-circle" class="w-5 h-5"></i> เชื่อมต่อด้วย LINE (1-Tap)';
                         lucide.createIcons({ root: connectBtn });
                     }
                 }
@@ -2225,9 +2368,7 @@
                         return;
                     }
                     if (res && res.status === 'success') {
-                        LineAccount.state.linked = false;
-                        LineAccount.state.displayName = null;
-                        LineAccount.state.error = null;
+                        LineAccount.applyStatus({...res,linked:false});
                         LineAccount.updateHeaderButton();
                         LineAccount.updateModalView();
                         UI.showToast('ยกเลิกการเชื่อมต่อ LINE เรียบร้อยแล้ว', 'success');
@@ -2308,7 +2449,7 @@
                 }
 
                 // Call connect without stripping URL parameters beforehand!
-                UI.showToast('กำลังยืนยันการเชื่อมต่อบัญชี LINE...', 'warning');
+                UI.showToast(intent.purpose === 'refresh' ? 'กำลังยืนยันชื่อบัญชี LINE เดิม...' : 'กำลังยืนยันการเชื่อมต่อบัญชี LINE...', 'warning');
                 await LineAccount.connect({ fromCallback: true, intent });
             }
         };
@@ -2522,10 +2663,15 @@
                 document.getElementById('close-line-modal-btn').addEventListener('click', LineAccount.closeModal);
                 document.getElementById('line-connect-btn').addEventListener('click', LineAccount.connect);
                 document.getElementById('line-unbind-btn').addEventListener('click', LineAccount.unbind);
+                document.getElementById('line-profile-refresh-btn').addEventListener('click', LineAccount.refreshProfile);
+                document.getElementById('line-profile-login-btn').addEventListener('click', () => LineAccount.connect({refreshProfile:true}));
                 document.getElementById('admin-btn').addEventListener('click', () => {
                     if (App.queueNavigationIfRefreshing({ type: 'admin' })) return;
                     UI.switchSection('admin-section');
                 });
+                document.getElementById('admin-sidebar-home').addEventListener('click', () => document.getElementById('back-to-dash-btn').click());
+                document.getElementById('admin-sidebar-users').addEventListener('click', () => document.getElementById('tab-btn-users').click());
+                document.getElementById('admin-sidebar-permissions').addEventListener('click', () => document.getElementById('tab-btn-apps').click());
                 document.getElementById('back-to-dash-btn').addEventListener('click', () => {
                     UI.switchSection('dashboard-section');
                     App.renderDashboard(); 
@@ -2579,9 +2725,21 @@
                 });
 
                 const savedToken = safeStorage.getItem(CONFIG.STORAGE_SESSION);
+                let startupToken = savedToken;
+                if (savedToken === null) {
+                    try {
+                        // A partial storage write can retain the canonical record alone.
+                        // Recover only its token; the server must still verify the session.
+                        const savedMain = JSON.parse(safeStorage.getItem('akra_main_session'));
+                        if (savedMain?.version === 1 && savedMain.signedOut !== true
+                            && typeof savedMain.token === 'string' && savedMain.token.length > 0) {
+                            startupToken = savedMain.token;
+                        }
+                    } catch (_) {}
+                }
 
-                if (savedToken && !window.AkraModule?.isMainSignedOut?.()) {
-                    state.sessionToken = savedToken;
+                if (startupToken && !window.AkraModule?.isMainSignedOut?.()) {
+                    state.sessionToken = startupToken;
                     state.sessionEpoch += 1;
                     // Restore tab lifecycle marker or generate fresh if not present in tab
                     try {
@@ -2640,6 +2798,19 @@
                 }
             },
 
+            clearLoginError: () => {
+                const error = document.getElementById('login-error');
+                error.hidden = true; error.textContent = '';
+                for (const id of ['username-input', 'password-input']) document.getElementById(id).removeAttribute('aria-invalid');
+            },
+
+            showLoginError: (message, invalidFields = [], focusId = invalidFields[0] || 'login-error') => {
+                const error = document.getElementById('login-error');
+                error.textContent = message; error.hidden = false;
+                for (const id of invalidFields) document.getElementById(id).setAttribute('aria-invalid', 'true');
+                if (focusId) document.getElementById(focusId).focus();
+            },
+
             handleLogin: async (e) => {
                 e.preventDefault();
                 const loginEpoch = state.sessionEpoch, storedToken = safeStorage.getItem(CONFIG.STORAGE_SESSION);
@@ -2650,9 +2821,10 @@
                 const pwdEl = document.getElementById('password-input');
                 const username = userEl.value.trim();
                 const pwd = pwdEl.value.trim();
+                App.clearLoginError();
                 
                 if (!username || !pwd) {
-                    UI.showToast("กรุณากรอกรหัสพนักงานและรหัสผ่าน", "warning");
+                    App.showLoginError('กรุณากรอกรหัสพนักงานและรหัสผ่าน', [!username && 'username-input', !pwd && 'password-input'].filter(Boolean));
                     return;
                 }
 
@@ -2696,22 +2868,25 @@
                     }
                 } catch (error) {
                     if (!isCurrent()) return;
-                    if (error.code === 'invalid_credentials' || error.message === 'invalid_credentials') {
-                        UI.showToast("รหัสพนักงานหรือรหัสผ่านไม่ถูกต้อง (หากเข้าครั้งแรก ให้ใช้รหัสพนักงานเป็นรหัสผ่าน)", 'error');
-                        pwdEl.focus();
+                    if (error.code === 'session_changed') {
+                        App.showLoginError('เซสชันหมดอายุหรือเปลี่ยนแล้ว กรุณาเข้าสู่ระบบ BUYMORETH อีกครั้ง');
+                    } else if (error.code === 'invalid_credentials' || error.message === 'invalid_credentials') {
+                        App.showLoginError('รหัสพนักงานหรือรหัสผ่านไม่ถูกต้อง (หากเข้าครั้งแรก ให้ใช้รหัสพนักงานเป็นรหัสผ่าน)', ['username-input', 'password-input'], 'password-input');
                     } else if (error.code === 'invalid_password' || error.message === 'รหัสผ่านไม่ถูกต้อง' || (error.message && error.message.includes('รหัสผ่านไม่ถูกต้อง'))) {
-                        UI.showToast("รหัสผ่านไม่ถูกต้อง", 'error');
-                        pwdEl.focus();
+                        App.showLoginError('รหัสผ่านไม่ถูกต้อง', ['password-input']);
                     } else if (error.code === 'user_not_found' || error.message === 'ไม่พบรหัสพนักงานนี้ในระบบ' || (error.message && error.message.includes('ไม่พบรหัสพนักงาน'))) {
-                        UI.showToast("ไม่พบรหัสพนักงานนี้ในระบบ", 'error');
-                        userEl.focus();
+                        App.showLoginError('ไม่พบรหัสพนักงานนี้ในระบบ', ['username-input']);
                     } else if (error.code === 'account_inactive' || (error.message && error.message.includes('ถูกระงับการใช้งาน'))) {
-                        UI.showToast(error.message || "บัญชีนี้ถูกระงับการใช้งาน กรุณาติดต่อผู้ดูแลระบบ", 'error');
+                        App.showLoginError(error.message && /[ก-๙]/.test(error.message) ? error.message : 'บัญชีนี้ถูกระงับการใช้งาน กรุณาติดต่อผู้ดูแลระบบ');
                     } else if (error.code === 'too_many_attempts') {
-                        UI.showToast("ลองเข้าสู่ระบบหลายครั้งเกินไป กรุณารอ 10 นาที", 'error');
+                        App.showLoginError('ลองเข้าสู่ระบบหลายครั้งเกินไป กรุณารอ 10 นาที');
+                    } else if (error.code === 'client_update_required') {
+                        App.showLoginError('พบเวอร์ชันใหม่ กรุณารีโหลดก่อนเข้าสู่ระบบ');
                     } else {
-                        const userMsg = error.message && error.message !== 'request_failed' && !error.message.includes('fetch') ? error.message : "เกิดข้อผิดพลาดในการเชื่อมต่อ กรุณาลองใหม่";
-                        UI.showToast(userMsg, 'error');
+                        const network = !navigator.onLine || ['TypeError', 'TimeoutError', 'AbortError'].includes(error.name) || error.code === 'request_timeout';
+                        const userMsg = network ? 'เชื่อมต่อไม่ได้ ตรวจสอบอินเทอร์เน็ตแล้วลองอีกครั้ง'
+                            : error.message && /[ก-๙]/.test(error.message) ? error.message : 'ระบบขัดข้องชั่วคราว ลองอีกครั้งในอีกสักครู่ ถ้ายังไม่ได้ให้แจ้งผู้ดูแล';
+                        App.showLoginError(userMsg);
                     }
                 } finally {
                     btn.disabled = false; btnText.innerText = 'เข้าสู่ระบบ';
@@ -2872,7 +3047,7 @@
 
                 const adminBtn = document.getElementById('admin-btn');
                 state.currentRoles.includes("ADMIN") ? adminBtn.classList.remove('hidden') : adminBtn.classList.add('hidden');
-                const execBtn = document.getElementById('exec-btn'); if (execBtn) { (state.currentRoles.includes("ADMIN") || state.currentRoles.includes("SUPERVISOR")) ? execBtn.classList.remove('hidden') : execBtn.classList.add('hidden'); }
+                const execBtn = document.getElementById('exec-btn'); if (execBtn) execBtn.classList.add('hidden');
 
                 const grid = document.getElementById('app-grid');
                 grid.innerHTML = ''; 
@@ -2970,7 +3145,7 @@
                 if (pendingPopup && !pendingPopup.closed) {
                     try { pendingPopup.close(); } catch (e) {}
                 }
-                if (window.AkraShell.open(appId)) API.sendLog("Open App", appId, `${state.currentUser} เปิดแอป`);
+                window.AkraShell.open(appId, {onOpened:() => API.sendLog("Open App", appId, `${state.currentUser} เปิดแอป`)});
             }
         };
 

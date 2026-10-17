@@ -5,7 +5,7 @@ const tick=()=>new Promise(setImmediate);
 const user={id:'fixture',name:'Verified',roles:['ADMIN'],identityId:'10000000-0000-4000-8000-000000000011',sessionVersion:2,authorizationRevision:'current',apps:[],perms:{}};
 function rig(){
  const storage=new Map(),nodes=new Map(),sections=[],views=[],toasts=[];
- const node=id=>{if(!nodes.has(id))nodes.set(id,{value:'',checked:false,disabled:false,innerHTML:'',innerText:'',focus(){},classList:{add(){},remove(){},toggle(){}},querySelectorAll:()=>[]});return nodes.get(id);};
+ const node=id=>{if(!nodes.has(id)){const attributes=new Map();nodes.set(id,{value:'',checked:false,disabled:false,innerHTML:'',innerText:'',setAttribute:(name,value)=>attributes.set(name,String(value)),removeAttribute:name=>attributes.delete(name),getAttribute:name=>attributes.get(name),focus(){},classList:{add(){},remove(){},toggle(){}},querySelectorAll:()=>[]});}return nodes.get(id);};
  const state={sessionToken:null,sessionEpoch:0,currentUser:null,currentUserId:null,currentRoles:[],currentPerms:{},appConfig:[],mustChangePassword:false};
  const c=vm.createContext({state,JSON,Date,URL,AbortController,console,document:{getElementById:node},window:{AkraShell:{reset(){}}},CONFIG:{STORAGE_SESSION:'token',STORAGE_USER_DATA:'user',STORAGE_USER_DB:'users',STORAGE_APP_CONFIG:'apps',API_URL:'https://fixture.invalid/'},
   safeStorage:{getItem:k=>storage.get(k)||null,setItem:(k,v)=>storage.set(k,String(v)),removeItem:k=>storage.delete(k)},sessionStorage:{getItem:()=>null,setItem(){},removeItem(){}},
@@ -16,7 +16,7 @@ function rig(){
  const run=s=>vm.runInContext(s,c);
  run(section('        const App = {','        const AKRA_SSO = {')+'\nthis.app=App;');
  c.app.renderDashboard=()=>views.push(state.currentUser);c.app.openChangePasswordModal=()=>views.push('password');c.app.runPendingNavigation=()=>{};
- run('this.startup=async()=>{'+section('                const savedToken = safeStorage.getItem(CONFIG.STORAGE_SESSION);','\n            },\n\n            handleLogin:')+'};');
+ run('this.startup=async()=>{'+section('                const savedToken = safeStorage.getItem(CONFIG.STORAGE_SESSION);','\n            },\n\n            clearLoginError:')+'};');
  return {c,state,storage,node,sections,views,toasts,run};
 }
 test('Main cached private identity/roles never render before verified refresh, including cached password-change flag',async()=>{

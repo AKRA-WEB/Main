@@ -5,6 +5,7 @@ const fs = require('node:fs');
 const path = require('node:path');
 const vm = require('node:vm');
 const root = path.resolve(__dirname, '../..');
+const {loadAuthSupport}=require('./module-source.cjs');
 const original = { id:'reused-name', name:'Original', identityId:'10000000-0000-4000-8000-000000000011',
     sessionVersion:1, authorizationRevision:'rev-one', roles:['ADMIN'], perms:{'app-po':['createPO'],'app-gr':['receiveGR']} };
 const replacement = { ...original, identityId:'10000000-0000-4000-8000-000000000012' };
@@ -15,7 +16,7 @@ for (const repo of ['PO','GR']) {
         for (const outcome of ['denied','allowed','replaced']) {
             const denied = outcome === 'denied', accepted = outcome === 'allowed';
             let finish, verified=0, reads=0, loaded=0, shown=0;
-            const store = new Map(), window = { location:{search:'?sso=forged.jwt.signature',pathname:`/${repo}/`}, history:{replaceState(){}},
+            const store = new Map(), window = { addEventListener(){}, location:{search:'?sso=forged.jwt.signature',pathname:`/${repo}/`}, history:{replaceState(){}},
                 AkraModule:{embedded:false,getToken:()=>'',isLocalPreview:()=>false,home(){},
                     verifySession(id, token) { verified++; assert.equal(id,repo==='PO'?'app-tracking':'app-gr'); assert.equal(token,'forged.jwt.signature'); return new Promise((resolve,reject)=>{finish=()=>denied?reject(Error('invalid_session')):resolve({...original});}); } } };
             const ctx = vm.createContext({window, URLSearchParams, console:{log(){},warn(){},error(){}},
@@ -25,7 +26,8 @@ for (const repo of ['PO','GR']) {
                 decodeJwtPayload:()=>({...original}), normalizeRoles:r=>r,hasPoAccess:()=>true,hasGrAccess:()=>true,
                 buildAppSession:(u,t)=>({...u,token:t}),isLocalPreviewMode:()=>false,PERF_MODE:false,
                 readApiCall:async()=>{reads++;return{};},loadInitialData:async()=>{loaded++;},openReceiving:async()=>{loaded++;},
-                document:{title:repo,getElementById:()=>null},fetch:()=>{throw Error('legacy verification forbidden');}});
+                document:{title:repo,getElementById:()=>({innerText:'',onclick:null})},fetch:()=>{throw Error('legacy verification forbidden');}});
+            loadAuthSupport(source(repo),ctx);
             vm.runInContext(source(repo).match(/var AuthGuard = ([\s\S]*?\n    };)/)[0]+'\nAuthGuard.bindEvents=()=>{};',ctx);
             const pending = ctx.AuthGuard.init(); await tick();
             assert.equal(shown,0,'unverified claims must never reveal UI/cache');
@@ -82,7 +84,7 @@ for (const repo of ['PO','GR']) {
         const auth=html.match(/var AuthGuard = ([\s\S]*?\n    };)/)[0];
         const ui=html.match(/var UI = ([\s\S]*?\n    };)/)[0];
         const tokenFn=html.match(/function getSessionToken\(\) \{[\s\S]*?\n    \}/)[0];
-        vm.runInContext(ui+'\n'+auth+'\n'+tokenFn,ctx);
+        loadAuthSupport(html,ctx);vm.runInContext(ui+'\n'+auth+'\n'+tokenFn,ctx);
         ctx.AuthGuard.bindEvents(); assert.equal(ctx.getSessionToken(),'verified-token');
         events.storage({key:'unrelated',oldValue:'a',newValue:'b'}); assert.ok(window.appSession);
         events.storage({key:'legacy',oldValue:'verified-token',newValue:'other-account-token'});

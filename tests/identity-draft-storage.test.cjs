@@ -1,12 +1,13 @@
 // Cross-module local storage acceptance: a username is not an immutable owner.
 const test=require('node:test'),assert=require('node:assert/strict'),vm=require('node:vm'),fs=require('node:fs'),path=require('node:path');
-const pr=require('../../PR/js/pr-api-client.js'),picking=require('../../Picking/js/supabase-picking-client.js');
+const {repoPath}=require('./module-source.cjs');
+const pr=require(path.join(repoPath('PR'),'js/pr-api-client.js')),picking=require(path.join(repoPath('Picking'),'js/supabase-picking-client.js'));
 const a='10000000-0000-4000-8000-000000000001',b='10000000-0000-4000-8000-000000000002';
 const store=()=>{const values=new Map();return {values,getItem:key=>values.get(key)||null,setItem:(key,value)=>values.set(key,value),removeItem:key=>values.delete(key)};};
 const prData={requester:'Fixture',warehouse:'W1',items:[{product:'Fixture',quantity:1}]};
 const pickData={billType:'Fixture',assigneeId:a,items:[{name:'Fixture',qty:1,unit:'piece'}]};
 function pickUser(identityId){return{id:'same-name',identityId,apps:['app-pick'],roles:['ADMIN'],perms:{}};}
-function evaluation(){const window={};vm.runInNewContext(fs.readFileSync(path.join(__dirname,'../../Evaluation form/js/evaluation-session.js'),'utf8'),{window});return window.EvaluationSession;}
+function evaluation(){const window={};vm.runInNewContext(fs.readFileSync(path.join(repoPath('Evaluation form'),'js/evaluation-session.js'),'utf8'),{window});return window.EvaluationSession;}
 test('PR replacement identity never restores another person draft even when username is identical',async()=>{
  const storage=store();let identityId=a;
  const client=pr.create({storage,getUserId:()=> 'same-name',getIdentityId:()=>identityId,getToken:()=> 'fixture',requestId:()=> 'fixture-request',fetch:async()=>{throw Error('offline');}});

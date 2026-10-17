@@ -13,6 +13,8 @@
         'app-evaluation': '/Evaluation/',
         'app-master-data': '/MasterData/'
     });
+    const SIDEBAR_NAMES = Object.freeze({ 'app-w5':'W5 เบิกย้าย', 'app-trd':'TRD เบิกจ่าย', 'app-gr':'GR รับสินค้า', 'app-pr':'PR ขอซื้อ',
+        'app-tracking':'PO จัดซื้อ', 'app-damage':'RETURN สินค้าคืน', 'app-kpi':'BM Work', 'app-manual':'SOP คู่มือ', 'app-master-data':'DATA ข้อมูลกลาง' });
     const WORKFLOW_NAV = Object.freeze({
         'app-w5': [
             {label:'เบิก-รับ', icon:'boxes', selector:'.w5-bottom-nav button:nth-child(1)'},
@@ -107,11 +109,11 @@
     const expandedApps = new Set();
     let pendingWorkflow = null;
     let workflowTimer, navigationKey = '';
-    let currentHash = '', suspended = false;
+    let currentHash = '', suspended = false, leaveDecision = null;
     const api = { moduleUrl, routeId, canLaunch, acceptsMessage, init, open, openWorkflow, home, reset, sync, tokenFor, getWorkState, confirmLeave };
 
     const EMBEDDED_HEADER_RULES = Object.freeze([
-        { header: '#trd-topbar', action: '.trd-topbar__actions' },
+        { header: '#trd-topbar', action: '.trd-topbar__actions', extraHeaders: '#main-view > div > header' },
         { header: '.gr-topbar', action: ':scope > div > div > .space-x-2' },
         { header: '#app-content > nav', action: ':scope > div > div > div:last-child' },
         { header: '.returnitem-topbar', action: '.returnitem-topbar__actions', compactActions: true },
@@ -119,6 +121,7 @@
         { header: '#app-shell > header', action: ':scope > div > div > div:last-child' },
         { header: '.w5-topbar', action: ':scope > .w5-topbar-inner', createActionGroup: true },
         { header: '.topbar', action: '.topbar-actions' },
+        { header: '.workspace-bar', action: '.workspace-location' },
         { header: '.top-nav', action: '.nav-controls' }
     ]);
 
@@ -159,7 +162,7 @@
     function matchesEmbeddedAction(element, type) {
         if (element.dataset.akraShellAction) return element.dataset.akraShellAction === type;
         const signature = actionSignature(element);
-        if (type === 'home') return element.matches('[data-auth-main], .trd-topbar__action--portal')
+        if (type === 'home') return element.dataset.action === 'home' || element.matches('[data-auth-main], .trd-topbar__action--portal')
             || /akramodule\.home|gotoportal|gotomain|returntomain|portal/.test(signature.replace(/\s+/g, ''));
         if (type === 'refresh') return /refresh|รีเฟรช|loadinitialdata|fetchdata/.test(signature);
         return element.id === 'logout-btn' || /logout|ออกจากระบบ|ออก$/.test(signature);
@@ -173,14 +176,15 @@
     }
 
     function hideEmbeddedAction(header, type, marker) {
-        const action = [...header.querySelectorAll('button, a')].find(element => {
+        const actions = [...header.querySelectorAll('button, a')].filter(element => {
             return !element.dataset.akraShellAction && matchesEmbeddedAction(element, type);
         });
-        if (!action) return;
-        action.dataset[marker] = 'true';
-        action.hidden = true;
-        action.setAttribute('aria-hidden', 'true');
-        action.tabIndex = -1;
+        for (const action of actions) {
+            action.dataset[marker] = 'true';
+            action.hidden = true;
+            action.setAttribute('aria-hidden', 'true');
+            action.tabIndex = -1;
+        }
     }
 
     function installEmbeddedHeaderStyle(doc) {
@@ -256,15 +260,40 @@
         if (!match) return false;
         const { element: header, rule } = match;
         installEmbeddedHeaderStyle(doc);
-        hideEmbeddedAction(header, 'home', 'akraShellChildHome');
-        hideEmbeddedAction(header, 'logout', 'akraShellChildLogout');
-        const ready = ensureEmbeddedAction(header, rule, 'home', 'กลับหน้าหลัก', '<path d="m3 10 9-7 9 7"/><path d="M5 9.5V21h14V9.5"/><path d="M9 21v-7h6v7"/>', () => home())
-            && ensureEmbeddedAction(header, rule, 'refresh', 'รีเฟรช', '<path d="M20 11a8 8 0 0 0-14.8-4L3 9"/><path d="M3 4v5h5"/><path d="M4 13a8 8 0 0 0 14.8 4L21 15"/><path d="M21 20v-5h-5"/>', () => open(active.id, {reload:true}));
-        if (ready) {
-            active.compactHeader = true;
-            panel.classList.add('shell-child-header');
+        const headers = [header, ...(rule.extraHeaders ? doc.querySelectorAll(rule.extraHeaders) : [])];
+        for (const childHeader of headers) {
+            hideEmbeddedAction(childHeader, 'home', 'akraShellChildHome');
+            hideEmbeddedAction(childHeader, 'logout', 'akraShellChildLogout');
         }
-        return ready;
+        active.compactHeader = true;
+        panel.classList.add('shell-child-header');
+        return true;
+    }
+
+    function closeAppChooser() {
+        const dialog = document.getElementById('shell-app-dialog');
+        if (dialog?.open) dialog.close();
+        document.getElementById('shell-apps')?.setAttribute('aria-expanded', 'false');
+    }
+
+    function openAppChooser() {
+        const state = host.state();
+        if (!active || !canLaunch(active.id, state)) return false;
+        const dialog = document.getElementById('shell-app-dialog'), nav = document.getElementById('shell-mobile-app-nav');
+        if (!dialog || !nav) return false;
+        nav.replaceChildren();
+        for (const app of (state.appConfig || []).filter(app => canLaunch(app.id, state) && moduleUrl(app, window.location.origin))) {
+            const button = document.createElement('button');
+            button.type = 'button'; button.className = 'shell-mobile-app-link'; button.textContent = host.label(app);
+            button.setAttribute('data-app-id', app.id);
+            if (active.id === app.id) button.setAttribute('aria-current', 'page');
+            button.addEventListener('click', () => { if (open(app.id)) closeAppChooser(); });
+            nav.appendChild(button);
+        }
+        if (!dialog.open) dialog.showModal();
+        document.getElementById('shell-apps').setAttribute('aria-expanded', 'true');
+        nav.querySelector('[aria-current="page"]')?.focus();
+        return true;
     }
 
     function watchEmbeddedHeader(frame) {
@@ -279,6 +308,7 @@
     function init(options) {
         if (host) return;
         host = options;
+        window.getBmDialogContext = leaveContext;
         panel = document.getElementById('unified-shell');
         selector = document.getElementById('shell-module-select');
         status = document.getElementById('shell-status');
@@ -289,8 +319,13 @@
         document.getElementById('shell-sidebar-home')?.addEventListener('click', home);
         document.getElementById('shell-refresh').addEventListener('click', () => { if (active) open(active.id, {reload:true}); });
         document.getElementById('shell-retry').addEventListener('click', () => { if (active) open(active.id, {reload:true}); });
-        document.getElementById('shell-logout').addEventListener('click', () => { if (confirmLeave()) host.logout(); });
-        document.getElementById('shell-admin').addEventListener('click', () => { if (home()) host.admin(); });
+        document.getElementById('shell-logout').addEventListener('click', () => { if (confirmLeave(() => host.logout())) host.logout(); });
+        document.getElementById('shell-admin').addEventListener('click', () => home({onHome:() => host.admin()}));
+        document.getElementById('shell-apps')?.addEventListener('click', openAppChooser);
+        document.getElementById('shell-app-dialog-close')?.addEventListener('click', closeAppChooser);
+        const appDialog = document.getElementById('shell-app-dialog');
+        appDialog?.addEventListener('close', () => { document.getElementById('shell-apps')?.setAttribute('aria-expanded', 'false'); document.getElementById('shell-apps')?.focus(); });
+        appDialog?.addEventListener('click', event => { if (event.target === appDialog) closeAppChooser(); });
         window.addEventListener('message', onMessage);
         window.addEventListener('hashchange', onRoute);
         window.addEventListener('popstate', onRoute);
@@ -329,11 +364,42 @@
         try { return !!active.frame.contentWindow.AkraModule?.hasPendingWork(); }
         catch (_) { return active.dirty || active.busy; }
     }
-    function confirmLeave() {
+    function leaveContext() {
+        const state = host.state();
+        let storedToken;
+        try { storedToken = window.localStorage?.getItem('akra_session_token'); } catch (_) {}
+        return [active?.frame, sequence, state.sessionToken, state.currentUserId, state.sessionEpoch,
+            state.identityId, state.sessionVersion, state.sessionAuthorizationRevision,
+            window.AkraModule?.sessionStamp?.(), storedToken];
+    }
+    function leaveBusy() {
         let busy = active?.busy;
         try { busy = active?.frame.contentWindow.AkraModule?.getWorkState?.().busy || busy; } catch (_) {}
-        if (busy) { host.notify('กำลังบันทึกรายการ กรุณารอผลก่อนเปลี่ยนแอปหรือออกจากระบบ'); return false; }
-        return !hasPendingWork() || window.confirm('มีข้อมูลที่แก้ไขหรือรายการที่อาจยังไม่บันทึก ต้องการออกจากหน้านี้หรือไม่?');
+        return busy;
+    }
+    function confirmLeave(proceed) {
+        const busyNotice = 'กำลังบันทึกรายการ กรุณารอผลก่อนเปลี่ยนแอปหรือออกจากระบบ';
+        if (leaveBusy()) { host.notify(busyNotice); return false; }
+        if (!hasPendingWork()) return true;
+        if (leaveDecision) return false;
+        if (!window.BMDialog) { host.notify('ยังเปิดหน้าต่างยืนยันไม่ได้ กรุณาลองอีกครั้ง'); return false; }
+        const owner = leaveContext(), decision = {};
+        leaveDecision = decision;
+        window.BMDialog.ask('มีข้อมูลที่แก้ไขหรือรายการที่อาจยังไม่บันทึก ต้องการออกจากหน้านี้หรือไม่?', {title:'ยืนยันออกจากหน้านี้', variant:'warning'}).then(approved => {
+            if (leaveDecision !== decision) return;
+            leaveDecision = null;
+            const state = host.state(), current = leaveContext();
+            if (!approved || !owner.every((value, index) => value === current[index]) || suspended
+                || !state.sessionToken || state.sessionRefreshPending || state.sessionRefreshFailed || state.mustChangePassword
+                || (active && !canLaunch(active.id, state))) return;
+            if (leaveBusy()) { host.notify(busyNotice); return; }
+            proceed?.();
+        }).catch(() => {
+            if (leaveDecision !== decision) return;
+            leaveDecision = null;
+            host.notify('ยังเปิดหน้าต่างยืนยันไม่ได้ กรุณาลองอีกครั้ง');
+        });
+        return false;
     }
     function setVisible(visible) {
         panel.hidden = !visible;
@@ -354,6 +420,8 @@
         window.history[replace ? 'replaceState' : 'pushState'](null, '', window.location.pathname + window.location.search + next);
     }
     function removeFrame() {
+        if (leaveDecision) { leaveDecision = null; window.BMDialog?.cancel(); }
+        closeAppChooser();
         sequence += 1;
         clearTimeout(readyTimer);
         clearPendingWorkflow();
@@ -373,13 +441,14 @@
         setRoute('', true);
     }
     function home(options = {}) {
-        if (!host || (!options.confirmed && !confirmLeave())) return false;
+        if (!host || (!options.confirmed && !confirmLeave(() => home({...options, confirmed:true})))) return false;
         removeFrame();
         setVisible(false);
         suspended = false;
         setRoute('', options.replace === true);
         host.home();
         document.getElementById('app-grid')?.querySelector('button')?.focus();
+        options.onHome?.();
         return true;
     }
     function showError(message) {
@@ -422,14 +491,15 @@
             item.type = 'button';
             item.className = 'shell-app-link';
             item.title = host.label(app);
-            item.setAttribute('aria-label', 'เปิด ' + host.label(app));
+            const shortName = SIDEBAR_NAMES[app.id] || host.label(app);
+            item.setAttribute('aria-label', 'เปิด ' + shortName + ' ' + host.label(app));
             if (active?.id === app.id) item.setAttribute('aria-current', 'page');
             const icon = document.createElement('i');
             icon.setAttribute('data-lucide', app.icon || 'layout-grid');
             icon.setAttribute('aria-hidden', 'true');
             const label = document.createElement('span');
             label.className = 'shell-app-link__label';
-            label.textContent = host.label(app);
+            label.textContent = shortName;
             item.appendChild(icon);
             item.appendChild(label);
             item.addEventListener('click', () => open(app.id));
@@ -522,7 +592,10 @@
         }, 100);
     }
     function activateWorkflow(appId, item) {
-        if (active?.id !== appId && !open(appId)) return false;
+        if (active?.id !== appId) {
+            if (!confirmLeave(() => { if (open(appId, {force:true})) activateWorkflow(appId, item); })) return false;
+            if (!open(appId, {force:true})) return false;
+        }
         clearPendingWorkflow();
         pendingWorkflow = {frame:active.frame, item, expiresAt:Date.now() + 20000};
         runPendingWorkflow();
@@ -531,7 +604,7 @@
     function openWorkflow(appId, selector) {
         const item = WORKFLOW_NAV[appId]?.find(item => item.selector === selector);
         if (!host || !item || !canLaunch(appId, host.state())) return false;
-        if (active?.id === appId && !confirmLeave()) return false;
+        if (active?.id === appId && !confirmLeave(() => activateWorkflow(appId, item))) return false;
         return activateWorkflow(appId, item);
     }
     function open(id, options = {}) {
@@ -542,8 +615,8 @@
         const perfEnabled = new URL(window.location.pathname + window.location.search, window.location.origin).searchParams.get('akra_perf') === '1';
         const url = moduleUrl(app,window.location.origin,perfEnabled);
         if (!url) { host.notify('แอปนี้ยังไม่ได้ตั้งค่าเส้นทางที่รองรับ กรุณาติดต่อผู้ดูแล'); return false; }
-        if (active?.id === id && !options.reload) { clearPendingWorkflow(); return true; }
-        if (!options.force && !confirmLeave()) return false;
+        if (active?.id === id && !options.reload) { clearPendingWorkflow(); options.onOpened?.(); return true; }
+        if (!options.force && !confirmLeave(() => open(id, {...options, force:true}))) return false;
         removeFrame();
         suspended = false;
         const frame = document.createElement('iframe');
@@ -567,6 +640,7 @@
         readyTimer = setTimeout(() => {
             if (active && sequence === loadSequence) showError('เปิดแอปไม่สำเร็จ กรุณาลองใหม่ หรือกลับหน้าหลัก');
         },20000);
+        options.onOpened?.();
         return true;
     }
     function tokenFor(source) {
@@ -582,7 +656,7 @@
         if (!active || !acceptsMessage(event,active.frame.contentWindow,window.location.origin)) return;
         const message = event.data;
         if (message.type === 'home') { home(); return; }
-        if (message.type === 'logout') { if (confirmLeave()) host.logout(); return; }
+        if (message.type === 'logout') { if (confirmLeave(() => host.logout())) host.logout(); return; }
         if (message.type === 'ready') active.ready = true;
         if (host.state().sessionRefreshPending) return;
         if (!tokenFor(event.source)) { suspended = true; showError('เซสชันหรือสิทธิ์ถูกเปลี่ยน กรุณากลับหน้าหลักเพื่อตรวจสอบอีกครั้ง'); return; }
@@ -606,12 +680,15 @@
         if (id === null) { host.notify('ไม่พบหน้าแอปที่ระบุ'); setRoute(active?.id || '',true); return; }
         if (!host.state().sessionToken || host.state().sessionRefreshPending) return;
         if (id === (active?.id || '')) { currentHash = window.location.hash; return; }
-        if (!confirmLeave()) {
+        const navigate = () => {
+            if (!id) { home({confirmed:true,replace:true}); return; }
+            if (!open(id,{replace:true,force:true})) setRoute(active?.id || '',true);
+        };
+        if (!confirmLeave(navigate)) {
             window.history.replaceState(null,'',window.location.pathname + window.location.search + currentHash);
             return;
         }
-        if (!id) { home({confirmed:true,replace:true}); return; }
-        if (!open(id,{replace:true,force:true})) setRoute(active?.id || '',true);
+        navigate();
     }
     function sync() {
         if (!host) return;

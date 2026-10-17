@@ -2,6 +2,7 @@ const test = require('node:test');
 const assert = require('node:assert/strict');
 const fs = require('node:fs');
 const path = require('node:path');
+const vm = require('node:vm');
 
 const html = fs.readFileSync(path.join(__dirname, '..', 'index.html'), 'utf8');
 
@@ -31,4 +32,21 @@ test('admin tab controller only switches between users and unified authorization
   assert.match(source, /\['users','apps'\]/);
   assert.doesNotMatch(source, /perms/);
   assert.doesNotMatch(source, /renderPermMatrix|renderAppMatrix/);
+});
+
+test('admin sidebar marks only the displayed tab as current', () => {
+  const start = html.indexOf('switchTab: (tabName) =>');
+  const end = html.indexOf('\n            renderUserList:', start);
+  const nodes = new Map();
+  const node = id => {
+    if (!nodes.has(id)) nodes.set(id, { attrs: {}, classList: { toggle() {} }, setAttribute(key, value) { this.attrs[key] = value; }, removeAttribute(key) { delete this.attrs[key]; } });
+    return nodes.get(id);
+  };
+  const switchTab = vm.runInNewContext('({' + html.slice(start, end) + '}).switchTab', { document: { getElementById: node }, AdminInteractive: { renderRoleAccessEditor() {} } });
+  switchTab('apps');
+  assert.equal(node('admin-sidebar-permissions').attrs['aria-current'], 'page');
+  assert.equal(node('admin-sidebar-users').attrs['aria-current'], undefined);
+  switchTab('users');
+  assert.equal(node('admin-sidebar-users').attrs['aria-current'], 'page');
+  assert.equal(node('admin-sidebar-permissions').attrs['aria-current'], undefined);
 });

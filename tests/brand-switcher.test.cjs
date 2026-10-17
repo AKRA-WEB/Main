@@ -5,11 +5,12 @@ const path = require('node:path');
 const vm = require('node:vm');
 const source = fs.readFileSync(path.join(__dirname, '../js/akra-shell-bridge.js'), 'utf8');
 const catalog = source.match(/const APP_SWITCHER_CATALOG = Object\.freeze\(([\s\S]*?)\);/)[0];
-const start = source.indexOf('    function switcherEntries()');
+const start = source.indexOf('    function configuredSwitcherTarget(');
 const end = source.indexOf('    function ensureSwitcherStyles()', start);
 function entries(user, cached) {
   const context = vm.createContext({
     standaloneUser: null, standaloneAppId: 'app-kpi',
+    URL, window: {location: {origin:'https://fixture.invalid'}},
     switcherStorageJson: key => key === 'akra_user_data' ? user : cached
   });
   vm.runInContext(catalog + '\n' + source.slice(start, end) + '\nthis.result = switcherEntries();', context);

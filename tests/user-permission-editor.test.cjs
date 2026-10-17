@@ -10,7 +10,7 @@ function fixture(options={}){
         addEventListener(k,fn){this.listeners[k]=fn;},focus(){document.activeElement=this;}};}};
     const root=document.createElement('div'),status=document.createElement('p'),button=document.createElement('button'),state={epoch:1,user:'staff',dirty:false,busy:false,roleDraft:false,ready:true},calls=[];
     let confirm=false,editor;
-    editor=create({root,status,button,document,describe:(app,key)=>({label:key,detail:'Fixture action detail'}),
+    editor=create({root,status,button,document,describe:options.describe||((app,key)=>({label:key,detail:'Fixture action detail'})),
         isCurrent:s=>s.epoch===state.epoch&&s.username===state.user,canEdit:()=>state.ready,hasRoleDraft:()=>state.roleDraft,
         onDirty:flag=>state.dirty=flag,onBusy:flag=>state.busy=flag,confirm:()=>confirm,notify:message=>calls.push(message),
         send:async payload=>{calls.push(payload);return options.send?options.send(payload):{status:'success',authorizationRevision:'after'};},
@@ -59,4 +59,15 @@ test('Logout/user switch during a response cannot paint old user results or rest
     f.editor.toggle({appId:'app-w5',permKey:'recordStock'},false);const saving=f.editor.save();f.state.epoch++;f.state.user='new-user';f.editor.reset();
     const message=f.status.textContent;finish({status:'success',authorizationRevision:'after'});assert.equal(await saving,false);
     assert.equal(f.status.textContent,message);assert.equal(f.state.busy,false);assert.equal(f.state.dirty,false);assert.equal(f.root.children.length,0);
+});
+
+test('permission controls show Thai descriptions and retain exact keys in tooltips with unknown-key fallback',()=>{
+    const catalog=require('../js/permission-catalog.js'),f=fixture({describe:catalog.describe});
+    const labels=f.root.children.filter(node=>node.tag==='label');
+    assert.equal(labels[0].title,'app-w5:viewInventory');assert.equal(labels[0].children[1].children[0].textContent,'ดูข้อมูลคลัง W5');
+    assert.match(inputs(f)[0].attributes['aria-label'],/ดูข้อมูลคลัง W5/);assert.doesNotMatch(inputs(f)[0].attributes['aria-label'],/viewInventory/);
+    const data=snapshot();data.user.explicitPermissions.push({appId:'app-w5',permKey:'legacyUnknown'});f.editor.load(data,true);
+    const unknown=f.root.children.filter(node=>node.tag==='label').at(-1);
+    assert.equal(unknown.title,'app-w5:legacyUnknown');assert.equal(unknown.children[1].children[0].textContent,'legacyUnknown');
+    assert.equal(unknown.children[0].attributes['data-permission-key'],JSON.stringify(['app-w5','legacyUnknown']));
 });

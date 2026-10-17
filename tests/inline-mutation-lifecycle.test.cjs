@@ -14,7 +14,7 @@ function extract(repo,signature){
 function fixture(){
  let busy=0,settle;const calls=[],alerts=[];
  const bridge={embedded:true,getToken:()=> 'live-fixture-token',runMutation:async fn=>{busy++;try{return await fn();}finally{busy--;}}};
- const c=vm.createContext({window:{AkraModule:bridge},console,FormData,sessionToken:'stale',runtime:{token:'stale'},state:{},
+ const c=vm.createContext({window:{AkraModule:bridge},console,FormData,sessionToken:'stale',runtime:{token:'stale'},state:{},sopReaderPerf:null,
   WEB_APP_URL:'https://fixture.invalid',authUrl:()=> 'https://fixture.invalid',apiEndpoint:()=> 'https://fixture.invalid',
   AppVersionGuard:{blockIfStale:async()=>false},fetch:(url,options)=>{calls.push(options);return new Promise(resolve=>settle=resolve);}});
  return{c,calls,alerts,busy:()=>busy,resolve:(ok=true)=>settle({ok,status:ok?200:503,json:async()=>({status:ok?'success':'error',success:ok})})};
@@ -35,10 +35,10 @@ test('SOP admin UI uses the backend capability, including explicit ADMIN revocat
 });
 test('TRD permission errors tell the user to check Main and do not claim a save',()=>{
  const c=vm.createContext({});vm.runInContext(extract('TRDAKRA','function saveErrorMessage('),c);
- for(const message of ['permission_denied','http_403'])assert.match(c.saveErrorMessage({message}),/Main.*ยังไม่ได้บันทึก/);
+ for(const message of ['permission_denied','http_403'])assert.match(c.saveErrorMessage({message}),/BUYMORETH.*ยังไม่ได้บันทึก/);
 });
 test('W5 mutation retains busy through response, uses fresh token and unwinds state on failure',async()=>{
- const f=fixture();vm.runInContext(`this.app={${extract('AKRA','async apiCall(')},${extract('AKRA','async transportApiCall(')}}`,f.c);
+ const f=fixture();vm.runInContext(`this.app={${extract('AKRA','async apiCall(')},${extract('AKRA','async transportApiCall(')},${extract('AKRA','dashboardFilterChanged(')}}`,f.c);
  f.c.appUser={id:'fixture'};vm.runInContext(extract('AKRA','function getW5Token(')+extract('AKRA','function isCurrentW5Session('),f.c);
  Object.assign(f.c.app,{isAuthorized:true,isOnline:true,dataRevision:0,showAlert:(...args)=>f.alerts.push(args)});
  const pending=f.c.app.apiCall({action:'transaction'});await new Promise(setImmediate);

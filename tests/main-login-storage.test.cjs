@@ -25,8 +25,9 @@ function rig(options = {}) {
     native.set('pending:other-module', 'uncertain mutation fixture');
     const faults = { quota: options.quotaAtBoot === true, read: false, remove: false };
     const node = id => {
-        if (!nodes.has(id)) nodes.set(id, { value: '', checked: false, disabled: false, innerText: '', innerHTML: '',
-            focus() {}, classList: { add() {}, remove() {}, toggle() {} }, querySelectorAll: () => [] });
+        if (!nodes.has(id)) nodes.set(id, { value: '', checked: false, disabled: false, hidden: id === 'login-error', innerText: '', innerHTML: '', textContent: '', attrs: {}, focused: false,
+            focus() { this.focused = true; }, setAttribute(key, value) { this.attrs[key] = String(value); }, removeAttribute(key) { delete this.attrs[key]; }, getAttribute(key) { return this.attrs[key]; },
+            classList: { add() {}, remove() {}, toggle() {} }, querySelectorAll: () => [] });
         return nodes.get(id);
     };
     const localStorage = {
@@ -45,7 +46,7 @@ function rig(options = {}) {
         addEventListener: (name, fn) => (events[name] ??= []).push(fn), AkraShell: { reset() {}, sync() {} } };
     window.parent = window;
     const context = vm.createContext({ window, localStorage: availableStorage, state, JSON, Date, URL, URLSearchParams, AbortController,
-        document: { getElementById: node }, CONFIG: { STORAGE_SESSION: 'akra_session_token', STORAGE_USER_DATA: 'akra_user_data',
+        document: { getElementById: node }, navigator: { onLine: true }, CONFIG: { STORAGE_SESSION: 'akra_session_token', STORAGE_USER_DATA: 'akra_user_data',
             STORAGE_USER_DB: 'akra_user_database', STORAGE_APP_CONFIG: 'akra_app_config', API_URL: 'https://fixture.invalid/auth-api' },
         sessionStorage: { getItem: () => null, setItem() {}, removeItem() {} }, DEFAULT_APP_CONFIG: [],
         generateLifecycleMarker: () => 'fixture-marker', pwdModal: node('password-modal'), lucide: { createIcons() {} },
@@ -63,7 +64,7 @@ function rig(options = {}) {
     context.app.openChangePasswordModal = () => views.push('password');
     context.app.runPendingNavigation = () => {};
     run('this.startup=async()=>{' + section('                const savedToken = safeStorage.getItem(CONFIG.STORAGE_SESSION);',
-        '\n            },\n\n            handleLogin:') + '};');
+        '\n            },\n\n            clearLoginError:') + '};');
     const login = async () => {
         node('username-input').value = 'fixture'; node('password-input').value = 'fixture-password';
         return context.app.handleLogin({ preventDefault() {} });
@@ -104,6 +105,85 @@ test('quota at boot still reads and verifies an existing healthy signed session 
     assert.equal(f.sections.at(-1), 'dashboard-section'); assert.equal(f.views.length, 1);
     assert.equal(f.state.sessionToken, 'verified-token'); f.assertUnrelated();
 });
+
+test('canonical-only startup submits its token for verification before rendering private state', async () => {
+    const f = rig({ entries: [['akra_main_session', record('canonical-token')]] });
+    const requests = []; let finish;
+    f.context.fetch = async (_url, options) => {
+        requests.push(JSON.parse(options.body));
+        return { ok: true, json: () => new Promise(resolve => finish = resolve) };
+    };
+    f.run(section('        const API = {', '        const AdminInteractive = {'));
+    const pending = f.context.startup(); await tick();
+    assert.equal(requests.length, 1);
+    assert.equal(requests[0].action, 'refreshSession');
+    assert.equal(requests[0].token, 'canonical-token');
+    assert.equal(f.state.currentUser, null); assert.equal(f.views.length, 0);
+    assert.equal(f.sections.includes('dashboard-section'), false);
+    finish({ status: 'success', token: 'verified-token', user, appConfig: [] }); await pending;
+    assert.equal(f.state.sessionToken, 'verified-token'); assert.equal(f.state.currentUser, 'Verified');
+    assert.equal(f.sections.at(-1), 'dashboard-section'); assert.equal(f.views.length, 1);
+    f.assertUnrelated();
+});
+
+for (const invalid of ['broken json', 'null', '[]', JSON.stringify({ version: 2, token: 'fixture' }),
+    JSON.stringify({ version: 1 }), JSON.stringify({ version: 1, token: '' }), JSON.stringify({ version: 1, token: 123 }),
+    signedOut, JSON.stringify({ version: 1, signedOut: true, token: 'fixture' })]) {
+    test(`startup does not restore an invalid or signed-out canonical record: ${invalid}`, async () => {
+        const f = rig({ entries: [['akra_main_session', invalid]] }); let calls = 0;
+        f.context.API.postAction = async () => { calls++; };
+        await f.context.startup();
+        assert.equal(calls, 0); assert.equal(f.state.currentUser, null); assert.equal(f.views.length, 0);
+        assert.equal(f.sections.at(-1), 'login-section'); f.assertUnrelated();
+    });
+}
+
+test('startup preserves a present compatibility token and never retries a rejected one with canonical credentials', async () => {
+    const f = rig({ entries: [['akra_session_token', 'legacy-token'], ['akra_main_session', record('canonical-token')]] });
+    let calls = 0;
+    f.context.API.postAction = async () => {
+        calls++; assert.equal(f.state.sessionToken, 'legacy-token');
+        throw Object.assign(Error('invalid_or_expired_token'), { code: 'invalid_or_expired_token' });
+    };
+    await f.context.startup();
+    assert.equal(calls, 1); assert.equal(f.state.currentUser, null); assert.equal(f.views.length, 0);
+    assert.equal(f.sections.at(-1), 'login-section'); f.assertUnrelated();
+});
+
+test('an explicitly empty compatibility token does not activate canonical startup recovery', async () => {
+    const f = rig({ entries: [['akra_session_token', ''], ['akra_main_session', record('canonical-token')]] }); let calls = 0;
+    f.context.API.postAction = async () => { calls++; };
+    await f.context.startup();
+    assert.equal(calls, 0); assert.equal(f.state.currentUser, null); assert.equal(f.views.length, 0);
+    assert.equal(f.sections.at(-1), 'login-section'); f.assertUnrelated();
+});
+
+for (const code of ['invalid_or_expired_token', 'request_timeout']) {
+    test(`canonical startup cannot render private state after ${code}`, async () => {
+        const f = rig({ entries: [['akra_main_session', record('canonical-token')]] }); let calls = 0;
+        f.context.API.postAction = async () => { calls++; throw Object.assign(Error(code), { code }); };
+        await f.context.startup();
+        assert.equal(calls, 1); assert.equal(f.state.currentUser, null); assert.equal(f.views.length, 0);
+        assert.equal(f.sections.at(-1), 'login-section'); f.assertUnrelated();
+    });
+}
+
+for (const change of ['logout', 'replacement', 'compatibility insertion']) {
+    test(`canonical startup cannot adopt a response superseded by peer ${change} before its event`, async () => {
+        const f = rig({ entries: [['akra_main_session', record('canonical-token')]] }); let finish, calls = 0;
+        f.context.API.postAction = () => { calls++; return new Promise(resolve => finish = resolve); };
+        const pending = f.context.startup(); await tick(); assert.equal(calls, 1);
+        const peerRecord = change === 'logout' ? signedOut : change === 'replacement' ? record('peer-token', otherUser) : record('canonical-token');
+        f.native.set('akra_main_session', peerRecord);
+        if (change === 'compatibility insertion') f.native.set('akra_session_token', 'peer-token');
+        finish({ status: 'success', token: 'obsolete-token', user, appConfig: [] }); await pending;
+        assert.notEqual(f.state.sessionToken, 'obsolete-token'); assert.equal(f.state.currentUser, null);
+        assert.equal(f.views.length, 0); assert.equal(f.sections.at(-1), 'login-section');
+        assert.equal(f.native.get('akra_main_session'), peerRecord);
+        assert.equal(f.native.get('akra_session_token'), change === 'compatibility insertion' ? 'peer-token' : undefined);
+        f.assertUnrelated();
+    });
+}
 
 test('fallback replaces stale native reads, preserves a removal tombstone and recovers after storage becomes writable', () => {
     const f = rig({ entries: [['akra_remember_id', 'older-id']] });
@@ -170,7 +250,9 @@ test('rejected credentials remain public and release the submit button under quo
     f.context.API.postAction = async () => { throw Object.assign(Error('invalid_credentials'), { code: 'invalid_credentials' }); };
     await f.login();
     assert.equal(f.state.sessionToken, null); assert.equal(f.views.length, 0);
-    assert.equal(f.toasts.length, 1); assert.match(f.toasts[0][0], /รหัสพนักงานหรือรหัสผ่านไม่ถูกต้อง/);
+    assert.equal(f.toasts.length, 0); assert.equal(f.node('login-error').hidden, false);
+    assert.match(f.node('login-error').textContent, /รหัสพนักงานหรือรหัสผ่านไม่ถูกต้อง/);
+    assert.equal(f.node('password-input').value, 'fixture-password');
     assert.equal(f.node('login-btn').disabled, false); f.assertUnrelated();
 });
 
@@ -182,7 +264,8 @@ test('actual login API timeout releases submit and cannot adopt a late successfu
     f.run(section('        const API = {', '        const AdminInteractive = {') + '\nthis.actualAPI=API;');
     const pending = f.login(); await tick(); deadline(); await pending;
     assert.equal(f.node('login-btn').disabled, false); assert.equal(f.state.sessionToken, null);
-    assert.equal(f.views.length, 0); assert.equal(f.toasts.length, 1);
+    assert.equal(f.views.length, 0); assert.equal(f.toasts.length, 0);
+    assert.equal(f.node('login-error').hidden, false); assert.equal(f.node('password-input').value, 'fixture-password');
     finishBody({ status: 'success', token: 'late-token', user, appConfig: [] }); await tick();
     assert.equal(f.state.sessionToken, null); assert.equal(f.views.length, 0); f.assertUnrelated();
 });
@@ -267,4 +350,39 @@ test('an unchanged-record notification cannot bless an unverified compatibility 
     assert.equal(f.state.sessionToken, null); assert.equal(f.state.currentUser, null);
     assert.equal(f.native.get('akra_session_token'), 'unverified-peer-token');
     assert.equal(f.native.get('akra_main_session'), currentRecord); f.assertUnrelated();
+});
+
+test('empty Main login fields show inline errors, mark fields and focus the first missing field without a request', async () => {
+    const f = rig(); let calls = 0; f.context.API.postAction = async () => { calls++; };
+    await f.context.app.handleLogin({ preventDefault() {} });
+    assert.equal(calls, 0); assert.equal(f.node('login-error').hidden, false);
+    assert.match(f.node('login-error').textContent, /กรุณากรอกรหัสพนักงานและรหัสผ่าน/);
+    assert.equal(f.node('username-input').getAttribute('aria-invalid'), 'true');
+    assert.equal(f.node('password-input').getAttribute('aria-invalid'), 'true');
+    assert.equal(f.node('username-input').focused, true); assert.equal(f.toasts.length, 0);
+});
+
+test('inline Main login errors preserve typed fields, business wording and retry success', async () => {
+    for (const code of ['invalid_password','user_not_found','account_inactive','too_many_attempts','client_update_required','request_timeout','unknown_server']) {
+        const f=rig();f.context.API.postAction=async()=>{throw Object.assign(new Error(code),{code});};await f.login();
+        assert.equal(f.node('username-input').value,'fixture');assert.equal(f.node('password-input').value,'fixture-password');
+        assert.equal(f.node('login-error').hidden,false);assert.equal(f.node('login-btn').disabled,false);assert.equal(f.toasts.length,0);
+        assert.match(f.node('login-error').textContent,/[ก-๙]/);assert.doesNotMatch(f.node('login-error').textContent,/unknown_server|request_timeout|client_update_required/);
+        if(code==='too_many_attempts')assert.match(f.node('login-error').textContent,/10 นาที/);
+        if(code==='request_timeout')assert.match(f.node('login-error').textContent,/เชื่อมต่อไม่ได้/);
+        if (!['invalid_password', 'user_not_found'].includes(code)) assert.equal(f.node('login-error').focused, true, 'non-field failure moves focus to the inline recovery message');
+        f.context.API.postAction=async()=>({status:'success',token:'verified-token',user,appConfig:[]});await f.login();
+        assert.equal(f.node('login-error').hidden,true);assert.equal(f.node('password-input').getAttribute('aria-invalid'),undefined);
+        assert.equal(f.node('password-input').value,'');assert.match(f.toasts.at(-1)[0],/ยินดีต้อนรับ/);f.assertUnrelated();
+    }
+});
+
+test('current login session rejection shows recovery while a superseded login stays silent', async () => {
+    const current = rig(); current.context.API.postAction = async () => { throw Object.assign(new Error('session_changed'), { code: 'session_changed' }); };
+    await current.login(); assert.equal(current.node('login-error').hidden, false);
+    assert.match(current.node('login-error').textContent, /เซสชัน.*เปลี่ยน/);
+    assert.equal(current.node('login-error').focused, true); assert.equal(current.state.sessionToken, null);
+    const superseded = rig(); superseded.context.API.postAction = async () => { superseded.state.sessionEpoch++; throw Object.assign(new Error('session_changed'), { code: 'session_changed' }); };
+    await superseded.login(); assert.equal(superseded.node('login-error').hidden, true);
+    superseded.assertUnrelated();
 });

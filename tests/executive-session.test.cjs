@@ -8,7 +8,7 @@ function rig(options={}){
  if(options.token!==false)storage.set('akra_session_token','synthetic');
  for(const id of ['executive-content','executive-access-status','executive-recheck'])elements.set(id,{hidden:id==='executive-content',disabled:false,textContent:'',events:{},addEventListener(name,fn){this.events[name]=fn;}});
  const window={location:new URL('https://example.test/Main/executive-dashboard.html'),localStorage:{getItem:key=>{if(options.storageBlocked)throw Error('blocked');return storage.get(key)||null;}},addEventListener:(name,fn)=>(events[name]??=[]).push(fn)};window.parent=window;
- const ctx={window,document:{hidden:false,getElementById:id=>elements.get(id),addEventListener:(name,fn)=>docEvents[name]=fn},URL,URLSearchParams,fetch:async(url,init)=>{calls.push({url,body:JSON.parse(init.body)});return options.reply?options.reply():{ok:true,json:async()=>({valid:true,user:{...user,...options.user}})};}};
+ const ctx={window,document:{hidden:false,getElementById:id=>elements.get(id),addEventListener:(name,fn)=>docEvents[name]=fn},URL,URLSearchParams,setTimeout:()=>1,clearTimeout(){},fetch:async(url,init)=>{calls.push({url,body:JSON.parse(init.body)});return options.reply?options.reply():{ok:true,json:async()=>({valid:true,user:{...user,...options.user}})};}};
  vm.createContext(ctx);vm.runInContext(read('js/akra-shell-bridge.js'),ctx);vm.runInContext(read('js/executive-session.js'),ctx);
  return {ctx,calls,elements,storage,events,docEvents,settle:()=>new Promise(r=>setImmediate(r)),recheck:()=>elements.get('executive-recheck').events.click()};
 }

@@ -1,0 +1,30 @@
+/* BUYMORETH shared tokens v20261012.01; plan 20261012-008. */
+:root {
+  --bm-primary: #2563eb;
+  --bm-primary-hover: #1d4ed8;
+  --bm-on-primary: #ffffff;
+  --bm-brand: #e35205;
+  --bm-text: #172033;
+  --bm-text-secondary: #475569;
+  --bm-surface: #ffffff;
+  --bm-surface-muted: #f8fafc;
+  --bm-border: #cbd5e1;
+  --bm-error: #b91c1c;
+  --bm-success: #15803d;
+  --bm-warning: #854d0e;
+  --bm-info: #1d4ed8;
+  --bm-focus: #2563eb;
+  --bm-text-xs: 12px;
+  --bm-text-sm: 14px;
+  --bm-text-base: 16px;
+  --bm-text-title: 20px;
+  --bm-space-1: 4px;
+  --bm-space-2: 8px;
+  --bm-space-3: 12px;
+  --bm-space-4: 16px;
+  --bm-space-6: 24px;
+  --bm-space-8: 32px;
+  --bm-radius-sm: 8px;
+  --bm-radius: 12px;
+  --bm-radius-lg: 16px;
+}

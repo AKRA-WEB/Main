@@ -47,17 +47,17 @@
                 const group = aliases[row.appId] || row.appId;
                 if (group !== lastGroup) { root.append(element('h4', row.appName, 'font-semibold text-slate-800 mt-5 mb-2')); lastGroup = group; }
                 const description = options.describe(row.appId, row.permKey);
-                const label = element('label', undefined, 'flex items-start gap-3 py-3 border-b border-slate-100');
-                const input = element('input'); input.type = 'checkbox'; input.className = 'mt-1 w-5 h-5 shrink-0 accent-blue-800';
+                const label = element('label', undefined, 'flex items-start gap-3 py-3 min-h-[44px] border-b border-slate-100');
+                label.title = `${row.appId}:${row.permKey}`;
+                const input = element('input'); input.type = 'checkbox'; input.className = 'mt-1 w-6 h-6 shrink-0 accent-blue-800';
                 input.checked = draft.some(item => key(item) === key(row));
                 input.disabled = busy || uncertain || !ready() || (!row.explicit && (!row.defined || !row.available));
-                input.setAttribute('aria-label', `เพิ่มเฉพาะบุคคล: ${snapshot.username} ${row.appName} ${row.permKey}`);
+                input.setAttribute('aria-label', `เพิ่มเฉพาะบุคคล: ${snapshot.username} ${row.appName} ${description.label}`);
                 input.setAttribute('data-permission-key', key(row));
                 if (focusedKey === key(row)) restoreFocus = input;
                 input.addEventListener('change', () => toggle(row, input.checked));
                 const copy = element('span', undefined, 'min-w-0 flex-1 break-words text-sm');
                 copy.append(element('span', description.label, 'block font-medium text-slate-800'));
-                copy.append(element('span', `${row.appId}:${row.permKey}`, 'block text-slate-500'));
                 copy.append(element('span', row.inherited ? 'ได้รับจากบทบาทอยู่แล้ว — เอาสิทธิ์เพิ่มออกยังใช้งานได้ตามบทบาท' : 'ไม่ได้รับสิทธิ์นี้จากบทบาท', 'block text-slate-600 mt-1'));
                 if (!row.available) copy.append(element('span', row.inactive ? 'แอปปิดใช้งาน — สิทธิ์ที่เก็บไว้ยังไม่เปิดให้เข้าแอป' : 'บทบาทยังไม่มีสิทธิ์เข้าแอป — เพิ่มสิทธิ์ใหม่ไม่ได้', 'block text-slate-600'));
                 if (!row.defined) copy.append(element('span', 'รายการเดิมไม่อยู่ในชุดสิทธิ์ปัจจุบัน เก็บไว้ได้หรือเอาออกโดยตั้งใจ', 'block text-slate-600'));

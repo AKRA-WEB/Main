@@ -5,7 +5,7 @@
 .shell-sidebar-brand > span:last-child { display: grid; gap: 2px; min-width: 0; }
 .shell-sidebar-brand strong { color: #fff; font-size: 14px; letter-spacing: .02em; }
 .shell-sidebar-brand small { color: #9eafc7; font-size: 10px; }
-.shell-sidebar-mark { display: grid; width: 34px; height: 34px; flex: 0 0 auto; place-items: center; border-radius: 9px; background: #2563eb; color: #fff; font-size: 13px; font-weight: 800; }
+.shell-sidebar-mark { display: grid; width: 34px; height: 34px; flex: 0 0 auto; place-items: center; border-radius: 9px; background: var(--bm-primary); color: var(--bm-on-primary); font-size: 13px; font-weight: 800; }
 .shell-sidebar-home, .shell-app-link { display: flex; width: 100%; min-height: 44px; align-items: center; gap: 10px; padding: 9px 10px; border: 1px solid transparent; border-radius: 9px; background: transparent; color: #b6c4d9; font: inherit; font-size: 12px; font-weight: 600; text-align: left; cursor: pointer; }
 .shell-sidebar-home svg, .shell-app-link svg { width: 17px; height: 17px; flex: 0 0 auto; fill: none; stroke: currentColor; stroke-linecap: round; stroke-linejoin: round; stroke-width: 1.8; }
 .shell-sidebar-home:hover, .shell-app-link:hover { border-color: #31425f; background: #1b2a43; color: #fff; }
@@ -48,7 +48,17 @@
 #shell-module-frame { border: 0; display: block; width: 100%; height: 100%; background: white; }
 #shell-status { padding: 24px; text-align: center; }
 #shell-retry { align-self: center; margin: 12px; }
-#unified-shell.shell-child-header .shell-toolbar { display: none; }
+#unified-shell.shell-child-header .shell-toolbar { display: flex; }
+.shell-app-dialog { position: fixed; inset: auto 0 0; margin: 0 auto; width: min(100%, 560px); max-height: 80vh; overflow: auto; padding: 20px; border: 1px solid var(--bm-border); border-radius: var(--bm-radius-lg) var(--bm-radius-lg) 0 0; background: var(--bm-surface); color: var(--bm-text); box-shadow: 0 -8px 24px rgba(15,23,42,.16); }
+.shell-app-dialog:not([open]) { display: none; }
+.shell-app-dialog::backdrop { background: rgba(15,23,42,.5); }
+.shell-app-dialog-heading { display: flex; align-items: center; justify-content: space-between; gap: 16px; margin-bottom: 16px; }
+.shell-app-dialog-heading h2 { font-size: var(--bm-text-title); font-weight: 700; }
+.shell-app-dialog-heading button, .shell-mobile-app-link { min-height: 44px; border: 1px solid var(--bm-border); border-radius: var(--bm-radius-sm); padding: 10px 12px; background: var(--bm-surface); color: var(--bm-text); font: inherit; cursor: pointer; }
+#shell-mobile-app-nav { display: grid; gap: 8px; }
+.shell-mobile-app-link { width: 100%; text-align: left; }
+.shell-mobile-app-link[aria-current="page"] { background: var(--bm-primary); color: var(--bm-on-primary); border-color: var(--bm-primary); }
+.shell-app-dialog button:focus-visible { outline: 3px solid var(--bm-focus); outline-offset: 2px; }
 body.shell-active { overflow: hidden; }
 body.shell-active #dashboard-section { display: none !important; }
 @media (max-width: 900px) {
@@ -64,6 +74,7 @@ body.shell-active #dashboard-section { display: none !important; }
     .shell-toolbar { gap: 7px; min-height: 56px; padding: 7px 10px; }
     .shell-toolbar button { min-width: 40px; padding: 6px 8px; font-size: 12px; }
     .shell-toolbar button span { display: none; }
+    .shell-toolbar #shell-apps span { display: inline; }
     .shell-toolbar button svg { width: 18px; height: 18px; }
     .shell-app-context strong { font-size: 13px; }
     #shell-user { display: none; }
