@@ -4,7 +4,7 @@ const assert = require('node:assert/strict');
 const vm = require('node:vm');
 const fs = require('node:fs');
 const path = require('node:path');
-function setup() {
+function setup(hostExtras = {}) {
     const elements = {}, listeners = {}, history = [], timers = new Map(), notices = [];
     let now = 0;
     let timer = 0, confirms = 0, nativeConfirms = 0, homes = 0, logouts = 0, admins = 0;
@@ -46,7 +46,7 @@ function setup() {
     if(fs.existsSync(dialogSource))new vm.Script(fs.readFileSync(dialogSource,'utf8')).runInContext(context);
     new vm.Script(fs.readFileSync(path.join(__dirname,'../js/unified-shell.js'),'utf8')).runInContext(context);
     const shell=window.AkraShell;
-    shell.init({state:()=>state,label:app=>app.name,notify:message=>notices.push(message),home:()=>homes++,admin:()=>admins++,logout:()=>logouts++});
+    shell.init({state:()=>state,label:app=>app.name,notify:message=>notices.push(message),home:()=>homes++,admin:()=>admins++,logout:()=>logouts++,...hostExtras});
     const frame=()=>elements['shell-frame-host'].children[0];
     const message=(type,details={},source=frame()?.contentWindow)=>listeners.message({source,origin:location.origin,data:{channel:'akra-shell',version:1,type,...details}});
     const workflow=(id,index=0)=>elements['shell-app-nav'].children.find(group=>group.attrs['data-app-id']===id).children[1].children[index].listeners.click();
@@ -56,6 +56,17 @@ function setup() {
     return {shell,state,window,elements,frame,listeners,location,history,timers,message,workflow,advance,notices,dialog,decide,allow:()=>{},count:()=>({confirms,nativeConfirms,homes,logouts,admins})};
 }
 const tick=()=>new Promise(setImmediate);
+
+test('only the active trusted frame can request Main reauthentication', () => {
+    let requests = 0;
+    const c = setup({reauthenticate: () => requests++});
+    c.shell.open('app-gr');
+    c.message('auth-required', {}, {});
+    assert.equal(requests, 0);
+    c.message('auth-required');
+    assert.equal(requests, 1);
+    assert.equal(c.frame().hidden, true);
+});
 function assertWorkState(actual,expected){
     assert.equal(actual.dirty,expected.dirty);
     assert.equal(actual.busy,expected.busy);

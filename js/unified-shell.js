@@ -672,6 +672,7 @@
         } else if (message.type === 'auth-required') {
             suspended = true;
             showError('เซสชันหมดอายุหรือไม่มีสิทธิ์ กรุณากลับหน้าหลักเพื่อเข้าสู่ระบบใหม่');
+            host.reauthenticate?.();
         }
     }
     function onRoute() {

@@ -19,6 +19,49 @@ const record = (token = 'saved-token', owner = user) => JSON.stringify({ version
 const signedOut = JSON.stringify({ version: 1, signedOut: true });
 const otherUser = { ...user, identityId: '10000000-0000-4000-8000-000000000012' };
 
+test('actual Main session expiry reaches login, preserves unrelated work and waits for a pending child mutation', () => {
+    const f = rig(); let now = Date.now(), busy = false;
+    f.context.Date = {now: () => now};
+    f.context.atob = s => Buffer.from(s, 'base64').toString('binary');
+    f.context.window.AkraShell.getWorkState = () => ({busy});
+    f.run(fs.readFileSync(path.join(__dirname, '../js/session-expiry.js'), 'utf8'));
+    const token = 'e30.' + Buffer.from(JSON.stringify({exp: now + 600000})).toString('base64url') + '.fixture';
+    f.context.app.saveSession({token, user, appConfig: []});
+    const watcher = f.context.app.expiryWatcher;
+    now += 600000; busy = true;
+    assert.equal(watcher.check(), false); assert.equal(f.state.sessionToken, token);
+    busy = false; watcher.check();
+    assert.equal(f.state.sessionToken, null);
+    assert.equal(f.sections.at(-1), 'login-section');
+    assert.equal(JSON.parse(f.native.get('akra_main_session')).signedOut, true);
+    assert.equal(f.toasts.at(-1)[0], 'เซสชันหมดอายุ กรุณาเข้าสู่ระบบใหม่');
+    f.assertUnrelated();
+});
+
+test('child session failure is confirmed with Main before logout; network failure preserves identity', async () => {
+    for (const code of ['invalid_or_expired_token', 'request_timeout']) {
+        const f = rig();
+        f.context.app.saveSession({token:'current', user, appConfig:[]});
+        let requests = 0;
+        f.context.API.postAction = async () => {requests++; throw Object.assign(Error(code), {code});};
+        await f.context.app.reauthenticate();
+        assert.equal(requests, 1);
+        assert.equal(f.state.sessionToken, code === 'request_timeout' ? 'current' : null);
+        f.assertUnrelated();
+    }
+});
+
+test('stale child reauthentication failure cannot log out a newer peer login', async () => {
+    const f = rig(); let reject;
+    f.context.app.saveSession({token:'old', user, appConfig:[]});
+    f.context.API.postAction = () => new Promise((_, fail) => reject = fail);
+    const pending = f.context.app.reauthenticate();
+    f.context.app.saveSession({token:'new', user:otherUser, appConfig:[]});
+    reject(Object.assign(Error('invalid_or_expired_token'), {code:'invalid_or_expired_token'}));
+    await pending;
+    assert.equal(f.state.sessionToken, 'new');
+});
+
 function rig(options = {}) {
     const native = new Map(options.entries || []), nodes = new Map(), events = {}, sections = [], views = [], toasts = [];
     native.set('private-draft:other-module', 'unrelated draft fixture');
@@ -43,10 +86,12 @@ function rig(options = {}) {
         currentPerms: {}, appConfig: [], mustChangePassword: false, pendingApiRequests: 0 };
     const availableStorage = options.storageUnavailable ? undefined : localStorage;
     const window = { localStorage: availableStorage, location: new URL('https://fixture.invalid/Main/'),
-        addEventListener: (name, fn) => (events[name] ??= []).push(fn), AkraShell: { reset() {}, sync() {} } };
+        addEventListener: (name, fn) => (events[name] ??= []).push(fn),
+        removeEventListener: (name, fn) => { events[name] = (events[name] || []).filter(listener => listener !== fn); },
+        AkraShell: { reset() {}, sync() {} } };
     window.parent = window;
     const context = vm.createContext({ window, localStorage: availableStorage, state, JSON, Date, URL, URLSearchParams, AbortController,
-        document: { getElementById: node }, navigator: { onLine: true }, CONFIG: { STORAGE_SESSION: 'akra_session_token', STORAGE_USER_DATA: 'akra_user_data',
+        document: { getElementById: node, addEventListener() {}, removeEventListener() {} }, navigator: { onLine: true }, CONFIG: { STORAGE_SESSION: 'akra_session_token', STORAGE_USER_DATA: 'akra_user_data',
             STORAGE_USER_DB: 'akra_user_database', STORAGE_APP_CONFIG: 'akra_app_config', API_URL: 'https://fixture.invalid/auth-api' },
         sessionStorage: { getItem: () => null, setItem() {}, removeItem() {} }, DEFAULT_APP_CONFIG: [],
         generateLifecycleMarker: () => 'fixture-marker', pwdModal: node('password-modal'), lucide: { createIcons() {} },

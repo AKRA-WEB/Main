@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <!-- Update the inline script hash when changing the script below; tests/main-csp.test.cjs checks it. -->
-    <meta http-equiv="Content-Security-Policy" content="script-src 'self' https://static.line-scdn.net 'sha256-/ARC75J7OUmetn4A408pN6H0G35AEfLk2NveT5y20P4='; object-src 'none'; base-uri 'self'">
+    <meta http-equiv="Content-Security-Policy" content="script-src 'self' https://static.line-scdn.net 'sha256-eL1S65g6v8GwgFahlKN1HbdPeeB7j7T5AFjlfFiZAaQ='; object-src 'none'; base-uri 'self'">
     <link rel="icon" href="assets/icons/bm.svg" type="image/svg+xml">
     <link rel="apple-touch-icon" href="assets/icons/bm-192-v20261001-07.png">
     <link rel="manifest" href="manifest.webmanifest">
@@ -13,8 +13,9 @@
     <link rel="stylesheet" href="css/bm-tokens.css?v=20261013.02">
     <link rel="stylesheet" href="css/unified-shell.css?v=20261013.02">
     <script src="js/akra-shell-bridge.js?v=20261006.03"></script>
+    <script src="js/session-expiry.js?v=20261029.01"></script>
     <script src="js/bm-dialog.js?v=20261014.01"></script>
-    <script src="js/unified-shell.js?v=20261014.01"></script>
+    <script src="js/unified-shell.js?v=20261029.01"></script>
     <script src="js/main-push.js?v=20261005.01"></script>
     <script src="js/permission-catalog.js?v=20261006.02"></script>
     <script src="js/user-permission-editor.js?v=20261013.02"></script>
@@ -698,7 +699,7 @@
             STORAGE_USER_DATA: "akra_user_data",
             STORAGE_APP_CONFIG: "akra_app_config"
         };
-        const CURRENT_VERSION = "20261016.01";
+        const CURRENT_VERSION = "20261029.01";
         const fontStylesheet = document.getElementById('main-fonts');
         if (fontStylesheet) {
             if (fontStylesheet.sheet) fontStylesheet.media = 'all';
@@ -2462,6 +2463,9 @@
 
         const App = {
             saveSession: (data, options = {}) => {
+                if (window.AkraSessionExpiry?.isExpired(data.token)) {
+                    throw Object.assign(new Error('invalid_or_expired_token'), {code:'invalid_or_expired_token'});
+                }
                 if (state.identityId && (state.identityId !== data.user.identityId
                     || state.sessionVersion !== data.user.sessionVersion
                     || (state.sessionAuthorizationRevision !== data.user.authorizationRevision && options.allowAuthorizationRevisionChange !== true))) {
@@ -2503,6 +2507,16 @@
                     invalidated:() => App.handleLogout({preserveStoredSession:true}),
                     refreshed:token => { state.sessionToken = token; window.AkraShell?.sync(); window.AkraPush?.sync(); }
                 });
+                App.expiryWatcher?.stop();
+                App.expiryWatcher = window.AkraSessionExpiry?.watch({
+                    getToken: () => state.sessionToken,
+                    isBusy: () => state.pendingApiRequests > 0 || window.AkraShell?.getWorkState?.().busy === true,
+                    onWarning: () => UI.showToast('เซสชันจะหมดอายุภายใน 5 นาที กรุณาบันทึกหรือพักบิล แล้วเข้าสู่ระบบใหม่', 'warning'),
+                    onExpire: () => {
+                        App.handleLogout();
+                        UI.showToast('เซสชันหมดอายุ กรุณาเข้าสู่ระบบใหม่', 'warning');
+                    }
+                });
                 window.AkraPush?.sync();
             },
 
@@ -2524,6 +2538,24 @@
                 if (!isCurrent()) return false;
                 App.saveSession(data, options);
                 return true;
+            },
+
+            reauthenticate: async () => {
+                if (App.reauthenticationPending) return;
+                const token = state.sessionToken, epoch = state.sessionEpoch;
+                App.reauthenticationPending = true;
+                try {
+                    // A child cannot retire a newer valid Main login on its own.
+                    if (await App.refreshSession()) window.AkraShell?.home({confirmed:true});
+                } catch (error) {
+                    if (state.sessionToken !== token || state.sessionEpoch !== epoch) return;
+                    if (error.code === 'invalid_or_expired_token') {
+                        App.handleLogout();
+                        UI.showToast('เซสชันหมดอายุหรือถูกยกเลิก กรุณาเข้าสู่ระบบใหม่', 'warning');
+                    } else {
+                        App.handleSessionRefreshFailure('ยังตรวจสอบเซสชันไม่ได้ กรุณาตรวจสอบอินเทอร์เน็ตแล้วลองอีกครั้ง');
+                    }
+                } finally { App.reauthenticationPending = false; }
             },
 
             closePendingNavigation: () => {
@@ -2613,7 +2645,8 @@
                     notify: message => UI.showToast(message, 'warning'),
                     home: () => { UI.switchSection('dashboard-section'); App.renderDashboard(); },
                     admin: () => { if (state.currentRoles.includes('ADMIN')) UI.switchSection('admin-section'); },
-                    logout: options => App.signOut(options)
+                    logout: options => App.signOut(options),
+                    reauthenticate: () => App.reauthenticate()
                 });
                 window.AkraPush?.init({state:() => state, apiUrl:CONFIG.API_URL.replace(/auth-api$/, 'push-api')});
                 AppVersionGuard.start({
@@ -2975,6 +3008,8 @@
             },
 
             handleLogout: (options = {}) => {
+                App.expiryWatcher?.stop();
+                App.expiryWatcher = null;
                 window.AkraModule?.stopWatchingSession();
                 window.AkraPush?.reset();
                 window.AkraShell?.reset();
