@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <!-- Update the inline script hash when changing the script below; tests/main-csp.test.cjs checks it. -->
-    <meta http-equiv="Content-Security-Policy" content="script-src 'self' https://static.line-scdn.net 'sha256-eL1S65g6v8GwgFahlKN1HbdPeeB7j7T5AFjlfFiZAaQ='; object-src 'none'; base-uri 'self'">
+    <meta http-equiv="Content-Security-Policy" content="script-src 'self' https://static.line-scdn.net 'sha256-EnRPOAQs0f4lc7+lM/0KstxPFhmTefW46y7XmB3hGJs='; object-src 'none'; base-uri 'self'">
     <link rel="icon" href="assets/icons/bm.svg" type="image/svg+xml">
     <link rel="apple-touch-icon" href="assets/icons/bm-192-v20261001-07.png">
     <link rel="manifest" href="manifest.webmanifest">
@@ -14,8 +14,9 @@
     <link rel="stylesheet" href="css/unified-shell.css?v=20261013.02">
     <script src="js/akra-shell-bridge.js?v=20261006.03"></script>
     <script src="js/session-expiry.js?v=20261029.01"></script>
+    <script src="js/session-renewal.js?v=20261112.01"></script>
     <script src="js/bm-dialog.js?v=20261014.01"></script>
-    <script src="js/unified-shell.js?v=20261029.01"></script>
+    <script src="js/unified-shell.js?v=20261112.01"></script>
     <script src="js/main-push.js?v=20261005.01"></script>
     <script src="js/permission-catalog.js?v=20261006.02"></script>
     <script src="js/user-permission-editor.js?v=20261013.02"></script>
@@ -699,7 +700,7 @@
             STORAGE_USER_DATA: "akra_user_data",
             STORAGE_APP_CONFIG: "akra_app_config"
         };
-        const CURRENT_VERSION = "20261029.01";
+        const CURRENT_VERSION = "20261112.01";
         const fontStylesheet = document.getElementById('main-fonts');
         if (fontStylesheet) {
             if (fontStylesheet.sheet) fontStylesheet.media = 'all';
@@ -2517,7 +2518,23 @@
                         UI.showToast('เซสชันหมดอายุ กรุณาเข้าสู่ระบบใหม่', 'warning');
                     }
                 });
+                App.renewalWatcher ||= window.AkraSessionRenewal?.watch({
+                    getToken: () => state.mustChangePassword ? '' : state.sessionToken,
+                    isBusy: () => App.sessionRenewalBusy(),
+                    renew: () => App.refreshSession({renewActive:true}),
+                    onDenied: () => {
+                        App.handleLogout();
+                        UI.showToast('เซสชันหมดอายุหรือถูกยกเลิก กรุณาเข้าสู่ระบบใหม่', 'warning');
+                    }
+                });
                 window.AkraPush?.sync();
+            },
+
+            sessionRenewalBusy: () => {
+                const child = window.AkraShell?.getWorkState?.();
+                return state.pendingApiRequests > 0 || state.sessionRefreshPending
+                    || state.authorizationSaving || AdminInteractive.profileSaving || App.logoutPending
+                    || child?.busy === true || child?.unknown === true;
             },
 
             refreshSession: async (options = {}) => {
@@ -2525,18 +2542,26 @@
                 const refreshEpoch = state.sessionEpoch;
                 const storedToken = safeStorage.getItem(CONFIG.STORAGE_SESSION);
                 const storedMain = safeStorage.getItem('akra_main_session');
+                const renewalFrame = options.renewActive === true ? document.getElementById('shell-module-frame') : null;
                 const isCurrent = () => state.sessionEpoch === refreshEpoch && state.sessionToken === refreshToken
                     && safeStorage.getItem(CONFIG.STORAGE_SESSION) === storedToken
-                    && safeStorage.getItem('akra_main_session') === storedMain;
+                    && safeStorage.getItem('akra_main_session') === storedMain
+                    && (options.renewActive !== true || document.getElementById('shell-module-frame') === renewalFrame);
                 let data;
                 try {
-                    data = await API.postAction({ action: 'refreshSession' });
+                    data = await API.postAction({ action: options.renewActive === true ? 'renewSession' : 'refreshSession' });
                 } catch (error) {
                     if (!isCurrent()) return false;
                     throw error;
                 }
+                // A receiving write may have started while renewal was awaiting the server.
+                // Keep its captured token until it settles; never cancel or replay the write.
+                while (options.renewActive === true && isCurrent() && App.sessionRenewalBusy()) {
+                    await new Promise(resolve => setTimeout(resolve, 250));
+                }
                 if (!isCurrent()) return false;
                 App.saveSession(data, options);
+                if (options.renewActive === true) window.AkraShell?.sync();
                 return true;
             },
 
@@ -2646,12 +2671,13 @@
                     home: () => { UI.switchSection('dashboard-section'); App.renderDashboard(); },
                     admin: () => { if (state.currentRoles.includes('ADMIN')) UI.switchSection('admin-section'); },
                     logout: options => App.signOut(options),
-                    reauthenticate: () => App.reauthenticate()
+                    reauthenticate: () => App.reauthenticate(),
+                    activity: event => App.renewalWatcher?.activity(event)
                 });
                 window.AkraPush?.init({state:() => state, apiUrl:CONFIG.API_URL.replace(/auth-api$/, 'push-api')});
                 AppVersionGuard.start({
                     current: CURRENT_VERSION,
-                    readActions: ['log', 'getAdminData', 'login', 'refreshSession', 'logoutSession', 'getLineAccountStatus'],
+                    readActions: ['log', 'getAdminData', 'login', 'refreshSession', 'renewSession', 'logoutSession', 'getLineAccountStatus'],
                     notify: message => UI.showToast(message, 'warning'),
                     workState: () => {
                         const child = window.AkraShell?.getWorkState?.();
@@ -3008,6 +3034,8 @@
             },
 
             handleLogout: (options = {}) => {
+                App.renewalWatcher?.stop();
+                App.renewalWatcher = null;
                 App.expiryWatcher?.stop();
                 App.expiryWatcher = null;
                 window.AkraModule?.stopWatchingSession();

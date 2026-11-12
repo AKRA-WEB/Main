@@ -305,6 +305,16 @@
         active.headerObserver.observe(doc.documentElement, { childList:true, subtree:true });
     }
 
+    function watchEmbeddedActivity(frame) {
+        const doc = childHeaderDocument(frame);
+        if (!doc || !active || active.frame !== frame) return;
+        for (const name of ['pointerdown', 'keydown', 'input', 'wheel']) {
+            doc.addEventListener(name, event => {
+                if (tokenFor(frame.contentWindow) && active?.frame === frame) host.activity?.(event);
+            }, {capture:true, passive:true});
+        }
+    }
+
     function init(options) {
         if (host) return;
         host = options;
@@ -634,7 +644,7 @@
         document.getElementById('shell-retry').hidden = true;
         populate();
         setRoute(id,!!options.replace);
-        frame.addEventListener('load', () => watchEmbeddedHeader(frame), { once:true });
+        frame.addEventListener('load', () => { watchEmbeddedActivity(frame); watchEmbeddedHeader(frame); }, { once:true });
         frame.src = url;
         frameHost.appendChild(frame);
         readyTimer = setTimeout(() => {

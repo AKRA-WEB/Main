@@ -31,7 +31,7 @@ function setup(hostExtras = {}) {
                 setState:(d,b=false)=>{dirty=d;busy=b;},prepareLeave:()=>{el.leaving=true;}
             }};
             const targets = new Map();
-            el.contentDocument = {querySelector:selector=>targets.get(selector) || null};
+            el.contentDocument = {location, listeners:{}, addEventListener(name,fn){this.listeners[name]=fn;}, querySelector:selector=>targets.get(selector) || null};
             el.targets = targets;
             Object.defineProperty(el,'src',{get:()=>el.url,set:value=>{el.url=value;el.contentWindow.location.pathname=new URL(value).pathname;}});
         }return el;
@@ -41,7 +41,7 @@ function setup(hostExtras = {}) {
     for(const method of ['pushState','replaceState'])window.history[method]=(s,title,url)=>{location.hash=url.slice(url.indexOf('#'));history.push({method,url});};
     const later=fn=>{timers.set(++timer,fn);return timer;};
     window.setTimeout=later;
-    const context=vm.createContext({window,document,URL,Date:{now:()=>now},setTimeout:later,clearTimeout:id=>timers.delete(id)});
+    const context=vm.createContext({window,document,URL,MutationObserver:class {observe(){} disconnect(){}},Date:{now:()=>now},setTimeout:later,clearTimeout:id=>timers.delete(id)});
     const dialogSource=path.join(__dirname,'../js/bm-dialog.js');
     if(fs.existsSync(dialogSource))new vm.Script(fs.readFileSync(dialogSource,'utf8')).runInContext(context);
     new vm.Script(fs.readFileSync(path.join(__dirname,'../js/unified-shell.js'),'utf8')).runInContext(context);
@@ -66,6 +66,15 @@ test('only the active trusted frame can request Main reauthentication', () => {
     c.message('auth-required');
     assert.equal(requests, 1);
     assert.equal(c.frame().hidden, true);
+});
+
+test('interaction inside the current authorized iframe reaches renewal; removed and unauthorized frames do not',()=>{
+    const events=[],c=setup({activity:event=>events.push(event)});c.shell.open('app-gr');
+    const frame=c.frame();frame.listeners.load();const event={isTrusted:true};
+    frame.contentDocument.listeners.input(event);assert.equal(events.length,1);assert.equal(events[0],event);
+    c.state.sessionRefreshPending=true;frame.contentDocument.listeners.keydown(event);assert.equal(events.length,1);
+    c.state.sessionRefreshPending=false;c.shell.open('app-tracking',{force:true});
+    frame.contentDocument.listeners.input(event);assert.equal(events.length,1,'old document cannot request renewal');
 });
 function assertWorkState(actual,expected){
     assert.equal(actual.dirty,expected.dirty);

@@ -122,6 +122,43 @@ function rig(options = {}) {
     return { context, state, native, faults, node, views, sections, toasts, run, login, notify, assertUnrelated };
 }
 
+test('active renewal waits for a mutation started during its request and preserves its captured token', async () => {
+    const f=rig();let reply,wake,busy=false,action;
+    f.context.app.saveSession({token:'old',user,appConfig:[]});
+    f.context.window.AkraShell.getWorkState=()=>({busy});
+    f.context.setTimeout=fn=>{wake=fn;};
+    f.context.API.postAction=data=>{action=data.action;return new Promise(resolve=>reply=resolve);};
+    const pending=f.context.app.refreshSession({renewActive:true});
+    busy=true;reply({token:'renewed',user,appConfig:[]});await tick();
+    assert.equal(action,'renewSession');assert.equal(f.state.sessionToken,'old');assert.equal(typeof wake,'function');
+    busy=false;wake();assert.equal(await pending,true);assert.equal(f.state.sessionToken,'renewed');f.assertUnrelated();
+});
+
+test('a late active renewal response cannot replace a new login or restore a logged-out session', async () => {
+    for(const newer of [true,false]){
+        const f=rig();let reply;f.context.app.saveSession({token:'old',user,appConfig:[]});
+        f.context.API.postAction=()=>new Promise(resolve=>reply=resolve);
+        const pending=f.context.app.refreshSession({renewActive:true});
+        if(newer)f.context.app.saveSession({token:'new',user:otherUser,appConfig:[]});else f.context.app.handleLogout();
+        reply({token:'renewed',user,appConfig:[]});assert.equal(await pending,false);
+        assert.equal(f.state.sessionToken,newer?'new':null);f.assertUnrelated();
+    }
+});
+
+test('renewal defers across unknown iframe startup and authenticated busy state; navigation discards its response', async () => {
+    const f=rig();let reply,wake,child={unknown:true,busy:false},frame={};
+    f.context.app.saveSession({token:'old',user,appConfig:[]});
+    f.context.document.getElementById=id=>id==='shell-module-frame'?frame:f.node(id);
+    f.context.window.AkraShell.getWorkState=()=>child;f.context.setTimeout=fn=>{wake=fn;};
+    f.context.API.postAction=()=>new Promise(resolve=>reply=resolve);
+    const pending=f.context.app.refreshSession({renewActive:true});reply({token:'renewed',user,appConfig:[]});await tick();
+    assert.equal(f.state.sessionToken,'old');child={unknown:false,busy:true};wake();await tick();
+    assert.equal(f.state.sessionToken,'old');child={unknown:false,busy:false};wake();assert.equal(await pending,true);
+    assert.equal(f.state.sessionToken,'renewed');
+    const obsolete=f.context.app.refreshSession({renewActive:true});frame={};reply({token:'obsolete',user,appConfig:[]});
+    assert.equal(await obsolete,false);assert.equal(f.state.sessionToken,'renewed');
+});
+
 for (const quotaAtBoot of [true, false]) for (const oldRecord of [signedOut, record('old-token', otherUser)]) {
     test(`verified login succeeds with ${quotaAtBoot ? 'boot' : 'late'} quota and ${oldRecord === signedOut ? 'signed-out' : 'different-owner'} stored record`, async () => {
         const f = rig({ quotaAtBoot, entries: [['akra_main_session', oldRecord], ['akra_session_token', 'old-token']] });
