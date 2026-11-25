@@ -338,6 +338,7 @@
                     <h2>แอปพลิเคชันของคุณ</h2>
                     <div class="main-launcher-actions">
                         <span class="main-section-count"><span id="app-grid-count">10</span> ระบบ</span>
+                        <a id="main-case-dashboard-link" class="main-pwa-install" href="./CaseDashboard/" hidden>CaseDashboard</a>
                         <button id="main-pwa-install" class="main-pwa-install" type="button" hidden>ติดตั้ง BUYMORETH</button>
                     </div>
                 </div>
@@ -700,7 +701,7 @@
             STORAGE_USER_DATA: "akra_user_data",
             STORAGE_APP_CONFIG: "akra_app_config"
         };
-        const CURRENT_VERSION = "20261112.01";
+        const CURRENT_VERSION = "20261125.01";
         const fontStylesheet = document.getElementById('main-fonts');
         if (fontStylesheet) {
             if (fontStylesheet.sheet) fontStylesheet.media = 'all';
@@ -3111,6 +3112,9 @@
                 const adminBtn = document.getElementById('admin-btn');
                 state.currentRoles.includes("ADMIN") ? adminBtn.classList.remove('hidden') : adminBtn.classList.add('hidden');
                 const execBtn = document.getElementById('exec-btn'); if (execBtn) execBtn.classList.add('hidden');
+                document.getElementById('main-case-dashboard-link').hidden = !state.currentRoles.some(
+                    role => ['ADMIN', 'MANAGER', 'SUPERVISOR'].includes(String(role).trim().toUpperCase())
+                );
 
                 const grid = document.getElementById('app-grid');
                 grid.innerHTML = ''; 
