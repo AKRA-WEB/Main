@@ -722,6 +722,7 @@
       outline: none; border-color: var(--accent); box-shadow: 0 0 0 3px rgba(234, 88, 12, .14);
     }
     .field input:disabled, .field select:disabled { background: var(--bg); color: var(--text-muted); }
+    .field input[readonly] { background: var(--bg-soft); color: var(--text-secondary); cursor: not-allowed; }
     .field small { font-size: 11.5px; color: var(--text-muted); }
     .check-card {
       display: flex; align-items: flex-start; gap: 10px; padding: 11px 13px;
@@ -744,6 +745,17 @@
     .form-section-body { padding: 14px 15px; border-top: 1px solid var(--border); display: grid; gap: 12px; }
 
     .template-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+    .template-grid.three-col { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+    .sop-starter-box {
+      padding: 13px 15px; border-radius: 12px;
+      background: var(--bg-soft); border: 1px solid var(--border);
+      display: grid; gap: 10px;
+    }
+    .sop-starter-head {
+      display: flex; align-items: center; justify-content: space-between; gap: 8px; flex-wrap: wrap;
+    }
+    .sop-starter-head strong { font-size: 13px; color: var(--navy); }
+    .sop-starter-head span { font-size: 11.5px; color: var(--text-muted); }
     .template-btn {
       display: grid; gap: 4px; padding: 12px 14px; border-radius: 12px;
       border: 1.5px solid var(--border); background: var(--bg-soft); text-align: left;
@@ -840,18 +852,45 @@
     .cmd-desc { font-size: 12.5px; color: var(--text-secondary); }
 
     /* ===== Admin Question Review & Product Aliases Tab ===== */
+    .review-summary-strip {
+      padding: 14px 20px; border-bottom: 1px solid var(--border); background: var(--bg-soft);
+      display: grid; gap: 10px; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    }
+    .review-stat-card {
+      padding: 10px 13px; border-radius: var(--radius-sm);
+      background: var(--surface); border: 1px solid var(--border);
+      display: grid; gap: 2px;
+    }
+    .review-stat-card.warn { background: var(--amber-soft); border-color: var(--amber-border); }
+    .review-stat-card.danger { background: var(--rose-soft); border-color: var(--rose-border); }
+    .review-stat-card span { font-size: 11.5px; font-weight: 600; color: var(--text-muted); }
+    .review-stat-card.warn span { color: var(--amber-text); }
+    .review-stat-card.danger span { color: var(--rose-text); }
+    .review-stat-card strong { font-size: 20px; font-weight: 800; color: var(--text); line-height: 1.2; }
     .review-item {
       padding: 16px 20px; border-bottom: 1px solid var(--border); display: grid; gap: 10px;
     }
     .review-item:last-child { border-bottom: 0; }
+    .review-item.is-marked { background: rgba(255, 251, 235, .55); }
+    .btn-star {
+      background: var(--surface); color: var(--text-secondary); border-color: var(--border-strong);
+    }
+    .btn-star:hover:not(:disabled) { border-color: var(--amber); color: var(--amber-text); background: var(--amber-soft); }
+    .btn-star.is-marked {
+      background: var(--amber-soft); color: var(--amber-text); border-color: var(--amber-border);
+    }
     .alias-table-row {
-      display: grid; grid-template-columns: minmax(120px, 1fr) minmax(160px, 1.5fr) minmax(120px, 1fr) auto;
-      gap: 12px; align-items: center; padding: 11px 20px; border-bottom: 1px solid var(--border);
+      display: grid; grid-template-columns: minmax(130px, 1fr) minmax(170px, 1.5fr) minmax(120px, 1fr) minmax(120px, auto) auto;
+      gap: 12px; align-items: center; padding: 12px 20px; border-bottom: 1px solid var(--border);
       font-size: 13px;
     }
+    .alias-table-row:last-child { border-bottom: 0; }
     .alias-table-row.head {
       background: var(--bg-soft); font-size: 11.5px; font-weight: 700; color: var(--text-muted); text-transform: uppercase;
     }
+    .alias-meta { font-size: 12px; color: var(--text-muted); display: grid; gap: 2px; }
+    .alias-actions { display: flex; gap: 6px; justify-content: flex-end; flex-wrap: wrap; }
+    .confirm-modal-backdrop { z-index: 95; }
 
     /* ===== Toast ===== */
     .toast-host {
@@ -893,10 +932,13 @@
       .kpi-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
       .kpi-grid > :last-child { grid-column: 1 / -1; }
       .cards-grid { grid-template-columns: minmax(0, 1fr); padding: 12px 14px; }
-      .form-grid, .template-grid { grid-template-columns: minmax(0, 1fr); }
+      .form-grid, .template-grid, .template-grid.three-col { grid-template-columns: minmax(0, 1fr); }
       .bill-step { grid-template-columns: minmax(0, 1fr); gap: 4px; }
       .alias-table-row { grid-template-columns: minmax(0, 1fr); gap: 6px; padding: 12px 16px; }
       .alias-table-row.head { display: none; }
+      .alias-actions { justify-content: flex-start; }
+      .review-summary-strip { padding: 12px 14px; }
+      .review-item { padding: 14px; }
       .cb-topbar-right { width: 100%; justify-content: space-between; }
       .cb-cta-group { flex: 1 1 auto; }
       .cb-cta-group .btn { flex: 1 1 auto; }
@@ -1003,10 +1045,18 @@
           <span id="nav-dot-line" class="cb-nav-dot"></span>
         </button>
 
+        <button id="nav-tab-aliases" class="cb-nav-item" type="button" data-tab="aliases" hidden>
+          <span class="cb-nav-left">
+            <svg class="icon" viewBox="0 0 24 24"><path d="M20.59 13.41 13.42 20.58a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"/><circle cx="7" cy="7" r="1.5"/></svg>
+            <span>คำย่อสินค้า</span>
+          </span>
+          <span id="nav-badge-aliases" class="cb-nav-badge">—</span>
+        </button>
+
         <button id="nav-tab-review" class="cb-nav-item" type="button" data-tab="review" hidden>
           <span class="cb-nav-left">
             <svg class="icon" viewBox="0 0 24 24"><path d="M3 12a9 9 0 1 0 3-6.7"/><path d="M3 4v5h5M12 7v5l3 2"/></svg>
-            <span>บันทึกคำถาม &amp; คำย่อ</span>
+            <span>คำถามที่ตอบไม่ได้</span>
           </span>
           <span id="nav-badge-review" class="cb-nav-badge">Admin</span>
         </button>
@@ -1027,7 +1077,7 @@
         </button>
         <div class="cb-version-meta">
           <span>CaseDashboard</span>
-          <span id="sidebar-version">v20261125.01</span>
+          <span id="sidebar-version">v20261125.03</span>
         </div>
       </div>
     </aside>
@@ -1357,59 +1407,62 @@
           </section>
         </section>
 
-        <!-- ===== TAB 4: QUESTION REVIEW & PRODUCT ALIASES (ADMIN/SUPERVISOR/MANAGER) ===== -->
-        <section id="tab-review" aria-label="บันทึกคำถามและคำย่อสินค้า" hidden style="display:grid;gap:18px">
-          <!-- Product Aliases Panel -->
+        <!-- ===== TAB 4: PRODUCT ALIASES (ADMIN/SUPERVISOR/MANAGER) ===== -->
+        <section id="tab-aliases" aria-label="คำย่อสินค้า" hidden style="display:grid;gap:16px">
           <section class="panel">
             <div class="panel-head">
               <div class="panel-title-wrap">
                 <h2 class="panel-title">คำย่อสินค้าสำหรับค้นหาใน DATA</h2>
                 <span id="alias-count-badge" class="count-badge">0 คำย่อ</span>
               </div>
-              <button id="btn-alias-refresh" class="btn btn-secondary btn-sm" type="button">รีเฟรชคำย่อ</button>
+              <div style="display:flex;gap:8px;flex-wrap:wrap">
+                <button id="btn-alias-refresh" class="btn btn-secondary btn-sm" type="button">
+                  <svg class="icon icon-sm" viewBox="0 0 24 24"><path d="M21 12a9 9 0 0 0-9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/><path d="M3 12a9 9 0 0 0 9 9 9.75 9.75 0 0 0 6.74-2.74L21 16"/><path d="M21 21v-5h-5"/></svg>
+                  รีเฟรชคำย่อ
+                </button>
+                <button id="btn-alias-create" class="btn btn-primary btn-sm" type="button">
+                  <svg class="icon icon-sm" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>
+                  เพิ่มคำย่อใหม่
+                </button>
+              </div>
             </div>
             <div class="toolbar">
-              <form id="alias-form" style="display:grid;gap:10px" novalidate>
-                <div class="form-grid" style="grid-template-columns:repeat(auto-fit,minmax(180px,1fr))">
-                  <label class="field">
-                    <span class="field-label">คำย่อ / คำเรียกที่ใช้พิมพ์ <span class="req">*</span></span>
-                    <input id="alias-input" type="text" maxlength="80" placeholder="เช่น ลูกเกดแคนยอน" required>
-                  </label>
-                  <label class="field">
-                    <span class="field-label">คำค้นจริงใน BUYMORETH DATA <span class="req">*</span></span>
-                    <input id="alias-target" type="text" maxlength="160" placeholder="เช่น ลูกเกดดำเม็ดเล็ก แคนยอน" required>
-                  </label>
-                  <label class="field">
-                    <span class="field-label">หมายเหตุ (ถ้ามี)</span>
-                    <input id="alias-note" type="text" maxlength="200" placeholder="เหตุผลหรือ SKU ตัวอย่าง">
-                  </label>
+              <div class="toolbar-row">
+                <div class="search-wrap">
+                  <svg class="icon icon-sm icon-search" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg>
+                  <input id="alias-search" class="search-input" type="search" autocomplete="off" placeholder="ค้นหาคำย่อ ชื่อสินค้าจริงใน DATA หมายเหตุ หรือผู้บันทึก..." aria-label="ค้นหาคำย่อสินค้า">
+                  <button id="alias-search-clear" class="search-clear" type="button" aria-label="ล้างคำค้นคำย่อ" hidden>
+                    <svg class="icon icon-sm" viewBox="0 0 24 24"><path d="M18 6 6 18M6 6l12 12"/></svg>
+                  </button>
                 </div>
-                <div id="alias-error" class="form-error-box" hidden></div>
-                <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
-                  <button id="btn-alias-save" class="btn btn-primary btn-sm" type="submit">บันทึกคำย่อ</button>
-                  <button id="btn-alias-clear-form" class="btn btn-ghost btn-sm" type="button">ล้างช่องกรอก</button>
-                </div>
-              </form>
+                <span style="font-size:12px;color:var(--text-muted)">ใช้สอนบอตให้เข้าใจชื่อเรียกสั้นๆ ของทีมและลูกค้า (รองรับคำสั่ง LINE <code style="font-family:var(--font-mono)">@Case-Bot เพิ่มคำย่อ</code>)</span>
+              </div>
             </div>
             <div id="alias-list-container"></div>
           </section>
+        </section>
 
-          <!-- Question Review & Unanswered Summary Panel -->
+        <!-- ===== TAB 5: QUESTION REVIEW LOG (ADMIN/SUPERVISOR/MANAGER) ===== -->
+        <section id="tab-review" aria-label="คำถามที่บอตยังตอบไม่ได้" hidden style="display:grid;gap:16px">
           <section class="panel">
             <div class="panel-head">
               <div class="panel-title-wrap">
-                <h2 class="panel-title">บันทึกคำถามและคำตอบจากกลุ่ม</h2>
+                <h2 class="panel-title">คำถามที่บอตยังตอบไม่ได้ &amp; บันทึกคำถาม</h2>
                 <span id="review-summary-badge" class="count-badge">—</span>
               </div>
               <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
-                <div class="status-chips" role="group" aria-label="มุมมองบันทึกคำถาม">
-                  <button class="status-chip" type="button" data-review-mode="all" aria-pressed="true">คำถามทั้งหมด</button>
-                  <button class="status-chip" type="button" data-review-mode="marked" aria-pressed="false">ทำเครื่องหมายแล้ว</button>
-                  <button class="status-chip" type="button" data-review-mode="unanswered" aria-pressed="false">สรุปคำถามที่ตอบไม่ได้</button>
+                <div class="status-chips" role="group" aria-label="กรองบันทึกคำถาม">
+                  <button class="status-chip" type="button" data-review-mode="all" aria-pressed="true">ทั้งหมด</button>
+                  <button class="status-chip" type="button" data-review-mode="marked" aria-pressed="false">ปักหมุดแล้ว</button>
+                  <button class="status-chip" type="button" data-review-mode="unanswered" aria-pressed="false">สรุปที่ตอบไม่ได้</button>
                 </div>
-                <button id="btn-review-refresh" class="btn btn-secondary btn-sm" type="button">โหลดล่าสุด</button>
+                <button id="btn-review-refresh" class="btn btn-secondary btn-sm" type="button">
+                  <svg class="icon icon-sm" viewBox="0 0 24 24"><path d="M21 12a9 9 0 0 0-9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/><path d="M3 12a9 9 0 0 0 9 9 9.75 9.75 0 0 0 6.74-2.74L21 16"/><path d="M21 21v-5h-5"/></svg>
+                  โหลดล่าสุด
+                </button>
               </div>
             </div>
+            <div id="review-summary-strip" class="review-summary-strip" hidden></div>
             <div id="review-list-container"></div>
           </section>
         </section>
@@ -1831,6 +1884,35 @@
       </header>
       <form id="sop-form" class="modal-body" novalidate>
         <div id="sop-form-error" class="form-error-box" role="alert" hidden></div>
+        <div id="sop-starter-section" class="sop-starter-box">
+          <div class="sop-starter-head">
+            <strong>เทมเพลตเริ่มต้น AKRA (Starter Templates)</strong>
+            <span>คลิกเพื่อเติมโครงร่าง แล้วตรวจสอบ/ปรับแก้ก่อนกดบันทึก</span>
+          </div>
+          <div class="template-grid three-col">
+            <button class="template-btn" type="button" data-sop-template="wrong_delivery">
+              <strong>
+                <span>เคสส่งสินค้าผิด</span>
+                <span class="badge badge-customer">จัดส่ง/บิล</span>
+              </strong>
+              <span>ขั้นตอนตรวจบิล 5 ขั้น แก้ไข และส่งสินค้าทดแทนให้ลูกค้า</span>
+            </button>
+            <button class="template-btn" type="button" data-sop-template="damaged_claim">
+              <strong>
+                <span>เคสเคลม / สินค้าชำรุด</span>
+                <span class="badge badge-open">บริการลูกค้า</span>
+              </strong>
+              <span>ถ่ายหลักฐาน คัดล็อต/วันหมดอายุ เปลี่ยนให้ลูกค้า และเคลม Vendor</span>
+            </button>
+            <button class="template-btn" type="button" data-sop-template="w1_transfer">
+              <strong>
+                <span>เบิก-โอนคลังเข้าหน้าร้าน (W1)</span>
+                <span class="badge badge-warehouse">W1</span>
+              </strong>
+              <span>เช็กสต็อก DATA ตรวจจำนวน/วันหมดอายุ (FEFO) และจัดขึ้นชั้น W1</span>
+            </button>
+          </div>
+        </div>
         <div class="form-grid">
           <label class="field full">
             <span class="field-label">ชื่อเรื่อง SOP <span class="req">*</span></span>
@@ -1902,13 +1984,91 @@
     </section>
   </div>
 
+  <!-- ===== Modal 7: Add / Edit Product Alias ===== -->
+  <div id="alias-modal" class="modal-backdrop" hidden>
+    <section class="modal-card" role="dialog" aria-modal="true" aria-labelledby="alias-modal-title" tabindex="-1">
+      <header class="modal-head">
+        <div class="modal-head-left">
+          <div class="modal-icon">
+            <svg class="icon" viewBox="0 0 24 24"><path d="M20.59 13.41 13.42 20.58a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"/><circle cx="7" cy="7" r="1.5"/></svg>
+          </div>
+          <div>
+            <h2 id="alias-modal-title">เพิ่มคำย่อสินค้า</h2>
+            <p id="alias-modal-sub">ผูกคำเรียกสั้นๆ กับชื่อสินค้าจริงใน BUYMORETH DATA</p>
+          </div>
+        </div>
+        <button class="btn btn-ghost btn-icon btn-sm" type="button" data-close-modal="alias-modal" aria-label="ปิดหน้าต่าง">
+          <svg class="icon" viewBox="0 0 24 24"><path d="M18 6 6 18M6 6l12 12"/></svg>
+        </button>
+      </header>
+      <form id="alias-form" class="modal-body" novalidate>
+        <div id="alias-error" class="form-error-box" role="alert" hidden></div>
+        <div id="alias-context-box" class="detail-box ai-box" hidden>
+          <h4>คำถามต้นทางจากกลุ่ม LINE</h4>
+          <p id="alias-context-text"></p>
+        </div>
+        <div class="form-grid">
+          <label class="field full">
+            <span class="field-label">คำย่อ / คำเรียกที่ใช้พิมพ์ <span class="req">*</span></span>
+            <input id="alias-input" type="text" maxlength="80" placeholder="เช่น ลูกเกดแคนยอน, sp, เนยแท่ง" required>
+            <small id="alias-input-hint">ความยาว 1–80 ตัวอักษร ระบบจะบันทึกเป็นตัวพิมพ์เล็กอัตโนมัติ</small>
+          </label>
+          <label class="field full">
+            <span class="field-label">คำค้นจริงใน BUYMORETH DATA <span class="req">*</span></span>
+            <input id="alias-target" type="text" maxlength="160" placeholder="เช่น ลูกเกดดำเม็ดเล็ก แคนยอน" required>
+            <small>ระบุชื่อสินค้าหรือคำหลักที่ตรงกับข้อมูลในระบบ BUYMORETH DATA (ไม่เกิน 160 ตัวอักษร)</small>
+          </label>
+          <label class="field full">
+            <span class="field-label">หมายเหตุ (ถ้ามี)</span>
+            <input id="alias-note" type="text" maxlength="200" placeholder="เหตุผล แบรนด์ หรือ SKU ตัวอย่าง">
+          </label>
+        </div>
+      </form>
+      <footer class="modal-foot">
+        <span style="font-size:12px;color:var(--text-muted)"><span class="req">*</span> ข้อมูลที่ต้องระบุ</span>
+        <div style="display:flex;gap:8px">
+          <button class="btn btn-secondary" type="button" data-close-modal="alias-modal">ยกเลิก</button>
+          <button id="btn-alias-save" class="btn btn-primary" type="submit" form="alias-form">บันทึกคำย่อ</button>
+        </div>
+      </footer>
+    </section>
+  </div>
+
+  <!-- ===== Modal 8: Confirmation Dialog ===== -->
+  <div id="confirm-modal" class="modal-backdrop confirm-modal-backdrop" hidden>
+    <section class="modal-card" style="width:min(460px,100%)" role="dialog" aria-modal="true" aria-labelledby="confirm-modal-title" tabindex="-1">
+      <header class="modal-head">
+        <div class="modal-head-left">
+          <div class="modal-icon" style="background:var(--rose-soft);color:var(--rose)">
+            <svg class="icon" viewBox="0 0 24 24"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><path d="M12 9v4M12 17h.01"/></svg>
+          </div>
+          <div>
+            <h2 id="confirm-modal-title">ยืนยันการทำรายการ</h2>
+            <p id="confirm-modal-sub">กรุณาตรวจสอบก่อนดำเนินการ</p>
+          </div>
+        </div>
+        <button class="btn btn-ghost btn-icon btn-sm" type="button" data-close-modal="confirm-modal" aria-label="ปิดหน้าต่าง">
+          <svg class="icon" viewBox="0 0 24 24"><path d="M18 6 6 18M6 6l12 12"/></svg>
+        </button>
+      </header>
+      <div class="modal-body">
+        <p id="confirm-modal-msg" style="margin:0;font-size:14px;color:var(--text);white-space:pre-wrap"></p>
+        <div id="confirm-modal-detail" class="detail-box" hidden></div>
+      </div>
+      <footer class="modal-foot">
+        <button class="btn btn-secondary" type="button" data-close-modal="confirm-modal">ยกเลิก</button>
+        <button id="confirm-modal-ok" class="btn btn-danger-soft" type="button">ยืนยันลบ</button>
+      </footer>
+    </section>
+  </div>
+
   <div id="toast-host" class="toast-host" aria-live="polite"></div>
 
   <script>
     (function () {
       'use strict';
 
-      const CURRENT_VERSION = '20261125.02';
+      const CURRENT_VERSION = '20261125.03';
       const CASE_DASHBOARD_FORBIDDEN = 'CaseDashboard เปิดให้เฉพาะหัวหน้างานและผู้ดูแลระบบ';
       const MAIN_PORTAL_URL = 'https://akra-web.github.io/Main/';
       const AUTH_API_URL = 'https://hgxrrskztbpejirrdpbq.supabase.co/functions/v1/auth-api';
@@ -1962,6 +2122,66 @@
         { cat: 'คลัง SOP', cmd: 'ดู SOP-0001', desc: 'เรียกอ่านขั้นตอนมาตรฐานการทำงานในกลุ่ม LINE' },
         { cat: 'คำย่อ & คำถาม', cmd: '@Case-Bot ดูคำย่อ', desc: 'ตรวจสอบคำย่อสินค้าที่บันทึกไว้ (Admin เพิ่ม/ลบผ่าน LINE ได้)' }
       ];
+
+      const SOP_STARTER_TEMPLATES = {
+        wrong_delivery: {
+          title: 'ขั้นตอนจัดการเคสส่งสินค้าผิด / สลับบิล',
+          category: 'จัดส่ง/จัดบิล',
+          keywords: ['ส่งสินค้าผิด', 'สลับบิล', 'เปลี่ยนสินค้า', 'ตรวจบิล 5 ขั้น'],
+          content: [
+            'วัตถุประสงค์',
+            'ใช้เมื่อลูกค้าแจ้งได้รับสินค้าผิดรุ่น ผิดขนาด ผิดยี่ห้อ หรือสลับบิลกับลูกค้ารายอื่น เพื่อเร่งแก้ไขและป้องกันการเกิดซ้ำ',
+            '',
+            '1. รับเรื่องและตรวจสอบเส้นทางบิล 5 ขั้นทันที (ลูกค้าสั่ง → เปิดบิล → จัดสินค้า → ตรวจเช็ค → ส่งมอบ)',
+            '2. ขอรูปถ่ายสินค้าจริงที่ลูกค้าได้รับเทียบกับเลขบิล (เช่น INV-...) เพื่อยืนยันความผิดพลาด',
+            '3. ตรวจสอบสต็อกสินค้าที่ถูกต้องในระบบ DATA และจัดเตรียมสินค้าเปลี่ยนให้ลูกค้าภายในรอบส่งถัดไปหรือภายใน 24 ชม.',
+            '4. ประสานงานรับสินค้าที่ส่งผิดคืน (หรือรับคืนจากลูกค้าที่สลับบิล) พร้อมอัปเดตสถานะใน Case-Bot',
+            '5. เมื่อส่งเปลี่ยนครบถ้วนและตรวจยอดบิลตรงกันแล้ว ให้ปิดเคสพร้อมระบุสาเหตุที่แท้จริง (แคชเชียร์ / จัด / เช็ค)',
+            '',
+            'ข้อควรระวัง:',
+            '- ห้ามปิดเคสจนกว่าสินค้าที่ถูกต้องจะถึงมือลูกค้าและตรวจรับเรียบร้อยแล้ว',
+            '- หากเป็นความผิดจากชื่อสินค้าคล้ายกัน ให้เพิ่มคำย่อสินค้าในระบบเพื่อป้องกันเปิดบิลผิดซ้ำ'
+          ].join('\n')
+        },
+        damaged_claim: {
+          title: 'ขั้นตอนรับแจ้งเคลมและจัดการสินค้าชำรุดเสียหาย',
+          category: 'บริการลูกค้า',
+          keywords: ['เคลมสินค้า', 'สินค้าชำรุด', 'แตกเสียหาย', 'ซีลหลวม', 'Vendor'],
+          content: [
+            'วัตถุประสงค์',
+            'ใช้สำหรับเคสสินค้าชำรุด แตกหัก ซีลหลวม หรือเสื่อมสภาพ ทั้งกรณีลูกค้าแจ้งเคลมและพบความเสียหายภายในคลัง',
+            '',
+            '1. ถ่ายภาพสินค้าที่ชำรุด ฉลากบาร์โค้ด เลขล็อตการผลิต (Lot) และวันหมดอายุ (EXP) เก็บเป็นหลักฐาน',
+            '2. ตรวจสอบสินค้าล็อตเดียวกันบนชั้นวางทันที เพื่อคัดแยกสินค้าที่มีความเสี่ยงออกจากพื้นที่ขาย',
+            '3. กรณีเคสลูกค้า: พิจารณาเปลี่ยนสินค้าล็อตใหม่ที่สมบูรณ์ให้ลูกค้าทันที หรือทำเรื่องคืนยอดตามเงื่อนไขร้าน',
+            '4. กรณีต้องเคลมกับ Vendor / ผู้ผลิต: เปิดเคสติดตามใน Case-Bot ระบุจำนวน มูลค่า และกำหนดติดตามผลเคลม',
+            '5. บันทึกผลการชดเชยหรือลดหนี้จาก Vendor เมื่อดำเนินการเสร็จสิ้นก่อนกดปิดเคส',
+            '',
+            'ข้อควรระวัง:',
+            '- การส่งเรื่องแจ้ง Vendor ยังไม่ถือว่าปิดเคส ต้องรอจนได้สินค้าทดแทนหรือใบลดหนี้ครบถ้วน',
+            '- เก็บสินค้าชำรุดแยกไว้ในโซนรอเคลม ติดป้ายเลขเคส (CASE-XXXX) ให้ชัดเจน'
+          ].join('\n')
+        },
+        w1_transfer: {
+          title: 'ขั้นตอนเบิก-โอนสินค้าจากคลังเข้าหน้าร้าน (W1)',
+          category: 'สต๊อก/จัดเก็บ',
+          keywords: ['เบิกโอน', 'คลังสินค้า', 'หน้าร้าน', 'W1', 'FEFO'],
+          content: [
+            'วัตถุประสงค์',
+            'มาตรฐานการเบิก-โอนสินค้าจากคลังหลัก (W2–W5) เข้าจุดจำหน่ายหน้าร้าน (W1) ให้จำนวนและล็อตถูกต้องตรงระบบ',
+            '',
+            '1. ตรวจสอบยอดคงเหลือและตำแหน่งจัดเก็บในระบบ DATA ก่อนออกใบเบิก-โอนสินค้าเข้า W1',
+            '2. จัดหยิบสินค้าตามหลัก FEFO / FIFO (นำล็อตที่หมดอายุก่อนหรือเข้าก่อนออกมาจำหน่ายก่อนเสมอ)',
+            '3. ตรวจนับจำนวน หน่วยนับ (ชิ้น / แพ็ก / ลัง) และสแกนบาร์โค้ดยืนยัน SKU ก่อนเคลื่อนย้ายออกจากคลังต้นทาง',
+            '4. เมื่อสินค้าถึงหน้าร้าน W1 ให้ผู้รับตรวจนับทวนซ้ำ จัดวางให้ตรงป้ายราคาและรหัส SKU บนชั้นวาง',
+            '5. บันทึกเอกสารโอนย้ายในระบบให้เสร็จสิ้นภายในกะ หากพบสินค้าขาด/เกินหรือชำรุดให้เปิดเคสใน Case-Bot ทันที',
+            '',
+            'ข้อควรระวัง:',
+            '- ห้ามวางสินค้าคนละขนาดหรือต่างรสชาติปะปนในช่องเดียวกันโดยไม่มีตัวกั้นช่องและป้ายชื่อชัดเจน',
+            '- กลุ่มสินค้าแช่เย็น/เบเกอรี่ต้องนำเข้าตู้แช่ W1 ทันทีเพื่อรักษาอุณหภูมิ'
+          ].join('\n')
+        }
+      };
 
       // ===== Safe Storage & URL Helpers =====
       const safeStorage = (function () {
@@ -2430,14 +2650,19 @@
         const aliases = [
           { alias: 'ลูกเกดแคนยอน', target: 'ลูกเกดดำเม็ดเล็ก แคนยอน', note: 'ชื่อที่ลูกค้าชอบเรียกสั้นๆ', createdBy: 'คุณพิมพ์', updatedAt: isoOffset(-20) },
           { alias: 'เนยแท่ง', target: 'เนยสดแท้ ชนิดแท่ง', note: 'สินค้าเบเกอรี่กลุ่มแช่เย็น', createdBy: 'ผู้จัดการร้าน', updatedAt: isoOffset(-48) },
-          { alias: 'วิปแดรี่', target: 'วิปปิ้งครีม แดรี่โกลด์', note: null, createdBy: 'คุณบี', updatedAt: isoOffset(-90) }
+          { alias: 'วิปแดรี่', target: 'วิปปิ้งครีม แดรี่โกลด์', note: 'ลูกค้าเบเกอรี่นิยมถามราคาต่อกล่อง', createdBy: 'คุณบี', updatedAt: isoOffset(-90) },
+          { alias: 'sp', target: 'สารเสริม เอสพี', note: 'คำย่อที่ทีมหน้าร้านพิมพ์ถามบ่อย', createdBy: 'คุณพิมพ์', updatedAt: isoOffset(-110) },
+          { alias: 'ดาวฟ้า', target: 'แป้งสาลี ดาวฟ้า', note: 'แป้งทำเค้ก/ซาลาเปา 1 กก. และ 22.5 กก.', createdBy: 'คุณก้อง', updatedAt: isoOffset(-140) },
+          { alias: 'บัวแดง', target: 'แป้งสาลี บัวแดง', note: null, createdBy: 'คุณก้อง', updatedAt: isoOffset(-160) }
         ];
 
         const reviews = [
           { id: '11111111-1111-4111-8111-111111111101', question: '@Case-Bot กล่องเค้ก 2 ปอนด์ ฝาใส แบบแพ็คกี่บาท', answer: 'ยังไม่พบข้อมูลสินค้า "กล่องเค้ก 2 ปอนด์ ฝาใส" ใน BUYMORETH DATA ครับ ลองระบุรุ่นหรือ SKU เพิ่มเติม', createdAt: isoOffset(-2), marked: false },
-          { id: '11111111-1111-4111-8111-111111111102', question: 'กล่องเค้ก 2 ปอนด์ ฝาใส ราคาเท่าไร', answer: 'ยังไม่พบสินค้าที่ตรงเงื่อนไขใน BUYMORETH DATA ครับ', createdAt: isoOffset(-8), marked: true },
+          { id: '11111111-1111-4111-8111-111111111102', question: 'กล่องเค้ก 2 ปอนด์ ฝาใส ราคาเท่าไร', answer: 'ยังไม่พบสินค้าที่ตรงเงื่อนไขใน BUYMORETH DATA ครับ', createdAt: isoOffset(-4), marked: true },
           { id: '11111111-1111-4111-8111-111111111103', question: '@Case-Bot เนยออร์คิดเค็ม 5 กก. อยู่คลังไหน', answer: 'พบสินค้า เนยสดออร์คิด ชนิดเค็ม 5 กก. โซนตู้เย็น C1-R02 ราคาขายตาม DATA 1,180.00 บาท', createdAt: isoOffset(-5), marked: false },
-          { id: '11111111-1111-4111-8111-111111111104', question: '@Case-Bot ผงโกโก้ทิวลิปสีเข้มมีแบบลังไหม', answer: 'ยังไม่ยืนยันจำนวนบรรจุลังของผงโกโก้ทิวลิปสีเข้มไม่ได้ครับ', createdAt: isoOffset(-12), marked: false }
+          { id: '11111111-1111-4111-8111-111111111104', question: '@Case-Bot ผงโกโก้ทิวลิปสีเข้มมีแบบลังไหม', answer: 'ยังไม่ยืนยันจำนวนบรรจุลังของผงโกโก้ทิวลิปสีเข้มไม่ได้ครับ', createdAt: isoOffset(-8), marked: false },
+          { id: '11111111-1111-4111-8111-111111111105', question: '@Case-Bot ช็อกชิพ ตราแกรนด์ กี่บาท', answer: 'ยังไม่พบสินค้าที่ตรงเงื่อนไขใน BUYMORETH DATA ครับ ลองระบุชื่อรุ่นหรือ SKU เพิ่มเติม', createdAt: isoOffset(-14), marked: true },
+          { id: '11111111-1111-4111-8111-111111111106', question: '@Case-Bot ถุงจีบพับข้าง 6x9 ยกแพ็กมีกี่ใบ', answer: 'ยังไม่พบข้อมูลสินค้า "ถุงจีบพับข้าง 6x9" ใน BUYMORETH DATA ครับ', createdAt: isoOffset(-22), marked: false }
         ];
 
         const system = {
@@ -2645,8 +2870,16 @@
             return { deleted: idx >= 0, alias: payload.alias };
           }
           if (action === 'question_review_list') {
-            const list = payload.markedOnly ? reviews.filter(r => r.marked) : [...reviews];
-            return { items: list, nextCursor: null };
+            const base = payload.markedOnly ? reviews.filter(r => r.marked) : [...reviews];
+            const limit = Number.isSafeInteger(payload.limit) ? Math.max(1, Math.min(50, payload.limit)) : 30;
+            let start = 0;
+            if (payload.before) {
+              const curIdx = base.findIndex(r => r.id === payload.before);
+              start = curIdx >= 0 ? curIdx + 1 : base.length;
+            }
+            const slice = base.slice(start, start + limit);
+            const hasMore = start + limit < base.length;
+            return { items: slice.map(r => ({ ...r })), nextCursor: hasMore && slice.length ? slice[slice.length - 1].id : null };
           }
           if (action === 'question_review_mark') {
             const item = reviews.find(r => r.id === payload.id);
@@ -2659,16 +2892,38 @@
             return { ok: idx >= 0 };
           }
           if (action === 'unanswered_review_summary') {
-            const items = reviews.map(r => {
-              const unanswered = /ยังไม่พบ|ยังไม่ยืนยัน/.test(r.answer);
-              return {
-                question: r.question.replace(/^@Case-Bot\s*/i, ''),
-                normalizedQuestion: r.question.toLowerCase(),
-                count: 1, unanswered, unansweredCount: unanswered ? 1 : 0,
-                markedCount: r.marked ? 1 : 0, latestAt: r.createdAt, sampleAnswer: r.answer
-              };
-            }).filter(x => x.unanswered);
-            return { total: reviews.length, uniqueCount: items.length, unansweredCount: items.length, items, nextCursor: null };
+            const base = payload.markedOnly ? reviews.filter(r => r.marked) : [...reviews];
+            const grouped = new Map();
+            let unansweredTotal = 0;
+            for (const r of base) {
+              const cleanQ = r.question.replace(/^@Case-Bot\s*/i, '').trim();
+              const norm = cleanQ.toLowerCase();
+              const unanswered = /ยังไม่พบ|ยังไม่ยืนยัน|ไม่พบสินค้า/.test(r.answer);
+              if (unanswered) unansweredTotal++;
+              const prev = grouped.get(norm);
+              if (!prev) {
+                grouped.set(norm, {
+                  question: cleanQ,
+                  normalizedQuestion: norm,
+                  count: 1,
+                  unanswered,
+                  unansweredCount: unanswered ? 1 : 0,
+                  markedCount: r.marked ? 1 : 0,
+                  latestAt: r.createdAt,
+                  sampleAnswer: r.answer
+                });
+              } else {
+                prev.count++;
+                if (unanswered) { prev.unanswered = true; prev.unansweredCount++; }
+                if (r.marked) prev.markedCount++;
+                if (Date.parse(r.createdAt) > Date.parse(prev.latestAt)) {
+                  prev.latestAt = r.createdAt;
+                  prev.sampleAnswer = r.answer;
+                }
+              }
+            }
+            const items = [...grouped.values()].sort((a, b) => Number(b.unanswered) - Number(a.unanswered) || b.unansweredCount - a.unansweredCount);
+            return { total: base.length, uniqueCount: items.length, unansweredCount: unansweredTotal, items, nextCursor: null };
           }
           throw new Error(`ไม่รองรับคำสั่ง ${action}`);
         }
@@ -2704,12 +2959,14 @@
         detailError: null,
         sops: { items: [], total: 0, query: '', status: 'active', category: 'all', loading: false, loaded: false, error: null },
         review: { mode: 'all', items: [], summary: null, nextCursor: null, loading: false, loaded: false, error: null },
-        aliases: { items: [], loading: false, loaded: false, error: null },
+        aliases: { items: [], query: '', loading: false, loaded: false, error: null },
         editingCase: null,
         closingCase: null,
         closeToken: null,
         closeResolution: '',
         editingSop: null,
+        editingAlias: null,
+        confirmAction: null,
         sopDetailCode: null,
         sopDetailData: null,
         sopHistoryData: null,
@@ -2807,7 +3064,7 @@
           err.status = 401;
           throw err;
         }
-        const isMutation = ['create_case', 'update_case', 'request_close', 'confirm_close', 'sop_create', 'sop_update', 'sop_archive'].includes(action);
+        const isMutation = ['create_case', 'update_case', 'request_close', 'confirm_close', 'sop_create', 'sop_update', 'sop_archive', 'upsert_product_alias', 'delete_product_alias', 'question_review_mark', 'question_review_clear'].includes(action);
         const headers = {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${token}`
@@ -3196,8 +3453,9 @@
 
       function syncTabVisibility() {
         const isAdmin = hasAdminRole(state.user);
+        $('#nav-tab-aliases').hidden = !isAdmin;
         $('#nav-tab-review').hidden = !isAdmin;
-        if (!isAdmin && state.activeTab === 'review') switchTab('cases');
+        if (!isAdmin && ['aliases', 'review'].includes(state.activeTab)) switchTab('cases');
         const aiBtn = $('#btn-ai-verify');
         const aiNote = $('#ai-admin-note');
         if (aiBtn) aiBtn.hidden = !isAdmin;
@@ -3205,16 +3463,17 @@
       }
 
       function switchTab(tab) {
-        if (tab === 'review' && !hasAdminRole(state.user)) tab = 'cases';
+        if (['aliases', 'review'].includes(tab) && !hasAdminRole(state.user)) tab = 'cases';
         state.activeTab = tab;
         const titles = {
           cases: 'ภาพรวมและเคสทั้งหมด',
           sops: 'คลัง SOP มาตรฐานการทำงาน',
           line: 'คำสั่ง LINE & การเชื่อมต่อ',
-          review: 'บันทึกคำถาม & คำย่อสินค้า'
+          aliases: 'คำย่อสินค้าสำหรับค้นหาใน DATA',
+          review: 'คำถามที่บอตยังตอบไม่ได้ & บันทึกคำถาม'
         };
         $('#topbar-title').textContent = titles[tab] || titles.cases;
-        ['cases', 'sops', 'line', 'review'].forEach(t => {
+        ['cases', 'sops', 'line', 'aliases', 'review'].forEach(t => {
           const sec = $(`#tab-${t}`);
           if (sec) sec.hidden = t !== tab;
         });
@@ -3223,9 +3482,11 @@
         });
         closeMobileSidebar();
         if (tab === 'sops' && !state.sops.loaded && !state.sops.loading) void loadSops();
-        if (tab === 'review' && hasAdminRole(state.user)) {
+        if (tab === 'aliases' && hasAdminRole(state.user)) {
           if (!state.aliases.loaded && !state.aliases.loading) void loadAliases();
-          if (!state.review.loaded && !state.review.loading) void loadReviews();
+        }
+        if (tab === 'review' && hasAdminRole(state.user)) {
+          if (!state.review.loaded && !state.review.loading) void refreshReviewTab();
         }
       }
 
@@ -3975,6 +4236,8 @@
         const el = $(`#${id}`);
         if (!el || el.hidden) return;
         el.hidden = true;
+        if (id === 'confirm-modal') state.confirmAction = null;
+        if (id === 'alias-modal') state.editingAlias = null;
         if (!$$('.modal-backdrop').some(m => !m.hidden) && $('#detail-drawer').hidden) {
           document.body.classList.remove('modal-open');
         }
@@ -4606,7 +4869,13 @@
         $('#sop-form').reset();
         $('#sop-form-error').hidden = true;
         $('#sop-form-title').textContent = sop ? `แก้ไข ${sop.code}` : 'เพิ่ม SOP ใหม่';
-        $('#sop-form-sub').textContent = sop ? `กำลังแก้ไขจากเวอร์ชัน ${sop.version}` : 'บันทึกขั้นตอนมาตรฐานการทำงานของทีม';
+        $('#sop-form-sub').textContent = sop ? `กำลังแก้ไขจากเวอร์ชัน ${sop.version}` : 'บันทึกขั้นตอนมาตรฐานการทำงานของทีม หรือเลือกเทมเพลตเริ่มต้นด้านบน';
+
+        const starterSec = $('#sop-starter-section');
+        if (starterSec) {
+          starterSec.hidden = Boolean(sop);
+          $$('[data-sop-template]').forEach(btn => btn.classList.remove('active'));
+        }
 
         const cats = [...new Set([...(state.sops.items || []).map(s => s.category).filter(Boolean), 'ทั่วไป', 'บริการลูกค้า', 'สต๊อก/จัดเก็บ', 'จัดส่ง/จัดบิล'])];
         $('#sf-categories-list').innerHTML = cats.map(c => `<option value="${escapeHtml(c)}"></option>`).join('');
@@ -4618,6 +4887,22 @@
         $('#sf-sourceUrl').value = sop?.sourceUrl || '';
         $('#sf-char-count').textContent = `${($('#sf-content').value || '').length.toLocaleString('th-TH')} / 12,000 ตัวอักษร`;
         openModal('sop-form-modal');
+      }
+
+      function applySopStarterTemplate(key) {
+        const tpl = SOP_STARTER_TEMPLATES[key];
+        if (!tpl) return;
+        $('#sop-form-error').hidden = true;
+        $$('[data-sop-template]').forEach(btn => {
+          btn.classList.toggle('active', btn.dataset.sopTemplate === key);
+        });
+        $('#sf-title').value = tpl.title;
+        $('#sf-category').value = tpl.category;
+        $('#sf-keywords').value = tpl.keywords.join(', ');
+        $('#sf-content').value = tpl.content;
+        $('#sf-char-count').textContent = `${tpl.content.length.toLocaleString('th-TH')} / 12,000 ตัวอักษร`;
+        toast(`เติมโครงร่าง "${tpl.title}" แล้ว — ตรวจสอบและปรับแก้ก่อนกดบันทึก`, 'ok');
+        $('#sf-title').focus();
       }
 
       async function handleSopFormSubmit(e) {
@@ -4711,7 +4996,45 @@
         }
       }
 
-      // ===== Tab 4: Product Aliases & Question Review (Admin) =====
+      // ===== Tab 4 & 5: Product Aliases & Question Review (Admin) =====
+      function openConfirmModal({ title, sub = 'กรุณาตรวจสอบก่อนดำเนินการ', message, detail = '', confirmLabel = 'ยืนยันลบ', onConfirm }) {
+        state.confirmAction = onConfirm;
+        $('#confirm-modal-title').textContent = title || 'ยืนยันการทำรายการ';
+        $('#confirm-modal-sub').textContent = sub;
+        $('#confirm-modal-msg').textContent = message || '';
+        const detailEl = $('#confirm-modal-detail');
+        if (detail) {
+          detailEl.textContent = detail;
+          detailEl.hidden = false;
+        } else {
+          detailEl.textContent = '';
+          detailEl.hidden = true;
+        }
+        const okBtn = $('#confirm-modal-ok');
+        okBtn.disabled = false;
+        okBtn.textContent = confirmLabel;
+        openModal('confirm-modal');
+      }
+
+      async function executeConfirmModal() {
+        const action = state.confirmAction;
+        if (typeof action !== 'function') { closeModal('confirm-modal'); return; }
+        const okBtn = $('#confirm-modal-ok');
+        const origLabel = okBtn.textContent;
+        okBtn.disabled = true;
+        okBtn.textContent = 'กำลังดำเนินการ...';
+        try {
+          await action();
+          state.confirmAction = null;
+          closeModal('confirm-modal');
+        } catch (err) {
+          toast(err?.message || 'ทำรายการไม่สำเร็จ', 'err');
+        } finally {
+          okBtn.disabled = false;
+          okBtn.textContent = origLabel;
+        }
+      }
+
       async function loadAliases() {
         state.aliases.loading = true;
         state.aliases.error = null;
@@ -4728,34 +5051,56 @@
         }
       }
 
+      function getFilteredAliases() {
+        const items = state.aliases.items || [];
+        const q = (state.aliases.query || '').trim().toLocaleLowerCase('th');
+        if (!q) return items;
+        return items.filter(it => [it.alias, it.target, it.note, it.createdBy].filter(Boolean).join(' ').toLocaleLowerCase('th').includes(q));
+      }
+
       function renderAliasesList() {
         const container = $('#alias-list-container');
-        const items = state.aliases.items || [];
-        $('#alias-count-badge').textContent = `${items.length} คำย่อ`;
+        const allItems = state.aliases.items || [];
+        const filtered = getFilteredAliases();
+        const q = (state.aliases.query || '').trim();
+        $('#alias-search-clear').hidden = !state.aliases.query;
+        $('#alias-count-badge').textContent = q
+          ? `${filtered.length.toLocaleString('th-TH')} / ${allItems.length.toLocaleString('th-TH')} คำย่อ`
+          : `${allItems.length.toLocaleString('th-TH')} คำย่อ`;
+        const navBadge = $('#nav-badge-aliases');
+        if (navBadge) navBadge.textContent = state.aliases.loaded ? String(allItems.length) : '—';
 
         if (state.aliases.loading && !state.aliases.loaded) {
-          container.innerHTML = `<div class="empty-state"><p>กำลังโหลดรายการคำย่อสินค้า...</p></div>`;
+          container.innerHTML = `<div class="empty-state"><svg class="icon icon-lg spin" style="color:var(--accent)" viewBox="0 0 24 24"><path d="M21 12a9 9 0 1 1-6.219-8.56"/></svg><h3>กำลังโหลดรายการคำย่อสินค้า...</h3></div>`;
           return;
         }
         if (state.aliases.error) {
-          container.innerHTML = `<div class="empty-state"><div class="form-error-box">${escapeHtml(state.aliases.error)}</div></div>`;
+          container.innerHTML = `<div class="empty-state"><div class="form-error-box">${escapeHtml(state.aliases.error)}</div><button class="btn btn-secondary btn-sm" type="button" data-action="retry-aliases">ลองอีกครั้ง</button></div>`;
           return;
         }
-        if (!items.length) {
-          container.innerHTML = `<div class="empty-state"><p>ยังไม่มีคำย่อสินค้า เพิ่มด้านบนเพื่อให้ Case-Bot ค้นหาชื่อเรียกสั้นๆ ได้แม่นยำขึ้น</p></div>`;
+        if (!allItems.length) {
+          container.innerHTML = `<div class="empty-state"><div class="empty-icon"><svg class="icon icon-lg" viewBox="0 0 24 24"><path d="M20.59 13.41 13.42 20.58a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"/><circle cx="7" cy="7" r="1.5"/></svg></div><h3>ยังไม่มีคำย่อสินค้า</h3><p>กด "+ เพิ่มคำย่อใหม่" เพื่อให้ Case-Bot ค้นหาชื่อเรียกสั้นๆ ใน BUYMORETH DATA ได้แม่นยำขึ้น</p></div>`;
+          return;
+        }
+        if (!filtered.length) {
+          container.innerHTML = `<div class="empty-state"><div class="empty-icon"><svg class="icon icon-lg" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg></div><h3>ไม่พบคำย่อที่ตรงกับ "${escapeHtml(q)}"</h3><p>ลองเปลี่ยนคำค้น หรือกด "+ เพิ่มคำย่อใหม่" เพื่อเพิ่มคำนี้เข้าระบบ</p><button class="btn btn-secondary btn-sm" type="button" data-action="clear-alias-search">ล้างคำค้น</button></div>`;
           return;
         }
 
         container.innerHTML = `
           <div class="alias-table-row head">
-            <span>คำย่อ</span><span>คำค้นจริงใน DATA</span><span>หมายเหตุ</span><span style="text-align:right">จัดการ</span>
+            <span>คำย่อ</span><span>คำค้นจริงใน DATA</span><span>หมายเหตุ</span><span>อัปเดตล่าสุด</span><span style="text-align:right">จัดการ</span>
           </div>
-          ${items.map(it => `
+          ${filtered.map(it => `
             <div class="alias-table-row">
-              <strong>${escapeHtml(it.alias)}</strong>
-              <span>${escapeHtml(it.target)}</span>
-              <span style="color:var(--text-muted)">${escapeHtml(it.note || '—')}</span>
-              <div style="display:flex;gap:6px;justify-content:flex-end">
+              <div><span class="code-pill">${escapeHtml(it.alias)}</span></div>
+              <strong style="overflow-wrap:anywhere">${escapeHtml(it.target)}</strong>
+              <span style="color:var(--text-muted);overflow-wrap:anywhere">${escapeHtml(it.note || '—')}</span>
+              <div class="alias-meta">
+                <span>${escapeHtml(formatDate(it.updatedAt))}</span>
+                ${it.createdBy ? `<span>โดย ${escapeHtml(it.createdBy)}</span>` : ''}
+              </div>
+              <div class="alias-actions">
                 <button class="btn btn-secondary btn-xs" type="button" data-edit-alias="${escapeHtml(it.alias)}">แก้ไข</button>
                 <button class="btn btn-danger-soft btn-xs" type="button" data-delete-alias="${escapeHtml(it.alias)}">ลบ</button>
               </div>
@@ -4764,23 +5109,75 @@
         `;
       }
 
+      function openAliasModal(options = {}) {
+        const { existing = null, prefillAlias = '', sourceQuestion = '' } = options;
+        state.editingAlias = existing;
+        $('#alias-form').reset();
+        $('#alias-error').hidden = true;
+
+        const aliasInput = $('#alias-input');
+        const targetInput = $('#alias-target');
+        const noteInput = $('#alias-note');
+        const ctxBox = $('#alias-context-box');
+
+        if (existing) {
+          $('#alias-modal-title').textContent = `แก้ไขคำย่อ "${existing.alias}"`;
+          $('#alias-modal-sub').textContent = 'ปรับปรุงคำค้นจริงใน BUYMORETH DATA หรือหมายเหตุ';
+          aliasInput.value = existing.alias || '';
+          aliasInput.readOnly = true;
+          $('#alias-input-hint').textContent = 'คำย่อเดิมใช้เป็นรหัสอ้างอิง (หากต้องการเปลี่ยนคำย่อให้ลบแล้วเพิ่มใหม่)';
+          targetInput.value = existing.target || '';
+          noteInput.value = existing.note || '';
+          ctxBox.hidden = true;
+        } else {
+          $('#alias-modal-title').textContent = prefillAlias ? 'สร้างคำย่อจากคำถาม' : 'เพิ่มคำย่อสินค้าใหม่';
+          $('#alias-modal-sub').textContent = 'ผูกคำเรียกสั้นๆ กับชื่อสินค้าจริงใน BUYMORETH DATA';
+          aliasInput.value = prefillAlias;
+          aliasInput.readOnly = false;
+          $('#alias-input-hint').textContent = 'ความยาว 1–80 ตัวอักษร ระบบจะบันทึกเป็นตัวพิมพ์เล็กอัตโนมัติ';
+          targetInput.value = '';
+          noteInput.value = '';
+          if (sourceQuestion) {
+            $('#alias-context-text').textContent = sourceQuestion;
+            ctxBox.hidden = false;
+          } else {
+            ctxBox.hidden = true;
+          }
+        }
+        openModal('alias-modal');
+        window.requestAnimationFrame(() => {
+          (existing || prefillAlias ? targetInput : aliasInput).focus();
+        });
+      }
+
       async function handleAliasSubmit(e) {
         e.preventDefault();
-        const alias = $('#alias-input').value.trim();
-        const target = $('#alias-target').value.trim();
-        const note = $('#alias-note').value.trim();
+        const alias = $('#alias-input').value.replace(/\s+/g, ' ').trim().toLowerCase();
+        const target = $('#alias-target').value.replace(/\s+/g, ' ').trim();
+        const note = $('#alias-note').value.replace(/\s+/g, ' ').trim();
         const errEl = $('#alias-error');
         errEl.hidden = true;
-        if (!alias || !target) {
-          errEl.textContent = 'กรุณากรอกทั้งคำย่อและคำค้นจริง';
+        if (!alias || [...alias].length > 80) {
+          errEl.textContent = 'กรุณาระบุคำย่อสินค้า 1–80 ตัวอักษร';
+          errEl.hidden = false;
+          return;
+        }
+        if (!target || [...target].length > 160) {
+          errEl.textContent = 'กรุณาระบุคำค้นจริงใน DATA 1–160 ตัวอักษร';
+          errEl.hidden = false;
+          return;
+        }
+        if ([...note].length > 200) {
+          errEl.textContent = 'หมายเหตุคำย่อยาวเกิน 200 ตัวอักษร';
           errEl.hidden = false;
           return;
         }
         const btn = $('#btn-alias-save');
         btn.disabled = true;
+        btn.textContent = 'กำลังบันทึก...';
         try {
           await adminPost('upsert_product_alias', { alias, target, note: note || null });
-          $('#alias-form').reset();
+          closeModal('alias-modal');
           toast(`บันทึกคำย่อ "${alias}" แล้ว`, 'ok');
           await loadAliases();
         } catch (err) {
@@ -4788,18 +5185,57 @@
           errEl.hidden = false;
         } finally {
           btn.disabled = false;
+          btn.textContent = 'บันทึกคำย่อ';
         }
       }
 
-      async function deleteAlias(alias) {
-        if (!window.confirm(`ต้องการลบคำย่อ "${alias}" หรือไม่?`)) return;
-        try {
-          await adminPost('delete_product_alias', { alias });
-          toast(`ลบคำย่อ "${alias}" แล้ว`, 'ok');
-          await loadAliases();
-        } catch (err) {
-          toast(err.message || 'ลบคำย่อไม่สำเร็จ', 'err');
+      function confirmDeleteAlias(alias) {
+        const found = (state.aliases.items || []).find(x => x.alias === alias);
+        openConfirmModal({
+          title: 'ลบคำย่อสินค้า',
+          sub: 'การลบจะมีผลกับการค้นหาสินค้าของ Case-Bot ทันที',
+          message: `ต้องการลบคำย่อ "${alias}" ออกจากระบบหรือไม่?`,
+          detail: found ? `${found.alias} → ${found.target}${found.note ? ` (${found.note})` : ''}` : '',
+          confirmLabel: 'ยืนยันลบคำย่อ',
+          onConfirm: async () => {
+            await adminPost('delete_product_alias', { alias });
+            toast(`ลบคำย่อ "${alias}" แล้ว`, 'ok');
+            await loadAliases();
+          }
+        });
+      }
+
+      function suggestAliasFromQuestion(question) {
+        let q = String(question || '')
+          .replace(/^\s*@(?:case-?bot|bot)\b[:\s]*/i, '')
+          .replace(/^(?:สอบถาม|ขอราคา|เช็[กค]ราคา|เช็[กค]สต[๊อ็]อก|ค้นหา|อยากทราบว่า|ถามเรื่อง)\s+/u, '')
+          .replace(/\s*(?:แบบ(?:แพ[็็]ค|ลัง|ถุง|กล่อง|ขวด|ชิ้น)\s*)?(?:ราคา)?(?:กี่บาท|เท่า(?:ไหร่|ไร)|อยู่คลังไหน|อยู่ไหน|คลังไหน|มี(?:ของ|สต[๊อ็]อก|แบบลัง|ขาย)?ไหม|มั้ย|ไหม)(?:\s*(?:ครับ|ค่ะ|คะ|นะคะ|นะ))?\s*[?？]*$/u, '')
+          .replace(/\s+/g, ' ')
+          .trim();
+        if (!q) {
+          q = String(question || '').replace(/^\s*@(?:case-?bot|bot)\b[:\s]*/i, '').replace(/\s+/g, ' ').trim();
         }
+        return q.toLowerCase().slice(0, 80);
+      }
+
+      function isAnswerUnanswered(answer) {
+        const txt = String(answer || '').trim();
+        if (!txt) return true;
+        return /(?:ยัง)?ไม่พบ(?:สินค้า|ข้อมูล|บาร์โค้ด|เอกสาร|ราย(?:การ|ชื่อ)|SKU|จำนวนบรรจุ)|ไม่พบสินค้า|ยังไม่ยืนยัน|ยังยืนยัน[^\n]{0,40}ไม่ได้|ยังสรุป[^\n]{0,40}ไม่ได้|ยังเปิดข้อมูล[^\n]{0,40}ไม่ได้|ยังอ่าน[^\n]{0,30}ไม่ได้|ยังตอบคำถามนี้ไม่ได้|ไม่มีข้อมูลเพียงพอ/u.test(txt);
+      }
+
+      async function loadReviewSummary() {
+        try {
+          const res = await adminPost('unanswered_review_summary', { limit: 50 });
+          state.review.summary = res;
+          renderReviewSummaryStrip();
+        } catch (_) {
+          // Summary strip is supplementary; list view handles primary errors.
+        }
+      }
+
+      async function refreshReviewTab() {
+        await Promise.all([loadReviews(), loadReviewSummary()]);
       }
 
       async function loadReviews(appendBefore = null) {
@@ -4808,8 +5244,12 @@
         if (!appendBefore) renderReviewList();
         try {
           if (state.review.mode === 'unanswered') {
-            const res = await adminPost('unanswered_review_summary', { limit: 50 });
+            const res = await adminPost('unanswered_review_summary', {
+              ...(appendBefore ? { before: appendBefore } : {}),
+              limit: 50
+            });
             state.review.summary = res;
+            state.review.nextCursor = res.nextCursor || null;
             state.review.loaded = true;
           } else {
             const res = await adminPost('question_review_list', {
@@ -4826,7 +5266,44 @@
           state.review.error = err.message || 'โหลดบันทึกคำถามไม่สำเร็จ';
         } finally {
           state.review.loading = false;
+          renderReviewSummaryStrip();
           renderReviewList();
+        }
+      }
+
+      function renderReviewSummaryStrip() {
+        const strip = $('#review-summary-strip');
+        const sum = state.review.summary;
+        const navBadge = $('#nav-badge-review');
+        if (!sum) {
+          if (strip) strip.hidden = true;
+          return;
+        }
+        const unansTopics = Array.isArray(sum.items) ? sum.items.filter(x => x.unanswered).length : 0;
+        const markedTotal = Array.isArray(sum.items) ? sum.items.reduce((acc, x) => acc + (Number(x.markedCount) || 0), 0) : 0;
+        if (navBadge) {
+          navBadge.textContent = sum.unansweredCount > 0 ? String(sum.unansweredCount) : '0';
+        }
+        if (strip) {
+          strip.hidden = false;
+          strip.innerHTML = `
+            <div class="review-stat-card">
+              <span>คำถามล่าสุดที่บันทึก</span>
+              <strong>${escapeHtml((sum.total ?? 0).toLocaleString('th-TH'))}</strong>
+            </div>
+            <div class="review-stat-card danger">
+              <span>บอตยังตอบไม่ได้</span>
+              <strong>${escapeHtml((sum.unansweredCount ?? 0).toLocaleString('th-TH'))} <small style="font-size:12px;font-weight:600">ครั้ง</small></strong>
+            </div>
+            <div class="review-stat-card warn">
+              <span>เรื่องที่รอเติมข้อมูล/คำย่อ</span>
+              <strong>${escapeHtml(unansTopics.toLocaleString('th-TH'))} <small style="font-size:12px;font-weight:600">เรื่อง</small></strong>
+            </div>
+            <div class="review-stat-card">
+              <span>ปักหมุดติดตาม</span>
+              <strong>${escapeHtml(markedTotal.toLocaleString('th-TH'))}</strong>
+            </div>
+          `;
         }
       }
 
@@ -4836,26 +5313,30 @@
 
         if (state.review.mode === 'unanswered') {
           const sum = state.review.summary;
-          $('#review-summary-badge').textContent = sum ? `ตอบไม่ได้ ${sum.unansweredCount} ครั้ง (${sum.items?.filter(x => x.unanswered).length || 0} เรื่อง)` : 'สรุปคำถาม';
-          if (state.review.loading && !sum) { container.innerHTML = `<div class="empty-state"><p>กำลังวิเคราะห์คำถามที่ตอบไม่ได้...</p></div>`; return; }
-          if (state.review.error) { container.innerHTML = `<div class="empty-state"><div class="form-error-box">${escapeHtml(state.review.error)}</div></div>`; return; }
           const unans = (sum?.items || []).filter(i => i.unanswered);
+          $('#review-summary-badge').textContent = sum ? `ตอบไม่ได้ ${sum.unansweredCount} ครั้ง (${unans.length} เรื่อง)` : 'สรุปคำถามที่ตอบไม่ได้';
+          if (state.review.loading && !sum) { container.innerHTML = `<div class="empty-state"><svg class="icon icon-lg spin" style="color:var(--accent)" viewBox="0 0 24 24"><path d="M21 12a9 9 0 1 1-6.219-8.56"/></svg><p>กำลังวิเคราะห์คำถามที่ตอบไม่ได้...</p></div>`; return; }
+          if (state.review.error) { container.innerHTML = `<div class="empty-state"><div class="form-error-box">${escapeHtml(state.review.error)}</div><button class="btn btn-secondary btn-sm" type="button" data-action="retry-reviews">ลองอีกครั้ง</button></div>`; return; }
           if (!unans.length) {
-            container.innerHTML = `<div class="empty-state"><h3>ยังไม่พบคำถามที่ตอบไม่ได้</h3><p>จากบันทึกล่าสุด ${sum?.total || 0} รายการ บอตตอบได้ครบถ้วน</p></div>`;
+            container.innerHTML = `<div class="empty-state"><h3>ยังไม่พบคำถามที่ตอบไม่ได้</h3><p>จากบันทึกล่าสุด ${escapeHtml(sum?.total || 0)} รายการ บอตตอบได้ครบถ้วน</p></div>`;
             return;
           }
-          container.innerHTML = unans.map(it => `
+          container.innerHTML = unans.map((it, idx) => `
             <div class="review-item">
               <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap">
-                <strong style="font-size:14.5px">${escapeHtml(it.question)}</strong>
-                <div style="display:flex;gap:6px;align-items:center">
-                  <span class="badge badge-overdue">ถาม ${escapeHtml(it.unansweredCount)} ครั้ง</span>
+                <strong style="font-size:14.5px;overflow-wrap:anywhere">${escapeHtml(it.question)}</strong>
+                <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap">
+                  <span class="badge badge-overdue">ตอบไม่ได้ ${escapeHtml(it.unansweredCount)} ครั้ง</span>
+                  ${it.markedCount > 0 ? `<span class="badge badge-open">★ ปักหมุด ${escapeHtml(it.markedCount)}</span>` : ''}
                   <span style="font-size:11.5px;color:var(--text-muted)">${escapeHtml(formatDate(it.latestAt))}</span>
                 </div>
               </div>
-              <p style="margin:0;font-size:12.5px;color:var(--text-muted)">คำตอบล่าสุด: ${escapeHtml(it.sampleAnswer)}</p>
-              <div>
-                <button class="btn btn-secondary btn-xs" type="button" data-prefill-alias="${escapeHtml(it.question)}">+ สร้างคำย่อจากคำถามนี้</button>
+              <p style="margin:0;font-size:12.5px;color:var(--text-muted);overflow-wrap:anywhere">คำตอบล่าสุด: ${escapeHtml(it.sampleAnswer)}</p>
+              <div style="display:flex;gap:8px;flex-wrap:wrap">
+                <button class="btn btn-primary btn-xs" type="button" data-prefill-summary-idx="${idx}">
+                  <svg class="icon icon-sm" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>
+                  สร้างคำย่อจากคำถามนี้
+                </button>
               </div>
             </div>
           `).join('');
@@ -4863,33 +5344,61 @@
         }
 
         const items = state.review.items || [];
-        $('#review-summary-badge').textContent = `${items.length} รายการ`;
-        if (state.review.loading && !items.length) { container.innerHTML = `<div class="empty-state"><p>กำลังโหลดบันทึกคำถาม...</p></div>`; return; }
-        if (state.review.error) { container.innerHTML = `<div class="empty-state"><div class="form-error-box">${escapeHtml(state.review.error)}</div></div>`; return; }
-        if (!items.length) { container.innerHTML = `<div class="empty-state"><h3>ยังไม่มีรายการคำถามในมุมมองนี้</h3></div>`; return; }
+        $('#review-summary-badge').textContent = `${items.length.toLocaleString('th-TH')} รายการ`;
+        if (state.review.loading && !items.length) { container.innerHTML = `<div class="empty-state"><svg class="icon icon-lg spin" style="color:var(--accent)" viewBox="0 0 24 24"><path d="M21 12a9 9 0 1 1-6.219-8.56"/></svg><p>กำลังโหลดบันทึกคำถาม...</p></div>`; return; }
+        if (state.review.error) { container.innerHTML = `<div class="empty-state"><div class="form-error-box">${escapeHtml(state.review.error)}</div><button class="btn btn-secondary btn-sm" type="button" data-action="retry-reviews">ลองอีกครั้ง</button></div>`; return; }
+        if (!items.length) {
+          container.innerHTML = `<div class="empty-state"><h3>${state.review.mode === 'marked' ? 'ยังไม่มีคำถามที่ปักหมุดไว้' : 'ยังไม่มีรายการคำถามในระบบ'}</h3><p>${state.review.mode === 'marked' ? 'กดปุ่ม "ปักหมุด" ที่คำถามที่ต้องการติดตามเพื่อรวมไว้ในมุมมองนี้' : 'เมื่อมีคำถามสินค้าหรือคำถามที่บอตยังตอบไม่ได้ในกลุ่ม ระบบจะบันทึกไว้ที่นี่'}</p></div>`;
+          return;
+        }
 
-        container.innerHTML = items.map(it => `
-          <div class="review-item">
-            <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap">
-              <span style="font-size:12px;color:var(--text-muted)">${escapeHtml(formatLongDate(it.createdAt))}</span>
-              <span class="badge ${it.marked ? 'badge-closed' : 'badge-internal'}">${it.marked ? 'ทำเครื่องหมายแล้ว' : 'รอตรวจ'}</span>
+        container.innerHTML = items.map((it, idx) => {
+          const unans = isAnswerUnanswered(it.answer);
+          return `
+            <div class="review-item ${it.marked ? 'is-marked' : ''}">
+              <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap">
+                <span style="font-size:12px;color:var(--text-muted)">${escapeHtml(formatLongDate(it.createdAt))}</span>
+                <div style="display:flex;gap:6px;flex-wrap:wrap;align-items:center">
+                  ${unans ? '<span class="badge badge-overdue">บอตยังตอบไม่ได้</span>' : '<span class="badge badge-closed">ตอบแล้ว</span>'}
+                  ${it.marked ? '<span class="badge badge-open">★ ปักหมุดแล้ว</span>' : ''}
+                </div>
+              </div>
+              <strong style="font-size:14px;white-space:pre-wrap;overflow-wrap:anywhere">${escapeHtml(it.question)}</strong>
+              <details class="orig-details" ${unans ? 'open' : ''}>
+                <summary><span>คำตอบของ Case-Bot</span></summary>
+                <div class="orig-body">${escapeHtml(it.answer)}</div>
+              </details>
+              <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
+                <button class="btn btn-xs btn-star ${it.marked ? 'is-marked' : ''}" type="button" data-review-mark="${escapeHtml(it.id)}" data-marked="${String(!it.marked)}">
+                  ${it.marked ? '★ เลิกปักหมุด' : '☆ ปักหมุด'}
+                </button>
+                <button class="btn btn-secondary btn-xs" type="button" data-prefill-review-idx="${idx}">
+                  + สร้างคำย่อจากคำถามนี้
+                </button>
+                <button class="btn btn-danger-soft btn-xs" type="button" data-review-clear="${escapeHtml(it.id)}">ลบรายการ</button>
+              </div>
             </div>
-            <strong style="font-size:14px;white-space:pre-wrap">${escapeHtml(it.question)}</strong>
-            <details class="orig-details">
-              <summary><span>อ่านคำตอบของ Case-Bot</span></summary>
-              <div class="orig-body">${escapeHtml(it.answer)}</div>
-            </details>
-            <div style="display:flex;gap:8px;flex-wrap:wrap">
-              <button class="btn btn-secondary btn-xs" type="button" data-review-mark="${escapeHtml(it.id)}" data-marked="${String(!it.marked)}">
-                ${it.marked ? 'เอาเครื่องหมายออก' : 'ทำเครื่องหมาย'}
-              </button>
-              <button class="btn btn-danger-soft btn-xs" type="button" data-review-clear="${escapeHtml(it.id)}">ล้างรายการ</button>
-            </div>
-          </div>
-        `).join('') + (state.review.nextCursor ? `
-          <div style="padding:16px;text-align:center">
-            <button id="btn-review-more" class="btn btn-secondary btn-sm" type="button" ${state.review.loading ? 'disabled' : ''}>โหลดรายการก่อนหน้า</button>
+          `;
+        }).join('') + (state.review.nextCursor ? `
+          <div style="padding:16px;text-align:center;border-top:1px solid var(--border);background:var(--bg-soft)">
+            <button id="btn-review-more" class="btn btn-secondary btn-sm" type="button" ${state.review.loading ? 'disabled' : ''}>${state.review.loading ? 'กำลังโหลด...' : 'โหลดรายการก่อนหน้า'}</button>
           </div>` : '');
+      }
+
+      function confirmClearReview(id) {
+        const found = (state.review.items || []).find(x => x.id === id);
+        openConfirmModal({
+          title: 'ลบบันทึกคำถามนี้',
+          sub: 'ลบรายการคำถามและคำตอบออกจาก Log การตรวจสอบ',
+          message: 'ต้องการลบคำถามและคำตอบรายการนี้ออกจากบันทึกหรือไม่?',
+          detail: found ? found.question : '',
+          confirmLabel: 'ยืนยันลบรายการ',
+          onConfirm: async () => {
+            await adminPost('question_review_clear', { id });
+            toast('ลบรายการคำถามแล้ว', 'ok');
+            await refreshReviewTab();
+          }
+        });
       }
 
       // ===== Event Wiring =====
@@ -5116,6 +5625,9 @@
         $('#sf-content').addEventListener('input', e => {
           $('#sf-char-count').textContent = `${e.target.value.length.toLocaleString('th-TH')} / 12,000 ตัวอักษร`;
         });
+        $$('[data-sop-template]').forEach(btn => btn.addEventListener('click', () => {
+          applySopStarterTemplate(btn.dataset.sopTemplate);
+        }));
         $('#sop-form').addEventListener('submit', handleSopFormSubmit);
 
         // LINE Commands & AI events
@@ -5131,58 +5643,93 @@
           if (cmd) void copyText(cmd, 'คัดลอกคำสั่ง LINE แล้ว');
         });
 
-        // Admin Review & Alias events
+        // Confirmation Modal
+        $('#confirm-modal-ok').addEventListener('click', () => void executeConfirmModal());
+
+        // Admin Product Aliases events
         $('#alias-form').addEventListener('submit', handleAliasSubmit);
-        $('#btn-alias-clear-form').addEventListener('click', () => { $('#alias-form').reset(); $('#alias-error').hidden = true; });
         $('#btn-alias-refresh').addEventListener('click', () => void loadAliases());
+        $('#btn-alias-create').addEventListener('click', () => openAliasModal());
+        $('#alias-search').addEventListener('input', e => {
+          state.aliases.query = e.target.value;
+          renderAliasesList();
+        });
+        $('#alias-search-clear').addEventListener('click', () => {
+          state.aliases.query = '';
+          $('#alias-search').value = '';
+          renderAliasesList();
+        });
         $('#alias-list-container').addEventListener('click', e => {
+          const act = e.target.closest('[data-action]')?.dataset?.action;
+          if (act === 'retry-aliases') { void loadAliases(); return; }
+          if (act === 'clear-alias-search') {
+            state.aliases.query = '';
+            $('#alias-search').value = '';
+            renderAliasesList();
+            return;
+          }
           const editBtn = e.target.closest('[data-edit-alias]');
           if (editBtn) {
-            const found = state.aliases.items.find(x => x.alias === editBtn.dataset.editAlias);
-            if (found) {
-              $('#alias-input').value = found.alias;
-              $('#alias-target').value = found.target;
-              $('#alias-note').value = found.note || '';
-              $('#alias-target').focus();
-            }
+            const found = (state.aliases.items || []).find(x => x.alias === editBtn.dataset.editAlias);
+            if (found) openAliasModal({ existing: found });
             return;
           }
           const delBtn = e.target.closest('[data-delete-alias]');
-          if (delBtn) void deleteAlias(delBtn.dataset.deleteAlias);
+          if (delBtn) confirmDeleteAlias(delBtn.dataset.deleteAlias);
         });
 
+        // Admin Question Review events
         $$('[data-review-mode]').forEach(btn => btn.addEventListener('click', () => {
           state.review.mode = btn.dataset.reviewMode;
           void loadReviews();
         }));
-        $('#btn-review-refresh').addEventListener('click', () => void loadReviews());
+        $('#btn-review-refresh').addEventListener('click', () => void refreshReviewTab());
         $('#review-list-container').addEventListener('click', async e => {
-          const prefill = e.target.closest('[data-prefill-alias]');
-          if (prefill) {
-            $('#alias-input').value = prefill.dataset.prefillAlias.slice(0, 80);
-            $('#alias-target').focus();
-            $('#alias-form').scrollIntoView({ behavior: 'smooth', block: 'center' });
+          if (e.target.closest('[data-action="retry-reviews"]')) {
+            void refreshReviewTab();
+            return;
+          }
+          const prefillSummary = e.target.closest('[data-prefill-summary-idx]');
+          if (prefillSummary) {
+            const unans = (state.review.summary?.items || []).filter(i => i.unanswered);
+            const item = unans[Number(prefillSummary.dataset.prefillSummaryIdx)];
+            if (item) {
+              openAliasModal({
+                prefillAlias: suggestAliasFromQuestion(item.question),
+                sourceQuestion: item.question
+              });
+            }
+            return;
+          }
+          const prefillReview = e.target.closest('[data-prefill-review-idx]');
+          if (prefillReview) {
+            const item = (state.review.items || [])[Number(prefillReview.dataset.prefillReviewIdx)];
+            if (item) {
+              openAliasModal({
+                prefillAlias: suggestAliasFromQuestion(item.question),
+                sourceQuestion: item.question
+              });
+            }
             return;
           }
           const markBtn = e.target.closest('[data-review-mark]');
           if (markBtn) {
             const id = markBtn.dataset.reviewMark;
             const marked = markBtn.dataset.marked === 'true';
+            markBtn.disabled = true;
             try {
               await adminPost('question_review_mark', { id, marked });
-              toast(marked ? 'ทำเครื่องหมายแล้ว' : 'เอาเครื่องหมายออกแล้ว', 'ok');
-              await loadReviews();
-            } catch (err) { toast(err.message || 'ทำรายการไม่สำเร็จ', 'err'); }
+              toast(marked ? 'ปักหมุดคำถามแล้ว' : 'เลิกปักหมุดแล้ว', 'ok');
+              await refreshReviewTab();
+            } catch (err) {
+              toast(err.message || 'ทำรายการไม่สำเร็จ', 'err');
+              markBtn.disabled = false;
+            }
             return;
           }
           const clrBtn = e.target.closest('[data-review-clear]');
           if (clrBtn) {
-            if (!window.confirm('ต้องการล้างคำถามและคำตอบรายการนี้ออกจากบันทึกหรือไม่?')) return;
-            try {
-              await adminPost('question_review_clear', { id: clrBtn.dataset.reviewClear });
-              toast('ล้างรายการแล้ว', 'ok');
-              await loadReviews();
-            } catch (err) { toast(err.message || 'ล้างรายการไม่สำเร็จ', 'err'); }
+            confirmClearReview(clrBtn.dataset.reviewClear);
             return;
           }
           if (e.target.closest('#btn-review-more') && state.review.nextCursor) {
