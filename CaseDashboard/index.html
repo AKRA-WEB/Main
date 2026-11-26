@@ -1053,6 +1053,14 @@
           <span id="nav-badge-aliases" class="cb-nav-badge">—</span>
         </button>
 
+        <button id="nav-tab-members" class="cb-nav-item" type="button" data-tab="members" hidden>
+          <span class="cb-nav-left">
+            <svg class="icon" viewBox="0 0 24 24"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+            <span>สมาชิก &amp; ฝากสั่ง</span>
+          </span>
+          <span id="nav-badge-members" class="cb-nav-badge">—</span>
+        </button>
+
         <button id="nav-tab-review" class="cb-nav-item" type="button" data-tab="review" hidden>
           <span class="cb-nav-left">
             <svg class="icon" viewBox="0 0 24 24"><path d="M3 12a9 9 0 1 0 3-6.7"/><path d="M3 4v5h5M12 7v5l3 2"/></svg>
@@ -1464,6 +1472,46 @@
             </div>
             <div id="review-summary-strip" class="review-summary-strip" hidden></div>
             <div id="review-list-container"></div>
+          </section>
+        </section>
+
+        <!-- ===== TAB 6: MEMBERS & PRE-ORDERS (ADMIN/SUPERVISOR/MANAGER) ===== -->
+        <section id="tab-members" aria-label="สมาชิกและฝากสั่ง" hidden style="display:grid;gap:16px">
+          <section class="panel">
+            <div class="panel-head">
+              <div class="panel-title-wrap">
+                <h2 class="panel-title">สมาชิก DATA &amp; รายการฝากสั่ง</h2>
+                <span id="members-count-badge" class="count-badge">—</span>
+              </div>
+              <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
+                <div class="status-chips" role="group" aria-label="มุมมองสมาชิกและฝากสั่ง">
+                  <button class="status-chip" type="button" data-member-view="members" aria-pressed="true">รายชื่อสมาชิก</button>
+                  <button class="status-chip" type="button" data-member-view="preorders" aria-pressed="false">ฝากสั่งค้างรับ</button>
+                  <button class="status-chip" type="button" data-member-view="all_preorders" aria-pressed="false">ฝากสั่งทั้งหมด</button>
+                </div>
+                <button id="btn-members-refresh" class="btn btn-secondary btn-sm" type="button">
+                  <svg class="icon icon-sm" viewBox="0 0 24 24"><path d="M21 12a9 9 0 0 0-9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/><path d="M3 12a9 9 0 0 0 9 9 9.75 9.75 0 0 0 6.74-2.74L21 16"/><path d="M21 21v-5h-5"/></svg>
+                  รีเฟรช
+                </button>
+                <button id="btn-preorder-create" class="btn btn-primary btn-sm" type="button">
+                  <svg class="icon icon-sm" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>
+                  บันทึกฝากสั่ง
+                </button>
+              </div>
+            </div>
+            <div class="toolbar">
+              <div class="toolbar-row">
+                <div class="search-wrap">
+                  <svg class="icon icon-sm icon-search" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg>
+                  <input id="member-search" class="search-input" type="search" autocomplete="off" placeholder="ค้นหาชื่อสมาชิก ชื่อเล่น รหัส เบอร์โทร จังหวัด หรือสินค้าที่ฝากสั่ง..." aria-label="ค้นหาสมาชิก">
+                  <button id="member-search-clear" class="search-clear" type="button" aria-label="ล้างคำค้นสมาชิก" hidden>
+                    <svg class="icon icon-sm" viewBox="0 0 24 24"><path d="M18 6 6 18M6 6l12 12"/></svg>
+                  </button>
+                </div>
+                <span style="font-size:12px;color:var(--text-muted)">รายการฝากสั่งจะแจ้งเตือนอัตโนมัติใน LINE ทุก 7 วัน เวลา 09:00 น. จนกว่าจะกดรับของแล้ว</span>
+              </div>
+            </div>
+            <div id="members-list-container"></div>
           </section>
         </section>
       </main>
@@ -2064,11 +2112,95 @@
 
   <div id="toast-host" class="toast-host" aria-live="polite"></div>
 
+  <!-- ===== Modal 9: Member Detail & Profile Memory ===== -->
+  <div id="member-modal" class="modal-backdrop" hidden>
+    <section class="modal-card wide" role="dialog" aria-modal="true" aria-labelledby="member-modal-title" tabindex="-1">
+      <header class="modal-head">
+        <div class="modal-head-left">
+          <div class="modal-icon">
+            <svg class="icon" viewBox="0 0 24 24"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+          </div>
+          <div>
+            <h2 id="member-modal-title">ข้อมูลสมาชิก</h2>
+            <p id="member-modal-sub">—</p>
+          </div>
+        </div>
+        <button class="btn btn-ghost btn-icon btn-sm" type="button" data-close-modal="member-modal" aria-label="ปิดหน้าต่าง">
+          <svg class="icon" viewBox="0 0 24 24"><path d="M18 6 6 18M6 6l12 12"/></svg>
+        </button>
+      </header>
+      <div id="member-modal-body" class="modal-body"></div>
+      <footer class="modal-foot">
+        <button id="btn-member-add-preorder" class="btn btn-secondary btn-sm" type="button">+ ฝากสั่งให้ลูกค้ารายนี้</button>
+        <div style="display:flex;gap:8px">
+          <button class="btn btn-secondary" type="button" data-close-modal="member-modal">ปิด</button>
+          <button id="btn-member-profile-save" class="btn btn-primary" type="submit" form="member-profile-form">บันทึกข้อมูลสมาชิก</button>
+        </div>
+      </footer>
+    </section>
+  </div>
+
+  <!-- ===== Modal 10: Create Member Pre-Order ===== -->
+  <div id="preorder-modal" class="modal-backdrop" hidden>
+    <section class="modal-card" role="dialog" aria-modal="true" aria-labelledby="preorder-modal-title" tabindex="-1">
+      <header class="modal-head">
+        <div class="modal-head-left">
+          <div class="modal-icon">
+            <svg class="icon" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><polyline points="12 7 12 12 15 15"/></svg>
+          </div>
+          <div>
+            <h2 id="preorder-modal-title">บันทึกลูกค้าฝากสั่งสินค้า</h2>
+            <p>แจ้งเตือนซ้ำในกลุ่ม LINE อัตโนมัติทุก 7 วัน เวลา 09:00 น.</p>
+          </div>
+        </div>
+        <button class="btn btn-ghost btn-icon btn-sm" type="button" data-close-modal="preorder-modal" aria-label="ปิดหน้าต่าง">
+          <svg class="icon" viewBox="0 0 24 24"><path d="M18 6 6 18M6 6l12 12"/></svg>
+        </button>
+      </header>
+      <form id="preorder-form" class="modal-body" novalidate>
+        <div id="preorder-error" class="form-error-box" role="alert" hidden></div>
+        <div class="form-grid">
+          <label class="field full">
+            <span class="field-label">เลือกลูกค้าสมาชิก <span class="req">*</span></span>
+            <select id="po-memberId" required></select>
+          </label>
+          <label class="field full">
+            <span class="field-label">สินค้าที่ฝากสั่ง <span class="req">*</span></span>
+            <input id="po-itemName" type="text" maxlength="240" required placeholder="เช่น แป้งขนมครก ช้างสามเศียร">
+          </label>
+          <label class="field">
+            <span class="field-label">จำนวน</span>
+            <input id="po-qty" type="number" step="any" min="0.01" placeholder="เช่น 5">
+          </label>
+          <label class="field">
+            <span class="field-label">หน่วย</span>
+            <input id="po-unit" type="text" maxlength="40" placeholder="เช่น ลัง / ถุง / กระสอบ">
+          </label>
+          <label class="field full">
+            <span class="field-label">รหัส SKU (ถ้ามี — เพื่อเชื่อมเช็กใบรับเข้า GR)</span>
+            <input id="po-sku" type="text" maxlength="160" placeholder="เช่น FL15052603">
+          </label>
+          <label class="field full">
+            <span class="field-label">หมายเหตุ</span>
+            <input id="po-note" type="text" maxlength="500" placeholder="เช่น แจ้งลูกค้าถ้าเข้าก่อนศุกร์">
+          </label>
+        </div>
+      </form>
+      <footer class="modal-foot">
+        <span style="font-size:12px;color:var(--text-muted)"><span class="req">*</span> ข้อมูลที่ต้องระบุ</span>
+        <div style="display:flex;gap:8px">
+          <button class="btn btn-secondary" type="button" data-close-modal="preorder-modal">ยกเลิก</button>
+          <button id="btn-preorder-save" class="btn btn-primary" type="submit" form="preorder-form">บันทึกรายการฝากสั่ง</button>
+        </div>
+      </footer>
+    </section>
+  </div>
+
   <script>
     (function () {
       'use strict';
 
-      const CURRENT_VERSION = '20261125.03';
+      const CURRENT_VERSION = '20261126.01';
       const CASE_DASHBOARD_FORBIDDEN = 'CaseDashboard เปิดให้เฉพาะหัวหน้างานและผู้ดูแลระบบ';
       const MAIN_PORTAL_URL = 'https://akra-web.github.io/Main/';
       const AUTH_API_URL = 'https://hgxrrskztbpejirrdpbq.supabase.co/functions/v1/auth-api';
@@ -2120,7 +2252,10 @@
         { cat: 'สรุปประจำวัน', cmd: 'สรุปงานวันนี้', desc: 'สรุปเคสที่มีความเคลื่อนไหวในวันนี้' },
         { cat: 'ถามผู้ช่วย AI', cmd: '@Case-Bot สรุปเคส CASE-0001', desc: 'ให้ AI สรุปสถานะ สาเหตุ และสิ่งที่ต้องติดตามต่อ' },
         { cat: 'คลัง SOP', cmd: 'ดู SOP-0001', desc: 'เรียกอ่านขั้นตอนมาตรฐานการทำงานในกลุ่ม LINE' },
-        { cat: 'คำย่อ & คำถาม', cmd: '@Case-Bot ดูคำย่อ', desc: 'ตรวจสอบคำย่อสินค้าที่บันทึกไว้ (Admin เพิ่ม/ลบผ่าน LINE ได้)' }
+        { cat: 'คำย่อ & คำถาม', cmd: '@Case-Bot ดูคำย่อ', desc: 'ตรวจสอบคำย่อสินค้าที่บันทึกไว้ (Admin เพิ่ม/ลบผ่าน LINE ได้)' },
+        { cat: 'ข้อมูลสมาชิก', cmd: '@Case-Bot ในร้านมีสมาชิกชื่อ พี่นนท์ ไหม', desc: 'ค้นหาสมาชิก เบอร์โทร ที่อยู่จัดส่ง สินค้าประจำ และประวัติเคส' },
+        { cat: 'ฝากสั่งสินค้า', cmd: '@Case-Bot พี่นนท์ฝากสั่ง แป้งขนมครก 5 ลัง', desc: 'บันทึกรายการฝากสั่ง พร้อมเด้งเตือนทุก 7 วัน 09:00 น.' },
+        { cat: 'คิดน้ำหนักบิล', cmd: 'คิดน้ำหนักบิล', desc: 'ส่งรูปบิลแล้วกด Reply พิมพ์ คิดน้ำหนักบิล เพื่อรวมน้ำหนักเป็น กก.' }
       ];
 
       const SOP_STARTER_TEMPLATES = {
@@ -2665,6 +2800,54 @@
           { id: '11111111-1111-4111-8111-111111111106', question: '@Case-Bot ถุงจีบพับข้าง 6x9 ยกแพ็กมีกี่ใบ', answer: 'ยังไม่พบข้อมูลสินค้า "ถุงจีบพับข้าง 6x9" ใน BUYMORETH DATA ครับ', createdAt: isoOffset(-22), marked: false }
         ];
 
+        const demoMembers = [
+          {
+            id: 'mem-1', code: 'M-0108', name: 'คุณนนท์ วัฒนา', phone: '081-234-5678', email: 'non@example.com',
+            address: 'อ.เมือง ชลบุรี', company: 'ร้านเค้กหน้าตลาด',
+            aliases: ['พี่นนท์', 'ร้านเค้กพี่นนท์'], deliveryAddress: '123/4 ถ.สุขุมวิท ต.บางปลาสร้อย อ.เมือง ชลบุรี',
+            province: 'ชลบุรี', mapsUrl: 'https://maps.app.goo.gl/demoNonShop', carrier: 'รถคอกชลบุรี (ออกอังคาร/ศุกร์)',
+            notes: 'ขอใบกำกับภาษีเต็มรูปทุกครั้ง ไม่รับของวันอาทิตย์'
+          },
+          {
+            id: 'mem-2', code: 'M-0245', name: 'คุณสมชาย เบเกอรี่', phone: '089-998-7766', email: null,
+            address: 'อ.เมือง ระยอง', company: 'ร้านบ้านขนมปัง',
+            aliases: ['ร้านบ้านขนม', 'พี่สมชาย'], deliveryAddress: '88 ตลาดสตาร์ อ.เมือง ระยอง',
+            province: 'ระยอง', mapsUrl: null, carrier: 'ขนส่งเอกชน PL', notes: 'ใช้แป้งว่าวเป็นหลัก'
+          },
+          {
+            id: 'mem-3', code: 'M-0312', name: 'เจ๊หมวย ขนมไทย', phone: '086-555-4321', email: null,
+            address: null, company: 'ครัวเจ๊หมวย',
+            aliases: ['เจ๊หมวย'], deliveryAddress: null, province: 'กรุงเทพมหานคร',
+            mapsUrl: null, carrier: 'รับเองหน้าร้าน W1', notes: 'โทรแจ้งก่อนของเข้า'
+          }
+        ];
+        const demoMemberProducts = {
+          'mem-1': [
+            { id: 'mp-1', sku: 'FL02031703', productName: 'Z/แป้ง มงกุฏม่วง (ลัง10x1kg)', pack: 'ลัง10x1kg', unit: 'ลัง', lastQty: 5, orderCount: 4, lastOrderedAt: isoOffset(-36), source: 'bill_image' },
+            { id: 'mp-2', sku: 'DT01010102', productName: 'เนยสดแท้ ออคิด (5kg)', pack: '5kg', unit: 'ก้อน', lastQty: 2, orderCount: 3, lastOrderedAt: isoOffset(-72), source: 'bill_image' }
+          ],
+          'mem-2': [
+            { id: 'mp-3', sku: 'FL01010103', productName: 'Z/แป้ง ว่าว (ลัง10x1kg)', pack: 'ลัง10x1kg', unit: 'ลัง', lastQty: 10, orderCount: 7, lastOrderedAt: isoOffset(-24), source: 'manual' }
+          ]
+        };
+        const demoPreorders = [
+          {
+            id: 'po-1', code: 'HOLD-0001', memberId: 'mem-1', memberLabel: 'คุณนนท์ วัฒนา', memberCode: 'M-0108',
+            memberName: 'คุณนนท์ วัฒนา', memberPhone: '081-234-5678', sku: 'FL15052603',
+            itemName: 'Z/แป้ง ขนมครก ช้างสามเศียร (ลัง10x1kg)', quantity: 5, unit: 'ลัง',
+            note: 'ลูกค้าฝากสั่งไว้รอบส่งวันศุกร์', status: 'open',
+            orderedAt: isoOffset(-180), nextRemindAt: isoOffset(12), remindCount: 1, closedAt: null
+          },
+          {
+            id: 'po-2', code: 'HOLD-0002', memberId: 'mem-3', memberLabel: 'เจ๊หมวย ขนมไทย', memberCode: 'M-0312',
+            memberName: 'เจ๊หมวย ขนมไทย', memberPhone: '086-555-4321', sku: null,
+            itemName: 'กะทิอัมพวา 1000ml ยกลัง', quantity: 3, unit: 'ลัง',
+            note: null, status: 'open',
+            orderedAt: isoOffset(-48), nextRemindAt: isoOffset(120), remindCount: 0, closedAt: null
+          }
+        ];
+        let nextDemoHoldSeq = 3;
+
         const system = {
           oaName: 'Case-Bot',
           oaId: '@829dnwur',
@@ -2925,6 +3108,69 @@
             const items = [...grouped.values()].sort((a, b) => Number(b.unanswered) - Number(a.unanswered) || b.unansweredCount - a.unansweredCount);
             return { total: base.length, uniqueCount: items.length, unansweredCount: unansweredTotal, items, nextCursor: null };
           }
+          if (action === 'member_search') {
+            const q = String(payload.query || '').trim().toLowerCase();
+            const list = demoMembers.map(m => ({
+              ...m,
+              productCount: (demoMemberProducts[m.id] || []).length,
+              openPreorderCount: demoPreorders.filter(po => po.memberId === m.id && po.status === 'open').length
+            })).filter(m => !q || `${m.code} ${m.name} ${m.phone || ''} ${m.company || ''} ${m.province || ''} ${(m.aliases || []).join(' ')}`.toLowerCase().includes(q));
+            return { total: list.length, items: list };
+          }
+          if (action === 'member_detail') {
+            const m = demoMembers.find(x => x.id === payload.memberId || (payload.code && x.code === payload.code));
+            if (!m) throw new Error('ไม่พบข้อมูลสมาชิกในระบบตัวอย่าง');
+            return {
+              member: { id: m.id, code: m.code, name: m.name, phone: m.phone, email: m.email, address: m.address, company: m.company },
+              profile: { aliases: m.aliases || [], deliveryAddress: m.deliveryAddress, province: m.province, mapsUrl: m.mapsUrl, carrier: m.carrier, notes: m.notes, updatedBy: 'Demo', updatedAt: ts },
+              products: [...(demoMemberProducts[m.id] || [])],
+              preorders: demoPreorders.filter(po => po.memberId === m.id),
+              cases: cases.filter(c => c.customerName && `${m.name} ${m.company || ''} ${(m.aliases || []).join(' ')}`.toLowerCase().includes(c.customerName.toLowerCase())).slice(0, 10)
+            };
+          }
+          if (action === 'member_upsert_profile') {
+            const m = demoMembers.find(x => x.id === payload.memberId);
+            if (!m) throw new Error('ไม่พบสมาชิก');
+            if (Array.isArray(payload.aliases)) m.aliases = payload.aliases;
+            if (payload.addAlias && !m.aliases.includes(payload.addAlias)) m.aliases.push(payload.addAlias);
+            if (Object.hasOwn(payload, 'deliveryAddress')) m.deliveryAddress = payload.deliveryAddress;
+            if (Object.hasOwn(payload, 'province')) m.province = payload.province;
+            if (Object.hasOwn(payload, 'mapsUrl')) m.mapsUrl = payload.mapsUrl;
+            if (Object.hasOwn(payload, 'carrier')) m.carrier = payload.carrier;
+            if (Object.hasOwn(payload, 'notes')) m.notes = payload.notes;
+            return { memberId: m.id, aliases: m.aliases, deliveryAddress: m.deliveryAddress, province: m.province, mapsUrl: m.mapsUrl, carrier: m.carrier, notes: m.notes, updatedAt: ts };
+          }
+          if (action === 'member_record_products') {
+            const list = demoMemberProducts[payload.memberId] || (demoMemberProducts[payload.memberId] = []);
+            for (const it of (payload.items || [])) {
+              list.unshift({ id: 'mp-' + Date.now(), sku: it.sku || null, productName: it.productName, pack: it.pack || null, unit: it.unit || null, lastQty: it.quantity || null, orderCount: 1, lastOrderedAt: ts, source: 'manual' });
+            }
+            return { savedCount: (payload.items || []).length, memberId: payload.memberId };
+          }
+          if (action === 'member_preorder_list') {
+            const st = payload.status || 'open';
+            const list = demoPreorders.filter(po => (st === 'all' || (st === 'closed' ? po.status !== 'open' : po.status === st)) && (!payload.memberId || po.memberId === payload.memberId));
+            return { items: list.map(po => ({ ...po })) };
+          }
+          if (action === 'member_preorder_create') {
+            const m = demoMembers.find(x => x.id === payload.memberId);
+            if (!m) throw new Error('ไม่พบสมาชิก');
+            const code = `HOLD-${String(nextDemoHoldSeq++).padStart(4, '0')}`;
+            const rec = {
+              id: 'po-' + Date.now(), code, memberId: m.id, memberLabel: m.name, memberCode: m.code, memberName: m.name, memberPhone: m.phone,
+              sku: payload.sku || null, itemName: payload.itemName, quantity: payload.quantity || null, unit: payload.unit || null,
+              note: payload.note || null, status: 'open', orderedAt: ts, nextRemindAt: isoOffset(168), remindCount: 0, closedAt: null
+            };
+            demoPreorders.unshift(rec);
+            return rec;
+          }
+          if (action === 'member_preorder_close') {
+            const po = demoPreorders.find(x => (payload.code && x.code === payload.code) || (payload.id && x.id === payload.id));
+            if (!po || po.status !== 'open') return { closed: false };
+            po.status = payload.status === 'cancelled' ? 'cancelled' : 'picked_up';
+            po.closedAt = ts;
+            return { closed: true, preorder: po };
+          }
           throw new Error(`ไม่รองรับคำสั่ง ${action}`);
         }
         return { handleAdmin };
@@ -2960,6 +3206,7 @@
         sops: { items: [], total: 0, query: '', status: 'active', category: 'all', loading: false, loaded: false, error: null },
         review: { mode: 'all', items: [], summary: null, nextCursor: null, loading: false, loaded: false, error: null },
         aliases: { items: [], query: '', loading: false, loaded: false, error: null },
+        members: { view: 'members', query: '', items: [], total: 0, preorders: [], loading: false, loaded: false, error: null, detail: null, detailLoading: false },
         editingCase: null,
         closingCase: null,
         closeToken: null,
@@ -3454,8 +3701,9 @@
       function syncTabVisibility() {
         const isAdmin = hasAdminRole(state.user);
         $('#nav-tab-aliases').hidden = !isAdmin;
+        $('#nav-tab-members').hidden = !isAdmin;
         $('#nav-tab-review').hidden = !isAdmin;
-        if (!isAdmin && ['aliases', 'review'].includes(state.activeTab)) switchTab('cases');
+        if (!isAdmin && ['aliases', 'members', 'review'].includes(state.activeTab)) switchTab('cases');
         const aiBtn = $('#btn-ai-verify');
         const aiNote = $('#ai-admin-note');
         if (aiBtn) aiBtn.hidden = !isAdmin;
@@ -3463,17 +3711,18 @@
       }
 
       function switchTab(tab) {
-        if (['aliases', 'review'].includes(tab) && !hasAdminRole(state.user)) tab = 'cases';
+        if (['aliases', 'members', 'review'].includes(tab) && !hasAdminRole(state.user)) tab = 'cases';
         state.activeTab = tab;
         const titles = {
           cases: 'ภาพรวมและเคสทั้งหมด',
           sops: 'คลัง SOP มาตรฐานการทำงาน',
           line: 'คำสั่ง LINE & การเชื่อมต่อ',
           aliases: 'คำย่อสินค้าสำหรับค้นหาใน DATA',
+          members: 'สมาชิก DATA & รายการฝากสั่ง',
           review: 'คำถามที่บอตยังตอบไม่ได้ & บันทึกคำถาม'
         };
         $('#topbar-title').textContent = titles[tab] || titles.cases;
-        ['cases', 'sops', 'line', 'aliases', 'review'].forEach(t => {
+        ['cases', 'sops', 'line', 'aliases', 'members', 'review'].forEach(t => {
           const sec = $(`#tab-${t}`);
           if (sec) sec.hidden = t !== tab;
         });
@@ -3484,6 +3733,9 @@
         if (tab === 'sops' && !state.sops.loaded && !state.sops.loading) void loadSops();
         if (tab === 'aliases' && hasAdminRole(state.user)) {
           if (!state.aliases.loaded && !state.aliases.loading) void loadAliases();
+        }
+        if (tab === 'members' && hasAdminRole(state.user)) {
+          if (!state.members.loaded && !state.members.loading) void loadMembersTab();
         }
         if (tab === 'review' && hasAdminRole(state.user)) {
           if (!state.review.loaded && !state.review.loading) void refreshReviewTab();
@@ -5401,6 +5653,277 @@
         });
       }
 
+      // ===== Members & Pre-orders Tab =====
+      async function loadMembersTab() {
+        state.members.loading = true;
+        state.members.error = null;
+        renderMembersList();
+        try {
+          const [memRes, poRes] = await Promise.all([
+            adminPost('member_search', { query: state.members.query || '' }),
+            adminPost('member_preorder_list', { status: state.members.view === 'all_preorders' ? 'all' : 'open' })
+          ]);
+          state.members.items = Array.isArray(memRes?.items) ? memRes.items : [];
+          state.members.total = Number(memRes?.total ?? state.members.items.length);
+          state.members.preorders = Array.isArray(poRes?.items) ? poRes.items : [];
+          state.members.loaded = true;
+        } catch (err) {
+          state.members.error = err.message || 'โหลดข้อมูลสมาชิกไม่สำเร็จ (โปรดตรวจสอบว่าติดตั้ง casebot_member_memory SQL แล้ว)';
+        } finally {
+          state.members.loading = false;
+          renderMembersList();
+        }
+      }
+
+      function renderMembersList() {
+        const container = $('#members-list-container');
+        if (!container) return;
+        $$('[data-member-view]').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.memberView === state.members.view)));
+        const clearBtn = $('#member-search-clear');
+        if (clearBtn) clearBtn.hidden = !state.members.query;
+
+        const openPreCount = (state.members.preorders || []).filter(p => p.status === 'open').length;
+        const navBadge = $('#nav-badge-members');
+        if (navBadge) navBadge.textContent = state.members.loaded ? (openPreCount > 0 ? String(openPreCount) : String(state.members.total || 0)) : '—';
+
+        if (state.members.loading && !state.members.loaded) {
+          container.innerHTML = `<div class="empty-state"><svg class="icon icon-lg spin" style="color:var(--accent)" viewBox="0 0 24 24"><path d="M21 12a9 9 0 1 1-6.219-8.56"/></svg><p>กำลังโหลดข้อมูลสมาชิกและฝากสั่ง...</p></div>`;
+          return;
+        }
+        if (state.members.error) {
+          container.innerHTML = `<div class="empty-state"><div class="form-error-box">${escapeHtml(state.members.error)}</div><button class="btn btn-secondary btn-sm" type="button" data-action="retry-members">ลองอีกครั้ง</button></div>`;
+          return;
+        }
+
+        const q = (state.members.query || '').trim().toLowerCase();
+        if (state.members.view === 'preorders' || state.members.view === 'all_preorders') {
+          const list = (state.members.preorders || []).filter(p => !q || `${p.code} ${p.memberLabel} ${p.memberName || ''} ${p.memberCode || ''} ${p.memberPhone || ''} ${p.itemName} ${p.sku || ''}`.toLowerCase().includes(q));
+          $('#members-count-badge').textContent = `${list.length.toLocaleString('th-TH')} รายการ`;
+          if (!list.length) {
+            container.innerHTML = `<div class="empty-state"><h3>ยังไม่มีรายการฝากสั่งในมุมมองนี้</h3><p>กดปุ่ม "+ บันทึกฝากสั่ง" หรือพิมพ์ใน LINE เช่น @Case-Bot พี่นนท์ฝากสั่ง แป้งขนมครก 5 ลัง</p></div>`;
+            return;
+          }
+          container.innerHTML = `<div style="display:grid;gap:10px;padding:16px">` + list.map(po => {
+            const qty = [po.quantity, po.unit].filter(Boolean).join(' ');
+            const isOpen = po.status === 'open';
+            const statusBadge = isOpen ? '<span class="badge badge-open">ค้างรับ</span>'
+              : po.status === 'cancelled' ? '<span class="badge badge-overdue">ยกเลิก</span>'
+              : '<span class="badge badge-closed">รับของแล้ว</span>';
+            return `
+              <div class="review-item">
+                <div style="display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;align-items:center">
+                  <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+                    <span class="badge badge-internal">${escapeHtml(po.code)}</span>
+                    ${statusBadge}
+                    <strong>${escapeHtml(po.memberName || po.memberLabel)}</strong>
+                    ${po.memberCode ? `<span style="font-size:12px;color:var(--text-muted)">(${escapeHtml(po.memberCode)})</span>` : ''}
+                    ${po.memberPhone ? `<span style="font-size:12px;color:var(--text-secondary)">· ${escapeHtml(po.memberPhone)}</span>` : ''}
+                  </div>
+                  <div style="display:flex;gap:6px;flex-wrap:wrap">
+                    <button class="btn btn-secondary btn-xs" type="button" data-open-member="${escapeHtml(po.memberId)}">ดูลูกค้า</button>
+                    ${isOpen ? `<button class="btn btn-emerald btn-xs" type="button" data-close-preorder="${escapeHtml(po.code)}">รับของแล้ว</button>` : ''}
+                  </div>
+                </div>
+                <div style="font-size:13.5px;font-weight:600;color:var(--text)">${escapeHtml(po.itemName)}${qty ? ` · ${escapeHtml(qty)}` : ''}${po.sku ? ` <code style="font-family:var(--font-mono);font-size:12px">[${escapeHtml(po.sku)}]</code>` : ''}</div>
+                <div style="font-size:12px;color:var(--text-muted);display:flex;gap:14px;flex-wrap:wrap">
+                  <span>สั่งเมื่อ: ${escapeHtml(formatDate(po.orderedAt))}</span>
+                  ${isOpen && po.nextRemindAt ? `<span>แจ้งเตือนรอบถัดไป: ${escapeHtml(formatDate(po.nextRemindAt))} น.</span>` : ''}
+                  ${po.note ? `<span>หมายเหตุ: ${escapeHtml(po.note)}</span>` : ''}
+                </div>
+              </div>
+            `;
+          }).join('') + `</div>`;
+          return;
+        }
+
+        const members = state.members.items || [];
+        $('#members-count-badge').textContent = `${Number(state.members.total || members.length).toLocaleString('th-TH')} ราย`;
+        if (!members.length) {
+          container.innerHTML = `<div class="empty-state"><h3>ไม่พบสมาชิกตรงคำค้น</h3><p>ลองค้นหาด้วยชื่อจริง ชื่อเล่น รหัสสมาชิก เบอร์โทร หรือจังหวัด</p></div>`;
+          return;
+        }
+        container.innerHTML = `<div style="overflow:auto"><table class="cases-table"><thead><tr>
+          <th>รหัส / ชื่อสมาชิก</th><th>เบอร์โทร / ร้าน</th><th>ชื่อเล่นที่จำไว้</th><th>จังหวัด / ที่อยู่จัดส่ง</th><th>ประวัติ / ฝากสั่ง</th><th>จัดการ</th>
+        </tr></thead><tbody>` + members.map(m => {
+          const aliases = Array.isArray(m.aliases) && m.aliases.length ? m.aliases.join(', ') : '—';
+          const loc = [m.province ? `จ.${m.province}` : '', m.deliveryAddress || m.address || ''].filter(Boolean).join(' · ') || '—';
+          return `<tr>
+            <td><div style="font-weight:700">${escapeHtml(m.name)}</div><div style="font-size:12px;color:var(--text-muted);font-family:var(--font-mono)">${escapeHtml(m.code)}</div></td>
+            <td><div>${escapeHtml(m.phone || '—')}</div><div style="font-size:12px;color:var(--text-muted)">${escapeHtml(m.company || '')}</div></td>
+            <td style="font-size:12.5px">${escapeHtml(aliases)}</td>
+            <td style="font-size:12.5px;max-width:260px">${escapeHtml(loc)}${m.carrier ? `<div style="font-size:11.5px;color:var(--blue-text)">🚚 ${escapeHtml(m.carrier)}</div>` : ''}</td>
+            <td style="font-size:12px"><div>สินค้าประจำ ${escapeHtml(m.productCount || 0)} รายการ</div>${(m.openPreorderCount || 0) > 0 ? `<span class="badge badge-open">ฝากสั่งค้าง ${escapeHtml(m.openPreorderCount)}</span>` : '<span style="color:var(--text-muted)">ไม่มีฝากสั่งค้าง</span>'}</td>
+            <td><button class="btn btn-secondary btn-xs" type="button" data-open-member="${escapeHtml(m.id)}">จัดการ / ดูข้อมูล</button></td>
+          </tr>`;
+        }).join('') + `</tbody></table></div>`;
+      }
+
+      async function openMemberModal(memberId) {
+        state.members.detail = null;
+        state.members.detailLoading = true;
+        $('#member-modal-title').textContent = 'กำลังโหลดข้อมูลสมาชิก...';
+        $('#member-modal-sub').textContent = 'กำลังดึงประวัติสินค้า โลเคชั่น เคส และฝากสั่ง';
+        $('#member-modal-body').innerHTML = `<div class="empty-state"><svg class="icon icon-lg spin" style="color:var(--accent)" viewBox="0 0 24 24"><path d="M21 12a9 9 0 1 1-6.219-8.56"/></svg></div>`;
+        openModal('member-modal');
+        try {
+          const detail = await adminPost('member_detail', { memberId });
+          state.members.detail = detail;
+          renderMemberModal(detail);
+        } catch (err) {
+          $('#member-modal-body').innerHTML = `<div class="form-error-box">${escapeHtml(err.message || 'โหลดข้อมูลสมาชิกไม่สำเร็จ')}</div>`;
+        } finally {
+          state.members.detailLoading = false;
+        }
+      }
+
+      function renderMemberModal(detail) {
+        const m = detail.member || {};
+        const p = detail.profile || {};
+        const products = detail.products || [];
+        const preorders = detail.preorders || [];
+        const casesList = detail.cases || [];
+        const safeMaps = safeHttpUrl(p.mapsUrl);
+        $('#member-modal-title').textContent = `${m.name || 'สมาชิก'} (${m.code || '—'})`;
+        $('#member-modal-sub').textContent = [m.company, m.phone ? `โทร ${m.phone}` : ''].filter(Boolean).join(' · ') || 'ข้อมูลสมาชิกใน DATA';
+
+        const prodHtml = products.length
+          ? products.map(it => `<div class="conn-row"><span>${escapeHtml(it.productName)}${it.sku ? ` <code>[${escapeHtml(it.sku)}]</code>` : ''}</span><strong>${escapeHtml([it.lastQty, it.unit].filter(Boolean).join(' ') || `${it.orderCount} ครั้ง`)}</strong></div>`).join('')
+          : '<p style="margin:6px 0 0;font-size:12.5px;color:var(--text-muted)">ยังไม่มีประวัติสินค้า (ส่งรูปบิลใน LINE แล้ว Reply พิมพ์ เก็บบิลลูกค้า <ชื่อ> เพื่อเก็บได้ทันที)</p>';
+
+        const preHtml = preorders.length
+          ? preorders.map(po => `
+            <div class="conn-row">
+              <span><b>${escapeHtml(po.code)}</b> · ${escapeHtml(po.itemName)}${po.quantity ? ` (${escapeHtml([po.quantity, po.unit].filter(Boolean).join(' '))})` : ''}</span>
+              <span style="display:flex;gap:6px;align-items:center">
+                <span class="badge ${po.status === 'open' ? 'badge-open' : 'badge-closed'}">${po.status === 'open' ? 'ค้างรับ' : po.status === 'cancelled' ? 'ยกเลิก' : 'รับแล้ว'}</span>
+                ${po.status === 'open' ? `<button class="btn btn-emerald btn-xs" type="button" data-close-preorder="${escapeHtml(po.code)}">รับของแล้ว</button>` : ''}
+              </span>
+            </div>
+          `).join('')
+          : '<p style="margin:6px 0 0;font-size:12.5px;color:var(--text-muted)">ไม่มีรายการฝากสั่ง</p>';
+
+        const caseHtml = casesList.length
+          ? casesList.map(c => `<div class="conn-row"><button class="btn btn-ghost btn-xs" type="button" data-jump-case="${escapeHtml(c.code)}">${escapeHtml(c.code)} · ${escapeHtml(c.title)}</button><span class="badge badge-open">${escapeHtml(STATUS_LABELS[c.status] || c.status)}</span></div>`).join('')
+          : '<p style="margin:6px 0 0;font-size:12.5px;color:var(--text-muted)">ไม่พบเคสที่ระบุชื่อลูกค้ารายนี้</p>';
+
+        $('#member-modal-body').innerHTML = `
+          <div id="member-profile-error" class="form-error-box" role="alert" hidden></div>
+          <form id="member-profile-form" class="form-grid" novalidate>
+            <label class="field full">
+              <span class="field-label">ชื่อเล่น / ชื่อร้านที่ใช้เรียก (คั่นด้วยเครื่องหมาย ,)</span>
+              <input id="mp-aliases" type="text" value="${escapeHtml((p.aliases || []).join(', '))}" placeholder="เช่น พี่นนท์, ร้านเค้กหน้าตลาด">
+            </label>
+            <label class="field full">
+              <span class="field-label">โลเคชั่น / ที่อยู่จัดส่งต่างจังหวัด</span>
+              <input id="mp-address" type="text" maxlength="500" value="${escapeHtml(p.deliveryAddress || m.address || '')}" placeholder="บ้านเลขที่ ถนน ตำบล อำเภอ จังหวัด">
+            </label>
+            <label class="field">
+              <span class="field-label">จังหวัด</span>
+              <input id="mp-province" type="text" maxlength="80" value="${escapeHtml(p.province || '')}" placeholder="เช่น ชลบุรี">
+            </label>
+            <label class="field">
+              <span class="field-label">ขนส่งประจำ / รถส่ง</span>
+              <input id="mp-carrier" type="text" maxlength="120" value="${escapeHtml(p.carrier || '')}" placeholder="เช่น รถคอก / ขนส่ง PL">
+            </label>
+            <label class="field full">
+              <span class="field-label">ลิงก์ Google Maps ${safeMaps ? `<a href="${escapeHtml(safeMaps)}" target="_blank" rel="noopener noreferrer" style="color:var(--blue-text);margin-left:6px">เปิดแผนที่ ↗</a>` : ''}</span>
+              <input id="mp-mapsUrl" type="url" maxlength="1000" value="${escapeHtml(p.mapsUrl || '')}" placeholder="https://maps.app.goo.gl/...">
+            </label>
+            <label class="field full">
+              <span class="field-label">หมายเหตุพิเศษของลูกค้า</span>
+              <textarea id="mp-notes" rows="2" maxlength="1000" placeholder="เช่น ขอใบกำกับภาษีทุกครั้ง / ไม่รับของวันอาทิตย์">${escapeHtml(p.notes || '')}</textarea>
+            </label>
+          </form>
+          <div class="detail-box"><h4>🛒 สินค้าที่ใช้ประจำ (${products.length})</h4>${prodHtml}</div>
+          <div class="detail-box"><h4>⏳ ประวัติฝากสั่ง (${preorders.length})</h4>${preHtml}</div>
+          <div class="detail-box"><h4>🗂️ เคสที่เกี่ยวข้อง (${casesList.length})</h4>${caseHtml}</div>
+        `;
+        const form = $('#member-profile-form');
+        if (form) form.addEventListener('submit', handleMemberProfileSave);
+      }
+
+      async function handleMemberProfileSave(e) {
+        e.preventDefault();
+        const memberId = state.members.detail?.member?.id;
+        if (!memberId) return;
+        const errEl = $('#member-profile-error');
+        if (errEl) errEl.hidden = true;
+        const aliases = ($('#mp-aliases')?.value || '').split(',').map(s => s.trim()).filter(Boolean).slice(0, 15);
+        const deliveryAddress = $('#mp-address')?.value?.trim() || null;
+        const province = $('#mp-province')?.value?.trim() || null;
+        const carrier = $('#mp-carrier')?.value?.trim() || null;
+        const mapsUrl = $('#mp-mapsUrl')?.value?.trim() || null;
+        const notes = $('#mp-notes')?.value?.trim() || null;
+        const btn = $('#btn-member-profile-save');
+        btn.disabled = true;
+        try {
+          await adminPost('member_upsert_profile', { memberId, aliases, deliveryAddress, province, carrier, mapsUrl, notes });
+          toast('บันทึกข้อมูลสมาชิกแล้ว', 'ok');
+          await Promise.all([openMemberModal(memberId), loadMembersTab()]);
+        } catch (err) {
+          if (errEl) { errEl.textContent = err.message || 'บันทึกไม่สำเร็จ'; errEl.hidden = false; }
+        } finally {
+          btn.disabled = false;
+        }
+      }
+
+      async function openPreorderModal(preselectedMemberId = '') {
+        $('#preorder-error').hidden = true;
+        $('#po-itemName').value = '';
+        $('#po-qty').value = '';
+        $('#po-unit').value = '';
+        $('#po-sku').value = '';
+        $('#po-note').value = '';
+        if (!state.members.items.length) {
+          try {
+            const res = await adminPost('member_search', { query: '' });
+            state.members.items = Array.isArray(res?.items) ? res.items : [];
+            state.members.total = Number(res?.total ?? state.members.items.length);
+          } catch (_) {}
+        }
+        const sel = $('#po-memberId');
+        const list = state.members.items || [];
+        sel.innerHTML = list.map(m => `<option value="${escapeHtml(m.id)}">${escapeHtml(m.name)} (${escapeHtml(m.code)})</option>`).join('');
+        if (preselectedMemberId && list.some(m => m.id === preselectedMemberId)) sel.value = preselectedMemberId;
+        openModal('preorder-modal');
+      }
+
+      async function handlePreorderSubmit(e) {
+        e.preventDefault();
+        const errEl = $('#preorder-error');
+        errEl.hidden = true;
+        const memberId = $('#po-memberId').value;
+        const itemName = $('#po-itemName').value.trim();
+        const qtyRaw = $('#po-qty').value.trim();
+        const unit = $('#po-unit').value.trim();
+        const sku = $('#po-sku').value.trim();
+        const note = $('#po-note').value.trim();
+        if (!memberId || !itemName) {
+          errEl.textContent = 'กรุณาเลือกสมาชิกและระบุชื่อสินค้าที่ฝากสั่ง';
+          errEl.hidden = false;
+          return;
+        }
+        const quantity = qtyRaw ? Number(qtyRaw) : undefined;
+        if (qtyRaw && (!Number.isFinite(quantity) || quantity <= 0)) {
+          errEl.textContent = 'จำนวนต้องเป็นตัวเลขมากกว่า 0';
+          errEl.hidden = false;
+          return;
+        }
+        const btn = $('#btn-preorder-save');
+        btn.disabled = true;
+        try {
+          const created = await adminPost('member_preorder_create', { memberId, itemName, ...(quantity ? { quantity } : {}), ...(unit ? { unit } : {}), ...(sku ? { sku } : {}), ...(note ? { note } : {}) });
+          closeModal('preorder-modal');
+          toast(`บันทึกรายการฝากสั่ง ${created.code || ''} แล้ว`, 'ok');
+          await loadMembersTab();
+        } catch (err) {
+          errEl.textContent = err.message || 'บันทึกรายการฝากสั่งไม่สำเร็จ';
+          errEl.hidden = false;
+        } finally {
+          btn.disabled = false;
+        }
+      }
+
       // ===== Event Wiring =====
       function bindEvents() {
         $('#login-form').addEventListener('submit', handleLoginSubmit);
@@ -5734,6 +6257,74 @@
           }
           if (e.target.closest('#btn-review-more') && state.review.nextCursor) {
             void loadReviews(state.review.nextCursor);
+          }
+        });
+
+        // Admin Members & Pre-orders events
+        let memberSearchTimer = null;
+        $$('[data-member-view]').forEach(btn => btn.addEventListener('click', () => {
+          state.members.view = btn.dataset.memberView;
+          void loadMembersTab();
+        }));
+        $('#btn-members-refresh').addEventListener('click', () => void loadMembersTab());
+        $('#btn-preorder-create').addEventListener('click', () => void openPreorderModal());
+        $('#preorder-form').addEventListener('submit', handlePreorderSubmit);
+        $('#btn-member-add-preorder').addEventListener('click', () => {
+          const id = state.members.detail?.member?.id || '';
+          closeModal('member-modal');
+          void openPreorderModal(id);
+        });
+        $('#member-search').addEventListener('input', e => {
+          state.members.query = e.target.value;
+          if (state.members.view === 'members') {
+            window.clearTimeout(memberSearchTimer);
+            memberSearchTimer = window.setTimeout(() => void loadMembersTab(), 250);
+          } else {
+            renderMembersList();
+          }
+        });
+        $('#member-search-clear').addEventListener('click', () => {
+          state.members.query = '';
+          $('#member-search').value = '';
+          void loadMembersTab();
+        });
+        $('#members-list-container').addEventListener('click', async e => {
+          if (e.target.closest('[data-action="retry-members"]')) { void loadMembersTab(); return; }
+          const openBtn = e.target.closest('[data-open-member]');
+          if (openBtn) { void openMemberModal(openBtn.dataset.openMember); return; }
+          const closePoBtn = e.target.closest('[data-close-preorder]');
+          if (closePoBtn) {
+            closePoBtn.disabled = true;
+            try {
+              await adminPost('member_preorder_close', { code: closePoBtn.dataset.closePreorder, status: 'picked_up' });
+              toast(`ปิดรายการฝากสั่ง ${closePoBtn.dataset.closePreorder} แล้ว`, 'ok');
+              await loadMembersTab();
+            } catch (err) {
+              toast(err.message || 'ปิดรายการฝากสั่งไม่สำเร็จ', 'err');
+              closePoBtn.disabled = false;
+            }
+          }
+        });
+        $('#member-modal-body').addEventListener('click', async e => {
+          const jumpCase = e.target.closest('[data-jump-case]');
+          if (jumpCase) {
+            closeModal('member-modal');
+            void openCaseDrawer(jumpCase.dataset.jumpCase);
+            return;
+          }
+          const closePoBtn = e.target.closest('[data-close-preorder]');
+          if (closePoBtn) {
+            closePoBtn.disabled = true;
+            try {
+              await adminPost('member_preorder_close', { code: closePoBtn.dataset.closePreorder, status: 'picked_up' });
+              toast(`ปิดรายการฝากสั่ง ${closePoBtn.dataset.closePreorder} แล้ว`, 'ok');
+              const memberId = state.members.detail?.member?.id;
+              if (memberId) await openMemberModal(memberId);
+              await loadMembersTab();
+            } catch (err) {
+              toast(err.message || 'ปิดรายการฝากสั่งไม่สำเร็จ', 'err');
+              closePoBtn.disabled = false;
+            }
           }
         });
 
